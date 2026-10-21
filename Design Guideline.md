@@ -9,7 +9,7 @@
 
 ## 1. Purpose and governing requirements
 
-ElectroDB is an educational reference catalogue for electronic components and circuit concepts. Visitors browse a hierarchical category tree, search the catalogue, open component detail pages, and read structured educational material: descriptions, working principles, truth/state/characteristic/excitation tables, equations, circuit diagrams, timing diagrams, graphs, specifications, and datasheets.
+ElectroDB is an educational reference catalogue for electronic components and circuit concepts. Visitors browse a hierarchical category tree, search the catalogue, open component detail pages, and read structured educational material: descriptions, truth/state/characteristic/excitation tables, equations, diagrams, graphs, specifications, and datasheets.
 
 This guideline consolidates the project decisions discussed so far and the uploaded SVNIT CS203 practical assignments.
 
@@ -174,8 +174,7 @@ Constraints: primary key; unique slug; parent foreign key; `is_active IN ('Y','N
 | `name` | VARCHAR(180), required | Component/concept name |
 | `slug` | VARCHAR(200), unique | Optional readable route segment |
 | `short_description` | VARCHAR(1000) | Search/result summary |
-| `general_description` | LONGTEXT | Detailed description |
-| `working_principle` | LONGTEXT | How it works |
+| `description` | LONGTEXT | Detailed description |
 | `main_image_path` | VARCHAR(500) | Optional media path |
 | `circuit_symbol_path` | VARCHAR(500) | Optional symbol SVG path |
 | `datasheet_url` | VARCHAR(1000) | Optional verified document URL |
@@ -201,13 +200,11 @@ Recommended codes/render kinds:
 - `IMAGE` → image resource
 - `TABLE` → structured table JSON
 - `EQUATION` → LaTeX equation
-- `DIAGRAM` → SVG path/content
-- `TIMING_DIAGRAM` → SVG path/content
+- Diagram assets → `component_diagrams` rows with SVG paths
 - `GRAPH` → graph resource or structured data
 - `DOCUMENT` → datasheet/document URL
-- `STATE_MACHINE` may be retained as a semantic content code if needed, but its renderer is still `SVG_DIAGRAM`; preferred alternative: use `DIAGRAM` plus `diagram_kind = 'STATE_MACHINE'` metadata.
 
-To satisfy the “all diagram types are just SVG paths” requirement, the renderer should not branch into a different database model for state diagrams. Store one diagram content item with an SVG path and a `diagram_kind` such as `STATE_MACHINE`, `LOGIC_CIRCUIT`, `BLOCK_DIAGRAM`, `PINOUT`, or `TIMING`. A timing diagram can use the same SVG asset pipeline while retaining its semantic content code for layout and accessibility.
+All diagrams are stored in `component_diagrams` with an SVG asset path. The database does not store diagram type; a title such as “Timing Diagram” or “State Diagram” is sufficient for display and accessibility.
 
 #### `category_content_types`
 
@@ -232,14 +229,13 @@ Use composite primary key such as `(category_id, section_key)` and unique `(cate
 | `section_key` | VARCHAR(80) | Template key / stable identity |
 | `title` | VARCHAR(180) | Section title |
 | `content` | LONGTEXT | Text, JSON, LaTeX, or resource path |
-| `diagram_kind` | VARCHAR(40), nullable | Diagram subtype for SVG content |
 | `alt_text` | VARCHAR(500) | Accessible description |
 | `caption` | VARCHAR(500) | Optional caption |
 | `display_order` | DECIMAL(18,6) | Per-component order |
 | `created_at` | TIMESTAMP | Creation time |
 | `updated_at` | TIMESTAMP | Last change |
 
-Recommended unique key: `(component_id, section_key)` unless the design intentionally allows multiple records under one section key. Validate the payload according to `content_type`; do not blindly parse all content as JSON. For a diagram, `content` should contain a controlled resource path or a vetted inline SVG payload, not arbitrary executable markup.
+Recommended unique key: `(component_id, section_key)` unless the design intentionally allows multiple records under one section key. Validate the payload according to `content_type`; do not blindly parse all content as JSON. Diagram assets belong in `component_diagrams.image_path`, which should contain a controlled resource path. Avoid injecting arbitrary inline SVG from the database into the DOM.
 
 #### `specifications`
 
@@ -654,7 +650,7 @@ The UI should be data-driven, responsive, keyboard accessible, and visually cohe
    - Name, summary, category, optional image, detail link.
    - Loading, empty, error, and pagination states.
 4. **Component detail**
-   - Name, short description, category/breadcrumb, main image, circuit symbol, general description, working principle.
+   - Name, short description, category/breadcrumb, main image, circuit symbol, and detailed description.
    - Category-appropriate sections in configured order.
    - Specifications table.
    - Applications, advantages, limitations, datasheet, and related items only when data exists.
@@ -672,7 +668,6 @@ Render by content type:
 - `TABLE`: validate the JSON structure before rendering.
 - `EQUATION`: render LaTeX through a math renderer such as KaTeX or MathJax; show plain text if rendering fails.
 - `DIAGRAM`: resolve and render an SVG resource.
-- `TIMING_DIAGRAM`: same SVG pipeline with timing-diagram presentation.
 - `GRAPH`: image or structured graph data if supported.
 - `DOCUMENT`: safe external/open-document link.
 - Any unknown type: show a safe fallback instead of crashing.
@@ -718,7 +713,7 @@ Each state-machine SVG should:
 - Avoid overlapping labels/edges.
 - Include a text/table alternative where practical.
 - Have a unique resource path and accessible description.
-- Be stored as a `DIAGRAM` content item with `diagram_kind='STATE_MACHINE'`.
+- Be stored in `component_diagrams` with a descriptive title such as “State Diagram”.
 
 ## 13. SVG and equation content conventions
 

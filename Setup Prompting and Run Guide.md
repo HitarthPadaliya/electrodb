@@ -197,7 +197,7 @@ Build the project in small, testable increments:
 4. `GET /api/components/:id` with ordered content and specifications.
 5. `GET /api/search`.
 6. Home/category/search/detail pages using API data.
-7. Renderers for `TEXT`, `TABLE`, `EQUATION`, `DIAGRAM`, `TIMING_DIAGRAM`, `GRAPH`, and `DOCUMENT`.
+7. Renderers for `TEXT`, `TABLE`, `EQUATION`, `DIAGRAM`, `GRAPH`, and `DOCUMENT`.
 8. CRUD procedures and corresponding lab routes.
 9. Filter/aggregate/join/subquery/correlated-subquery routes using allowlisted templates.
 10. XML serializers/routes for assignment query 1, 3, and 4.
@@ -238,8 +238,7 @@ Do not invent existing schema details; verify them in the files.
 The assignment requires MySQL MySQL stored programs. Do not mix MySQL syntax with
 MySQL syntax. The frontend must fetch catalogue data from the Node.js
 API, not hardcode the catalogue. Store equations as LaTeX source.
-Keep characteristic tables and equations separate. All diagrams,
-including state-machine diagrams, use the shared SVG asset model.
+Keep characteristic tables and equations separate. All diagrams, including state-machine diagrams, are stored in `component_diagrams` and use the same SVG renderer. Diagram type is not stored; use the title/caption to identify the diagram for readers.
 Do not add public login, shopping, reviews, or other out-of-scope
 features.
 
@@ -289,9 +288,9 @@ contract. Use bind variables, release connections safely, and return
 ```text
 Implement the component detail page using the existing API client and
 design tokens. Render only content sections returned by the API.
-Support TEXT, TABLE, EQUATION, DIAGRAM, TIMING_DIAGRAM, GRAPH, and
+Support TEXT, TABLE, EQUATION, DIAGRAM, GRAPH, and
 DOCUMENT. Equations are LaTeX strings; tables may contain JSON; all
-diagrams use SVG assets. Add loading, error, missing-resource, and
+diagrams use SVG assets from `component_diagrams`. Add loading, error, missing-resource, and
 not-found states. Do not hardcode catalogue content.
 ```
 

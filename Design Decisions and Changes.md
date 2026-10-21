@@ -9,7 +9,7 @@ The existing frontend specification describes:
 - Node.js backend and MySQL database in its original technology assumptions.
 - Hierarchical categories and data-driven component pages.
 - Core tables: `categories`, `components`, `content_types`, `category_content_types`, `component_content`, `specifications`, `component_specifications`.
-- Content types for text, image, table, equation, diagram, timing diagram, graph, and document.
+- Content types for text, image, table, equation, generic diagram, graph, and document; diagram assets now use a dedicated table.
 - Category-specific educational sections, including state/next-state tables for counters and truth/characteristic/excitation tables plus equations and timing diagrams for flip-flops.
 - No public login, profiles, cart, payment, ratings, reviews, or administrative editing.
 - Backend API as the source of catalogue data, not hardcoded UI records.
@@ -19,7 +19,7 @@ The recent project requests additionally specify:
 - Separate characteristic table and characteristic equation records, including flip-flops and other relevant components.
 - Data for roughly 40–50 components in the seed dataset, with relevant tags requested in a prior project conversation.
 - A page per category leaf as a useful implementation approach, but pages must still be generated from category IDs/data rather than hardcoded per-category data.
-- SVG paths as the common representation for all diagram families.
+- SVG paths as the common representation for all diagrams, with no database-level diagram subtype.
 - State-machine diagrams for relevant components.
 - A static website was previously requested for design reference; that static prototype should not be confused with the final data-driven frontend.
 
@@ -48,26 +48,19 @@ Implementation:
 - Lab routes are development/demo functionality and can be disabled or protected in production.
 - Never expose an arbitrary SQL execution box. Use pre-approved query templates and allowlisted table/column/operator/function options.
 
-## 4. Diagram normalization: one SVG asset model
+## 4. Confirmed decision: one generic diagram model
 
-**Change proposed: use one diagram content mechanism for all diagram types.**
+**Decision: store every diagram in a dedicated `component_diagrams` table, without a diagram-type column.**
 
-Rather than designing a distinct table or data format for every diagram, store a diagram as a content record with a path or vetted SVG payload. Use metadata such as `diagram_kind` to identify the semantic type:
-- `STATE_MACHINE`
-- `LOGIC_CIRCUIT`
-- `BLOCK_DIAGRAM`
-- `PINOUT`
-- `TIMING`
-- `GRAPH`
-- `SCHEMATIC`
+The table stores `diagram_id`, `component_id`, `title`, `image_path`, `alt_text`, `caption`, `display_order`, and timestamps. Titles such as “Circuit Diagram”, “Timing Diagram”, and “State Diagram” are human-facing labels, not database classifications.
 
 Benefits:
-- One frontend SVG component.
-- Consistent accessibility, captions, fallback handling, responsive scaling, and resource resolution.
-- State-machine diagrams become first-class content without a parallel subsystem.
-- Easier Figma-to-frontend mapping.
+- One storage model and one frontend renderer for all diagram assets.
+- Adding a new diagram does not require a new type or enum value.
+- Multiple diagrams per component are straightforward.
+- Captions, accessibility text, and display order remain available.
 
-Caution: a timing diagram may retain `TIMING_DIAGRAM` as its content type for section ordering while still using the same SVG rendering pipeline. “One diagram model” does not require erasing useful semantic metadata.
+Implementation consequence: remove `diagram_kind` from `component_content`; diagram assets belong in `component_diagrams`. Keep tables, equations, prose, specifications, and documents distinct because they have different structures and rendering requirements.
 
 ## 5. Separate equations from tables
 
@@ -78,8 +71,8 @@ Examples for a JK flip-flop:
 - `characteristic_table` → `TABLE`
 - `characteristic_equation` → `EQUATION` with LaTeX source
 - `excitation_table` → `TABLE`
-- `timing_diagram` → `TIMING_DIAGRAM` referencing an SVG
-- `state_diagram` → `DIAGRAM` with `diagram_kind=STATE_MACHINE`
+- `component_diagrams` row titled “Timing Diagram” referencing an SVG
+- `component_diagrams` row titled “State Diagram”
 
 Rationale:
 - Easier to validate and render each artifact.

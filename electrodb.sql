@@ -1,5 +1,5 @@
 -- ================================================================
--- ElectroDB - Full MySQL database for XAMPP / phpMyAdmin
+-- ElectroDB - Complete merged MySQL database and Assignment 10 stored programs
 -- Target: MySQL 8.0+ / compatible MariaDB version bundled with XAMPP
 -- Import: phpMyAdmin -> Import -> choose this file -> Go
 --
@@ -9,16 +9,21 @@
 --
 -- Includes:
 --   * Hierarchical categories and tags
---   * Components and typed educational content
+--   * Components, educational content, and component diagrams
 --   * Separate truth/characteristic/excitation tables and equations
 --   * Specifications and component specifications
 --   * Application user records for DBMS assignment demonstration
 --   * Audit log
---   * Views, indexes, stored procedures, functions, and triggers
+--   * Views, indexes, stored procedures, functions, cursors, and triggers
+--   * Consolidates the standalone Assignment 10 stored-program examples;
+--     duplicate routine/trigger definitions are intentionally not repeated
 --   * Seed data for 147 components
+--   * Dedicated component_diagrams table; diagram subtypes are not stored
 --
 -- Notes:
 --   * This is MySQL stored-program syntax, not Oracle PL/SQL.
+--   * Includes the shared procedures, cursor examples, aggregate function,
+--     validation/normalization/audit/restricted-hours triggers, and app-user routines.
 --   * Diagram assets are SVG paths; create the actual SVG files in the
 --     frontend public/assets/svg directory before expecting them to load.
 --   * Educational numeric examples are illustrative unless sourced
@@ -153,7 +158,6 @@ CREATE TABLE component_content (
   section_key VARCHAR(80) NOT NULL,
   title VARCHAR(180) NOT NULL,
   content LONGTEXT NOT NULL,
-  diagram_kind VARCHAR(40) NULL,
   alt_text VARCHAR(500) NULL,
   caption VARCHAR(500) NULL,
   display_order INT NOT NULL DEFAULT 0,
@@ -169,6 +173,29 @@ CREATE TABLE component_content (
   CONSTRAINT fk_component_content_type
     FOREIGN KEY (content_type_id) REFERENCES content_types(content_type_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
+ ) ENGINE=InnoDB;
+
+-- ------------------------------
+-- 5A. Component diagrams
+-- All diagrams share one storage model. The database stores title,
+-- caption, alt text, asset path, and display order; it does not classify
+-- diagrams as circuit/timing/state/etc.
+-- ------------------------------
+CREATE TABLE component_diagrams (
+  diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  component_id BIGINT UNSIGNED NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  image_path VARCHAR(500) NOT NULL,
+  alt_text VARCHAR(500) NULL,
+  caption VARCHAR(500) NULL,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (diagram_id),
+  KEY idx_component_diagrams_order (component_id, display_order),
+  CONSTRAINT fk_component_diagrams_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 -- ------------------------------
@@ -252,7 +279,6 @@ INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('TABLE','Table','TABLE','Structured table; content is JSON text'),
 ('EQUATION','Equation','EQUATION','LaTeX equation source'),
 ('DIAGRAM','Diagram','SVG_DIAGRAM','SVG diagram path'),
-('TIMING_DIAGRAM','Timing Diagram','SVG_DIAGRAM','Timing diagram as SVG'),
 ('GRAPH','Graph','SVG_DIAGRAM','Graph image or SVG resource'),
 ('DOCUMENT','Document','DOCUMENT','Datasheet or document URL');
 
@@ -512,15 +538,13 @@ INSERT INTO category_content_types
 SELECT c.category_id, ct.content_type_id, x.section_key, x.section_label, x.is_required, x.display_order
 FROM (
   SELECT 6 category_id, 'state_table' section_key, 'State / Next-State Table' section_label, 1 is_required, 1 display_order, 'TABLE' type_code
-  UNION ALL SELECT 6,'timing_diagram','Timing Diagram',0,2,'TIMING_DIAGRAM'
+  UNION ALL SELECT 6,'diagram','Diagrams',0,2,'DIAGRAM'
   UNION ALL SELECT 6,'logic_diagram','Logic Circuit Diagram',0,3,'DIAGRAM'
-  UNION ALL SELECT 6,'state_diagram','State Machine Diagram',0,4,'DIAGRAM'
   UNION ALL SELECT 7,'truth_table','Truth Table',1,1,'TABLE'
   UNION ALL SELECT 7,'characteristic_table','Characteristic Table',1,2,'TABLE'
   UNION ALL SELECT 7,'characteristic_equation','Characteristic Equation',1,3,'EQUATION'
   UNION ALL SELECT 7,'excitation_table','Excitation Table',1,4,'TABLE'
-  UNION ALL SELECT 7,'timing_diagram','Timing Diagram',0,5,'TIMING_DIAGRAM'
-  UNION ALL SELECT 7,'state_diagram','State Machine Diagram',0,6,'DIAGRAM'
+  UNION ALL SELECT 7,'diagram','Diagrams',0,5,'DIAGRAM'
   UNION ALL SELECT 8,'truth_table','Truth Table',1,2,'TABLE'
   UNION ALL SELECT 8,'boolean_equation','Boolean Equation',1,3,'EQUATION'
   UNION ALL SELECT 9,'selection_table','Selection Table',1,2,'TABLE'
@@ -533,15 +557,15 @@ JOIN content_types ct ON ct.code = x.type_code;
 -- 16. Component content seed records
 -- ------------------------------
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'overview', 'Overview',
-       c.description, NULL, NULL, NULL, 1
+       c.description, NULL, NULL, 1
 FROM components c JOIN content_types ct ON ct.code='TEXT';
 
 
 -- Counter state tables (stored as JSON strings)
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'state_table', 'State / Next-State Table',
        CASE c.slug
          WHEN 'decade-counter' THEN JSON_OBJECT('columns',JSON_ARRAY('Decimal','Current State Q3Q2Q1Q0','Next State Q3Q2Q1Q0'),'rows',JSON_ARRAY(
@@ -557,14 +581,14 @@ SELECT c.component_id, ct.content_type_id, 'state_table', 'State / Next-State Ta
            JSON_ARRAY('011','010'),JSON_ARRAY('010','001'),JSON_ARRAY('001','000'),JSON_ARRAY('000','111')))
          ELSE JSON_OBJECT('columns',JSON_ARRAY('Current State','Next State'),'rows',JSON_ARRAY())
        END,
-       NULL,NULL,NULL,3
+       NULL,NULL,3
 FROM components c
 JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=6;
 
 -- Flip-flop truth, characteristic, excitation tables, and equations are separate.
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
        CASE c.slug
          WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)','Operation'),'rows',JSON_ARRAY(
@@ -576,12 +600,12 @@ SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
          ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
        END,
-       NULL,NULL,'Q(next) is the output after the active clock edge. X means don''t care where applicable.',3
+       NULL,'Q(next) is the output after the active clock edge. X means don''t care where applicable.',3
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'characteristic_table', 'Characteristic Table',
        CASE c.slug
          WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)'),'rows',JSON_ARRAY(
@@ -593,12 +617,12 @@ SELECT c.component_id, ct.content_type_id, 'characteristic_table', 'Characterist
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
          ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
        END,
-       NULL,NULL,NULL,4
+       NULL,NULL,4
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'characteristic_equation', 'Characteristic Equation',
        CASE c.slug
          WHEN 'jk-flip-flop' THEN 'Q_{next}=J\\overline{Q}+\\overline{K}Q'
@@ -607,12 +631,12 @@ SELECT c.component_id, ct.content_type_id, 'characteristic_equation', 'Character
          WHEN 'sr-flip-flop' THEN 'Q_{next}=S+\\overline{R}Q\\quad\\text{(valid states only)}'
          ELSE 'Q_{next}=f(inputs,Q)'
        END,
-       NULL,NULL,'Stored as LaTeX source for frontend rendering.',5
+       NULL,'Stored as LaTeX source for frontend rendering.',5
 FROM components c JOIN content_types ct ON ct.code='EQUATION'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
+(component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table',
        CASE c.slug
          WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('Q','Q(next)','J','K'),'rows',JSON_ARRAY(
@@ -623,22 +647,22 @@ SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
          ELSE JSON_OBJECT('columns',JSON_ARRAY('Current State','Next State','Required Inputs'),'rows',JSON_ARRAY())
        END,
-       NULL,NULL,'X means don''t care.',6
+       NULL,'X means don''t care.',6
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
--- One SVG-path diagram content record per component with an available symbol path.
-INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
-SELECT c.component_id, ct.content_type_id, 'circuit_diagram', 'Circuit / Symbol Diagram',
-       c.circuit_symbol_path, 'LOGIC_CIRCUIT', CONCAT('SVG diagram for ',c.name), NULL, 10
-FROM components c JOIN content_types ct ON ct.code='DIAGRAM'
+-- All visual assets use one generic diagram model. Titles describe the
+-- diagram to people; the database does not store a diagram subtype.
+INSERT INTO component_diagrams
+(component_id, title, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Circuit / Symbol Diagram',
+       c.circuit_symbol_path, CONCAT('Diagram for ',c.name), NULL, 10
+FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
--- State-machine SVG paths for relevant sequential components.
-INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
-SELECT c.component_id, ct.content_type_id, 'state_diagram', 'State Machine Diagram',
+INSERT INTO component_diagrams
+(component_id, title, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'State Diagram',
        CASE c.slug
          WHEN 'decade-counter' THEN '/assets/svg/counters/decade-counter-state.svg'
          WHEN 'mod8-up-counter' THEN '/assets/svg/counters/mod8-up-counter-state.svg'
@@ -647,18 +671,16 @@ SELECT c.component_id, ct.content_type_id, 'state_diagram', 'State Machine Diagr
          WHEN 'd-flip-flop' THEN '/assets/svg/flipflops/d-flip-flop-state.svg'
          WHEN 't-flip-flop' THEN '/assets/svg/flipflops/t-flip-flop-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END,
-       'STATE_MACHINE', CONCAT('State transitions for ',c.name), NULL, 11
-FROM components c JOIN content_types ct ON ct.code='DIAGRAM'
+       END, CONCAT('State transitions for ',c.name), NULL, 11
+FROM components c
 WHERE c.category_id IN (6,7);
 
--- Counter timing diagram paths (assets must be created by frontend work).
-INSERT INTO component_content
-(component_id, content_type_id, section_key, title, content, diagram_kind, alt_text, caption, display_order)
-SELECT c.component_id, ct.content_type_id, 'timing_diagram', 'Timing Diagram',
+INSERT INTO component_diagrams
+(component_id, title, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Timing Diagram',
        CONCAT('/assets/svg/counters/',c.slug,'-timing.svg'),
-       'TIMING', CONCAT('Timing diagram for ',c.name), NULL, 12
-FROM components c JOIN content_types ct ON ct.code='TIMING_DIAGRAM'
+       CONCAT('Timing diagram for ',c.name), NULL, 12
+FROM components c
 WHERE c.category_id=6;
 
 -- Representative Boolean equations for gates and multiplexers.
@@ -1018,6 +1040,7 @@ SELECT 'categories' AS table_name, COUNT(*) AS row_count FROM categories
 UNION ALL SELECT 'components', COUNT(*) FROM components
 UNION ALL SELECT 'content_types', COUNT(*) FROM content_types
 UNION ALL SELECT 'component_content', COUNT(*) FROM component_content
+UNION ALL SELECT 'component_diagrams', COUNT(*) FROM component_diagrams
 UNION ALL SELECT 'specifications', COUNT(*) FROM specifications
 UNION ALL SELECT 'tags', COUNT(*) FROM tags;
 
