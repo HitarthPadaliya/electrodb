@@ -23,9 +23,9 @@ These academic requirements add a database-lab/demo surface to the public catalo
 
 ## 2. Technology decision: MySQL with equivalent stored programs
 
-**Decision: ElectroDB will use MySQL.** The earlier frontend specification already describes a Node.js backend and MySQL database. Assignment 10 calls its procedural requirements “stored-program”, but the project will implement the closest equivalent using MySQL stored procedures, stored functions, cursors, and triggers. These are MySQL stored programs, not MySQL stored programs; document this distinction in the submission and confirm with the instructor if literal MySQL stored programs is mandatory.
+**Decision: ElectroDB uses MySQL.** The earlier frontend specification describes a Node.js backend and MySQL database. Assignment 10's stored procedures/functions/cursors can be implemented as MySQL stored programs. They are not Oracle PL/SQL. Confirm with the instructor if the rubric literally requires Oracle PL/SQL; disclose the dialect difference in the submission.
 
-Use one consistent MySQL version (preferably a current supported MySQL 8.0/8.4 release) and test scripts against that version. Use the MySQL Node.js driver, such as `mysql2`, with a connection pool. Do not mix MySQL-only syntax (`VARCHAR2`, `NEW`, `DBMS_OUTPUT`, `DUAL` assumptions, stored-program blocks) into MySQL scripts. MySQL uses `AUTO_INCREMENT`, `DELIMITER` in command-line scripts, `NEW.column`/`OLD.column` in triggers, and `SIGNAL SQLSTATE` for deliberate errors.
+Use one consistent MySQL version (preferably a current supported MySQL 8.0/8.4 release) and test scripts against that version. Use the MySQL Node.js driver, such as `mysql2`, with a connection pool. Do not mix Oracle-only syntax (`VARCHAR2`, `:NEW`, `DBMS_OUTPUT`, Oracle trigger blocks) into MySQL scripts. MySQL uses `AUTO_INCREMENT`, `DELIMITER` in command-line scripts, `NEW.column`/`OLD.column` in triggers, and `SIGNAL SQLSTATE` for deliberate errors.
 
 **Transaction note:** MySQL triggers cannot issue transaction-control statements such as `COMMIT` or `ROLLBACK`; transaction boundaries belong to the application/service or calling procedure where supported. Stored procedures can use MySQL control flow and handlers, but functions and triggers have additional restrictions. Check each object against the chosen MySQL version.
 
@@ -74,59 +74,30 @@ Browser
 
 ## 4. Repository layout
 
-Suggested structure:
+Implemented structure:
 
 ```text
 electrodb/
 ├── README.md
-├── .env.example
-├── .gitignore
-├── package.json
-├── docs/
-│   ├── design-guideline.md
-│   ├── change-log.md
-│   └── setup-and-prompting-guide.md
+├── .env.example / .gitignore / package.json / package-lock.json
+├── Design Guideline.md / Design Decisions and Changes.md
+├── Setup Prompting and Run Guide.md
+├── electrodb.sql                 # consolidated MySQL schema + seed (destructive; documented)
 ├── database/
 │   ├── 00_create_users_and_roles.sql
-│   ├── 01_schema.sql
-│   ├── 02_constraints_indexes.sql
 │   ├── 03_views.sql
-│   ├── 04_plsql_procedures.sql
-│   ├── 05_plsql_functions.sql
-│   ├── 06_triggers.sql
-│   ├── 07_seed_data.sql
 │   ├── 08_assignment10_demo.sql
 │   ├── 09_assignment11_queries.sql
-│   └── 10_query_timing_results.md
+│   ├── 10_query_timing_results.md
+│   └── 11_assignment11_indexes.sql
 ├── server/
-│   ├── src/
-│   │   ├── app.js
-│   │   ├── server.js
-│   │   ├── config/
-│   │   ├── db/
-│   │   │   ├── pool.js
-│   │   │   └── repository.js
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   ├── validators/
-│   │   ├── serializers/
-│   │   │   └── xml.js
-│   │   └── middleware/
-│   └── tests/
-├── public/
-│   ├── index.html
-│   ├── assets/
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── svg/
-│   └── images/
-└── scripts/
-    ├── check-db-connection.js
-    └── verify-install.js
+│   ├── src/{app.js,server.js,config/,db/,routes/,services/,serializers/}
+│   └── test/
+├── public/{index.html,assets/{css,js,svg}}
+└── scripts/{check-assets.js,verify-install.js}
 ```
 
-Keep SQL scripts idempotent where practical, or make the README state the order and whether a script is destructive. Do not put `DROP TABLE` commands in the normal setup script. Put reset/drop commands in a clearly named development-only script.
+The consolidated root SQL file is deliberately destructive because it drops and recreates the `electrodb` database; its header and README warn about this, and it must only be imported into a verified disposable development schema. The other database scripts are non-destructive demonstrations. Never run the consolidated import against a production or shared course database.
 
 ## 5. Database model
 
@@ -171,7 +142,8 @@ Constraints: primary key; unique slug; parent foreign key; `is_active IN ('Y','N
 |---|---|---|
 | `component_id` | BIGINT AUTO_INCREMENT, PK | Stable identifier |
 | `category_id` | BIGINT, required FK | Exactly one category |
-| `name` | VARCHAR(180), required | Component/concept name |
+| `name` | VARCHAR(180), required | Component/concept display name |
+| `name_uppercase` | VARCHAR(180), trigger-maintained | Uppercase normalization key for the Assignment 10 trigger demo |
 | `slug` | VARCHAR(200), unique | Optional readable route segment |
 | `short_description` | VARCHAR(1000) | Search/result summary |
 | `description` | LONGTEXT | Detailed description |
@@ -329,11 +301,11 @@ Demonstrate:
 - One procedure opening an explicit cursor and iterating through all qualifying rows without a limit.
 - A second procedure that processes a bounded batch using a limit/bulk-fetch pattern appropriate to the chosen MySQL version.
 
-In MySQL, demonstrate an explicit cursor with `DECLARE cursor_name CURSOR FOR SELECT ...`, `OPEN`, `FETCH`, and `CLOSE`, plus a `NOT FOUND` handler. For the bounded example, use a counter/condition to stop after N fetched rows, or use a limited cursor query (`LIMIT n`) if that clearly satisfies the instructor's meaning of “with limit”. MySQL does not provide MySQL's `BULK COLLECT ... LIMIT` syntax.
+In MySQL, demonstrate an explicit cursor with `DECLARE cursor_name CURSOR FOR SELECT ...`, `OPEN`, `FETCH`, and `CLOSE`, plus a `NOT FOUND` handler. For the bounded example, use a counter/condition to stop after N fetched rows, or use a limited cursor query (`LIMIT n`) if that clearly satisfies the instructor's meaning of “with limit”. MySQL does not provide Oracle's `BULK COLLECT ... LIMIT` syntax.
 
 ### 7.3 Paginated search functions/procedures
 
-Provide search with and without filters. A page request must validate page number and page size and use deterministic ordering. For MySQL versions supporting it, `OFFSET ... FETCH NEXT ... ROWS ONLY` is a straightforward approach. For older versions, use an appropriate `ROW_DECIMAL(18,6)()` wrapper. Return total count separately if the UI needs page counts.
+Provide search with and without filters. A page request must validate page number and page size and use deterministic ordering. Use MySQL's parameterized `LIMIT page_size OFFSET offset` syntax with deterministic ordering and validated integer bounds; return the total row count separately when the UI needs page counts. Return total count separately if the UI needs page counts.
 
 Filtering must be parameterized. Dynamic identifiers must be allowlisted. Do not concatenate untrusted text into SQL.
 
@@ -347,7 +319,7 @@ A scalar stored-program function naturally returns one scalar; a grouped result 
 ### 7.5 Triggers
 
 1. **BEFORE row trigger:** validate at least two integrity rules. Keep expensive queries out of row triggers where possible.
-2. **Uppercase statement trigger:** Assignment 10 says “statement trigger”. MySQL does not support MySQL-style statement-level triggers: MySQL triggers execute once per affected row. Implement a `BEFORE INSERT` and/or `BEFORE UPDATE` row trigger to normalize selected text with `SET NEW.column_name = UPPER(NEW.column_name)`, and document this as the closest MySQL equivalent. Do not falsely label it a statement-level trigger; confirm with the instructor whether the row-level equivalent is accepted.
+2. **Uppercase trigger requirement:** Assignment 10 says “statement trigger”. MySQL does not support statement-level triggers; MySQL triggers execute once per affected row. Implement `BEFORE INSERT` and `BEFORE UPDATE` row triggers to maintain `name_uppercase = UPPER(name)` while preserving the display name, and document this as the closest MySQL equivalent. Do not falsely label it a statement-level trigger; confirm with the instructor whether the row-level equivalent is accepted.
 3. **AFTER DML audit trigger:** MySQL allows one trigger for each table/event/timing combination (subject to version features). Implement `AFTER INSERT`, `AFTER UPDATE`, and `AFTER DELETE` triggers on the chosen table, inserting the operation, row key, timestamp, database user, and safe old/new values into `application_audit_log`. Use `NEW` for insert/update and `OLD` for delete/update as appropriate. Do not audit modifications to the audit table itself.
 4. **Restricted-hours trigger:** block modifications to one selected project table on Monday between 14:00 and 16:00 using `DAYOFWEEK(CURRENT_TIMESTAMP)` (Monday is 2 in MySQL) and `TIME(CURRENT_TIMESTAMP)`, with `SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '...'`. Decide which database/server time zone is authoritative and test boundary times. This is an intentionally artificial assignment rule, not a production security mechanism.
 
@@ -426,7 +398,7 @@ DELIMITER ;
 
 For a true bounded result set, it is usually simpler and more efficient to put `LIMIT p_limit` in the cursor's SELECT, but MySQL cursor declarations have restrictions around dynamic values; use a fixed/approved query or a loop over a prepared result only if needed. If the assignment specifically expects a cursor loop that stops after N rows, the counter approach demonstrates that behavior. A result-returning procedure can use a normal `SELECT` rather than expecting `DBMS_OUTPUT`.
 
-### Row trigger to uppercase a field
+### Row trigger to maintain an uppercase normalization key
 
 ```sql
 DELIMITER //
@@ -435,14 +407,16 @@ CREATE TRIGGER trg_components_uppercase_bi
 BEFORE INSERT ON components
 FOR EACH ROW
 BEGIN
-    SET NEW.name = UPPER(TRIM(NEW.name));
+    SET NEW.name = TRIM(NEW.name);
+    SET NEW.name_uppercase = UPPER(NEW.name);
 END//
 
 CREATE TRIGGER trg_components_uppercase_bu
 BEFORE UPDATE ON components
 FOR EACH ROW
 BEGIN
-    SET NEW.name = UPPER(TRIM(NEW.name));
+    SET NEW.name = TRIM(NEW.name);
+    SET NEW.name_uppercase = UPPER(NEW.name);
 END//
 
 DELIMITER ;
@@ -514,7 +488,7 @@ Create at least one view joining two tables, for example:
 - `v_component_catalogue`: component + category summary.
 - `v_component_content_summary`: component + category + content section counts.
 
-Choose a view that has a meaningful condition (for example, published components in a category or a particular category branch). Test whether the view is updatable; joins and aggregates often make views non-updatable. If inserting through a view is required, use an `INSTEAD OF` trigger where appropriate or call the stored procedure explicitly. The assignment asks to execute a saved procedure and trigger around/for a view; explain precisely what is being tested.
+Choose a meaningful view, such as the component/category catalogue view. Test and document whether it is updatable; joins and aggregates often make views non-updatable. MySQL does not support triggers on views (including `INSTEAD OF` triggers). Demonstrate a saved procedure that writes to the underlying base table, then show that the view reflects the change and that the base-table audit trigger fires. If the rubric requires a trigger directly on a view, disclose this MySQL limitation and confirm the accepted equivalent with the instructor.
 
 Assignment 11 query catalogue:
 1. Display all rows from one main table (for example `components`).
@@ -563,7 +537,8 @@ Choose endpoint names once and keep them stable. Suggested REST endpoints:
 - `GET /api/categories/:categoryId/content-template` — optional template endpoint.
 
 ### Lab/assignment endpoints
-- `GET /api/lab/components` — full-table output with bounded pagination by default; a dedicated assignment route can demonstrate all rows on a small seed dataset.
+- `GET /api/lab/components/full-table` — all component columns (bounded for the small assignment dataset).
+- `GET /api/lab/components` — paginated CRUD list.
 - `POST /api/lab/components` — insert through stored procedure.
 - `PATCH /api/lab/components/:id` — update through stored procedure.
 - `DELETE /api/lab/components/:id` — delete through stored procedure.
@@ -573,6 +548,8 @@ Choose endpoint names once and keep them stable. Suggested REST endpoints:
 - `GET /api/lab/subquery?kind=...` — server-selected query templates.
 - `GET /api/lab/correlated-query?kind=...`
 - `GET /api/lab/dashboard` — counts/statistics for every relevant table.
+- `GET /api/lab/views` and `POST /api/lab/view-demo` — joined-view display and procedure/base-table-trigger demonstration (MySQL does not support view triggers).
+- `GET/POST/PATCH/DELETE /api/lab/app-users` — assignment-only login-data CRUD; plaintext passwords are scrypt-hashed before storage and hashes are never returned.
 - `GET /api/lab/components.xml` — XML form for query 1.
 - `GET /api/lab/aggregate.xml?...` — XML form for query 3.
 - `GET /api/lab/filter.xml?...` — XML form for query 4.
@@ -599,13 +576,13 @@ These lab endpoints should be disabled or protected in production if they expose
         "title": "Characteristic Equation",
         "type": "EQUATION",
         "content": "Q_{next}=J\\overline{Q}+\\overline{K}Q"
-      },
+      }
+    ],
+    "diagrams": [
       {
-        "sectionKey": "state_diagram",
         "title": "State Diagram",
-        "type": "DIAGRAM",
-        "diagramKind": "STATE_MACHINE",
-        "content": "/assets/svg/jk-flip-flop-state.svg"
+        "imagePath": "/assets/svg/flipflops/jk-flip-flop-state.svg",
+        "altText": "Two-state transition diagram for the JK flip-flop"
       }
     ],
     "specifications": []
@@ -688,13 +665,12 @@ Use `Q` for current output and `Q(next)` for output after the active clock event
 
 ### 11.4 Shared SVG diagram system
 
-All diagram types should be handled as SVG assets. Keep one reusable `SvgDiagram` UI component that accepts:
+All diagram types should be handled as SVG assets. Keep one reusable SVG renderer that accepts:
 - `src` or approved inline SVG.
-- `kind` (`STATE_MACHINE`, `LOGIC_CIRCUIT`, `BLOCK_DIAGRAM`, `PINOUT`, `TIMING`, `GRAPH`, etc.).
-- `title`, `altText`, `caption`.
+- `title`, `altText`, and `caption` as human-facing labels.
 - Optional aspect ratio/viewBox metadata.
 
-Use separate SVG files for separate figures, but do not create a separate database table or renderer implementation for each diagram family. Sanitize/validate inline SVG or prefer controlled static files. SVG can contain active content; do not inject untrusted SVG from a database directly into the DOM.
+Use separate SVG files for separate figures, but do not create a diagram-kind database field, separate table, or renderer implementation for each diagram family. Sanitize/validate inline SVG or prefer controlled static files. SVG can contain active content; do not inject untrusted SVG from a database directly into the DOM.
 
 ## 12. State-machine diagram requirements
 
@@ -731,8 +707,8 @@ These paths are examples. Verify each file exists before publishing the record. 
 ### 13.2 LaTeX
 
 Store equation strings as LaTeX source, not as screenshots. Keep equations in their own content records, separate from characteristic/truth/excitation tables. Examples:
-- JK flip-flop characteristic equation: `Q_{next}=J\\overline{Q}+\\overline{K}Q`
-- Counter state relationship: `N_{next}=(N+1)\\bmod M`
+- JK flip-flop characteristic equation: `Q_{next}=J\overline{Q}+\overline{K}Q`
+- Counter state relationship: `N_{next}=(N+1)\bmod M`
 
 These are examples; verify equations against the intended component/logic convention before seeding. Do not put Markdown delimiters or HTML in the stored equation field unless the API contract explicitly requires them.
 
@@ -772,7 +748,7 @@ These are examples; verify equations against the intended component/logic conven
 - [ ] Paginated search exists with and without filtering.
 - [ ] Sum example exists without grouping and with grouping.
 - [ ] BEFORE trigger tests at least two integrity rules.
-- [ ] Uppercase statement-trigger requirement is implemented validly for MySQL and tested.
+- [ ] Uppercase normalization is tested with MySQL row-level triggers; instructor accepts this documented equivalent to the rubric's statement-trigger wording.
 - [ ] AFTER DML audit trigger logs insert/update/delete.
 - [ ] Restricted-hours trigger blocks modifications Monday 14:00–16:00 and gives a clear message.
 
@@ -781,7 +757,7 @@ These are examples; verify equations against the intended component/logic conven
 - [ ] At least two indexes are justified and created.
 - [ ] Before/after execution timings are measured and analyzed.
 - [ ] A view joins two tables and its behavior is demonstrated.
-- [ ] Procedure/trigger interaction with the view is explained and tested.
+- [ ] MySQL procedure writes to a view's base table, the view reflects the change, and the base-table audit trigger is demonstrated; direct view triggers are unsupported.
 - [ ] Frontend has CRUD navigation and forms.
 - [ ] Aggregate/filter controls execute approved query templates.
 - [ ] Join selectors include two table selectors and a join type.

@@ -1,6 +1,10 @@
 # ElectroDB — Design Decisions, Improvements, and Change Log
 
-This document records proposed changes and the rationale behind them. It distinguishes established project requirements from implementation recommendations. Update this file whenever a decision changes.
+This document records project decisions and rationale. It distinguishes established requirements from implementation recommendations. Update it whenever a decision changes.
+
+## Implementation baseline — 2026-10-21
+
+The repository now contains the data-driven Express/MySQL application, responsive catalogue and separate lab console, a consolidated MySQL schema/seed file, and supporting assignment scripts. The SQL seed is kept at 45 components to honor the 40–50 component requirement. Reviewed SVG assets are used for the published state/timing diagrams; missing symbol/image files are left unset rather than referenced as broken assets. The Node API uses parameterized queries, allowlisted lab templates, XML serialization, and consistent errors. MySQL was not available in the coding environment, so database import/routine compilation and real index timings remain unverified; timings are deliberately blank in `database/10_query_timing_results.md`. MySQL's row-trigger and view-trigger limitations remain instructor-confirmation items.
 
 ## 1. Baseline carried forward
 
@@ -25,7 +29,7 @@ The recent project requests additionally specify:
 
 ## 2. Confirmed decision: keep MySQL and use equivalent stored programs
 
-**Decision: MySQL remains the database engine.** The backend will use Node.js with a MySQL driver such as `mysql2`. Assignment 10 calls for PL/SQL, which is Oracle-specific; implement the closest equivalents using MySQL stored procedures, stored functions, cursors, and triggers, and clearly disclose this dialect difference. If the instructor requires literal MySQL stored programs, this is a grading risk that must be confirmed; do not mislabel MySQL routines as PL/SQL.
+**Decision: MySQL remains the database engine.** The backend uses Node.js with `mysql2`. Assignment 10 calls for PL/SQL, which is Oracle-specific; the implementation uses MySQL stored procedures, stored functions, cursors, and triggers as equivalents and must disclose the dialect difference. If the instructor requires literal Oracle PL/SQL, confirm the accepted implementation before submission; do not mislabel MySQL routines as PL/SQL.
 
 Implementation effect:
 1. Use MySQL-compatible DDL and stored-program syntax throughout.
@@ -115,8 +119,8 @@ In Oracle, a statement-level trigger cannot use `:NEW`/`:OLD` row values. The up
 A join view may not support direct inserts or updates. For the assignment demo:
 - Create a meaningful two-table view.
 - Execute a saved procedure that reads or inserts the underlying records.
-- If a write through the view itself is explicitly required, use an appropriate `INSTEAD OF` trigger where supported and document what is being tested.
-- Do not claim that a normal joined view is automatically insertable.
+- MySQL does not support triggers on views. Demonstrate the stored procedure against the underlying base table, show that the view reflects the result, and verify the base-table audit trigger.
+- Do not claim that a normal joined view is automatically insertable or that MySQL supports `INSTEAD OF` view triggers.
 
 ## 10. Index benchmarking methodology
 
@@ -161,10 +165,10 @@ Use category ID and backend-provided content to choose what to render. If a cate
 
 ## 13. Proposed implementation order
 
-1. Confirm Oracle versus MySQL with the course/instructor.
-2. Freeze logical schema and API response contracts.
-3. Write Oracle DDL, constraints, indexes, and seed scripts.
-4. Implement required PL/SQL procedures/functions/triggers and test scripts.
+1. Confirm the MySQL-vs-Oracle rubric decision with the course/instructor.
+2. Freeze the logical schema and API response contracts.
+3. Implement MySQL DDL, constraints, indexes, and reviewed seed scripts.
+4. Implement MySQL stored procedures/functions/triggers and test scripts.
 5. Implement the Node.js database pool and health check.
 6. Implement catalogue read APIs.
 7. Build the reusable frontend shell and catalogue pages.
@@ -177,10 +181,10 @@ Use category ID and backend-provided content to choose what to render. If a cate
 
 ## 14. Decisions still requiring confirmation
 
-- [ ] MySQL is approved as the implementation engine for the PL/SQL assignment.
-- [ ] The exact Oracle version and local setup method are known.
-- [ ] Whether the lab console is development-only or must be demonstrable in the final deployment.
-- [ ] Whether tags are required in the final catalogue schema or only in seed-data classification.
-- [ ] Whether diagrams are stored only as static SVG files or whether vetted inline SVG is permitted.
-- [ ] Exact route naming and JSON response envelopes are agreed before parallel frontend/backend implementation.
+- [ ] Instructor acceptance of MySQL stored programs in place of Oracle PL/SQL, MySQL row triggers in place of statement triggers, and base-table triggers in place of view triggers.
+- [ ] The course-approved MySQL version and account/role provisioning policy are confirmed.
+- [ ] Confirm whether the lab console is only for development/demo or must be demonstrated in the final deployment; disable it in production unless protected.
+- [x] Tags are normalized in `tags`/`component_tags` and included in backend search.
+- [x] Published diagrams use reviewed static SVG files; no inline SVG from database content is permitted.
+- [x] API routes and JSON/XML envelopes are implemented consistently; update this decision if the contract changes.
 - [ ] Assignment timing measurements are captured from the real database rather than estimated.

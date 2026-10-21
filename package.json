@@ -1,0 +1,25 @@
+{
+  "name": "electrodb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Electronics reference catalogue and DBMS practical lab console",
+  "main": "server/src/server.js",
+  "scripts": {
+    "start": "node server/src/server.js",
+    "dev": "node --watch server/src/server.js",
+    "test": "node --test server/test/*.test.js",
+    "check": "node --check server/src/server.js && node --check server/src/app.js && node --check server/src/routes/api.js && node --check public/assets/js/app.js",
+    "check:assets": "node scripts/check-assets.js",
+    "verify:db": "node scripts/verify-install.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "katex": "^0.19.0",
+    "mysql2": "^3.12.0"
+  }
+}

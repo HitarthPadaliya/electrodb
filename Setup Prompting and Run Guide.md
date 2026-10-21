@@ -2,7 +2,7 @@
 
 This guide explains how to work on ElectroDB with an AI coding assistant, install the project prerequisites, configure the database and backend, run the frontend, and verify the assignment features.
 
-> **Database decision:** ElectroDB will use MySQL. Assignment 10 explicitly says MySQL stored programs, which is MySQL-specific. This guide uses MySQL stored procedures, functions, cursors, and triggers as equivalents. Confirm with the instructor that the MySQL implementation is acceptable if the rubric literally requires MySQL MySQL stored programs. Do not mix MySQL syntax with MySQL scripts.
+> **Database decision:** ElectroDB uses MySQL 8.0-compatible stored procedures, functions, cursors, and row-level triggers. These are MySQL stored programs, not Oracle PL/SQL. MySQL does not support statement-level triggers; the name-normalization row triggers are the closest functional equivalent. Confirm with the instructor if the rubric literally requires Oracle PL/SQL or a statement-level trigger. Do not mix Oracle syntax with the MySQL scripts.
 
 ---
 
@@ -42,69 +42,38 @@ git --version
 
 Install MySQL Server for your operating system or use the college-provided server. Confirm host, port, database name, username, and privileges with the administrator. Common local MySQL installations use port 3306, but verify your own configuration.
 
-## 3. Create/open the project
+## 3. Open the project
 
-If a repository already exists:
-
-```bash
-git clone <your-repository-url>
-cd electrodb
-```
-
-If starting from a folder:
+Clone the repository if needed, then run commands from the repository root. This project already includes its Express backend, static frontend, SQL, and package manifest. Do not run `npm init` or create a second package in `server/`.
 
 ```bash
-mkdir electrodb
-cd electrodb
-git init
+npm install
 ```
 
-Create the directories from the system design document. Commit source files and SQL scripts, but never commit `.env`, passwords, wallet files, private keys, or real user data.
+Commit source files and SQL scripts, but never commit `.env`, passwords, private keys, or real user data.
 
-## 4. Initialize the Node.js backend
+## 4. Project structure and scripts
 
-From the repository root, create the server package if one does not already exist:
+- `server/src/` — Express app, MySQL pool, API routes, catalogue services, and XML serializer.
+- `public/` — responsive HTML/CSS/JavaScript frontend and SVG assets.
+- `database/` — assignment demos, least-privilege roles, and the timing-report template.
+- `electrodb.sql` — consolidated schema, seed data, stored programs, views, and triggers.
 
-```bash
-mkdir -p server
-cd server
-npm init -y
-npm install express dotenv cors helmet
-npm install mysql2
-npm install --save-dev nodemon
-```
-
-On Windows PowerShell, `mkdir` can also create directories, but the `-p` flag may not behave like a Unix shell. Create the folder manually or use `New-Item -ItemType Directory -Force server`.
-
-Add scripts to `server/package.json`, adjusting filenames to match the project:
-
-```json
-{
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "node --test"
-  }
-}
-```
-
-Do not replace an existing `package.json` wholesale if it already contains dependencies or scripts. Merge the required entries.
+Available root scripts are `npm start`, `npm run dev`, `npm test`, `npm run check`, and `node scripts/check-assets.js`.
 
 ## 5. Configure environment variables
 
-Create `server/.env` locally:
+Copy `.env.example` to `.env` in the repository root and set your local MySQL values:
 
 ```dotenv
 PORT=3000
 NODE_ENV=development
-
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=electrodb
 DB_USER=electrodb_app
 DB_PASSWORD=replace_me_locally
-
-PUBLIC_BASE_URL=http://localhost:3000
+DB_CONNECTION_LIMIT=10
 ENABLE_LAB_CONSOLE=true
 ```
 
@@ -114,52 +83,32 @@ Create `.env.example` with fake placeholders and commit that file. Add `.env` to
 
 ## 6. Set up MySQL database objects
 
-Create the `electrodb` database and a least-privilege application user. Use an administrative account only for initial database/user setup, not for the runtime Node.js connection.
+**Important:** `electrodb.sql` is the consolidated fresh-install script and drops/recreates the database named `electrodb`. Back up data and verify the active MySQL connection/schema before importing. Run it only against a disposable local/development database—not a shared course or production database.
 
-Run the scripts in the documented order, using the schema owner/admin connection only for tasks that require it:
+After the schema exists, an administrator may run `database/00_create_users_and_roles.sql` to create least-privilege MySQL roles. That file intentionally contains no account passwords. Create local accounts and assign roles manually using the institution's credential policy. The Node.js runtime should use the narrowest necessary account, not the DBA role.
 
-1. `00_create_users_and_roles.sql` — database roles/accounts, only if your environment permits and the assignment requires them.
-2. `01_schema.sql` — catalogue and assignment tables.
-3. `02_constraints_indexes.sql` — keys, checks, and initial indexes.
-4. `03_views.sql` — views.
-5. `04_plsql_procedures.sql` — CRUD and cursor procedures.
-6. `05_plsql_functions.sql` — paginated search and aggregate functions.
-7. `06_triggers.sql` — validation, uppercase, audit, restricted-hours triggers.
-8. `07_seed_data.sql` — categories, components, content, specifications.
-9. `08_assignment10_demo.sql` — demonstrations for Assignment 10.
-10. `09_assignment11_queries.sql` — eight query demonstrations and view/index exercises.
+Then run the non-destructive demonstrations as needed:
 
-Check every compilation error. Do not proceed while a procedure, function, or trigger is invalid. In MySQL, inspect compilation errors with the SQL tool's error view or the relevant `USER_ERRORS` query.
+1. `database/03_views.sql` — inspect the joined views.
+2. `database/08_assignment10_demo.sql` — exercise stored procedures and cursors.
+3. `database/09_assignment11_queries.sql` — eight SQL demonstrations; data-changing examples are commented out by default.
+4. `database/10_query_timing_results.md` — record real measurements after benchmarking.
 
-### Important database safety notes
+`electrodb.sql` includes schema, constraints, indexes, views, stored programs, triggers, and 45 component seed records in a single import. Check every import error before continuing. This MySQL script does not create Oracle objects; do not use Oracle `USER_ERRORS` diagnostics.
 
-- A setup script should not silently delete existing tables/data.
-- Keep any destructive reset script separate and clearly named.
-- Execute the reset script only against a disposable development schema after checking the current connection/schema.
-- Never use a production or shared course database for destructive experimentation.
-- Store the real execution timings in `database/10_query_timing_results.md`; do not estimate them.
+## 7. Verify the MySQL connection pool
 
-## 7. Implement and verify the MySQL connection pool
-
-Create a small database module that:
-- Reads credentials from environment variables.
-- Initializes a connection pool once at server startup.
-- Exposes functions to execute parameterized queries and call stored procedures.
-- Closes connections in `finally` blocks.
-- Closes the pool during graceful shutdown.
-- Does not print passwords or connection strings to logs.
-
-For the first test, create a minimal health route that executes a harmless query such as `SELECT 1`. Start the server and visit:
+The implemented pool in `server/src/db/pool.js` reads environment variables, initializes once when configured, uses parameterized queries, and is closed during graceful shutdown. It does not log credentials. Verify the database connection by visiting:
 
 ```text
 http://localhost:3000/api/health
 ```
 
-The route should report success only if the database query succeeds. If it fails, check the MySQL host/database, host/port, credentials, network access, and driver/Instant Client requirements.
+The route reports success only after `SELECT 1` succeeds. If it fails, verify MySQL host/database, port, user privileges, network access, and the `.env` values. `mysql2` does not require Oracle Instant Client.
 
 ## 8. Start the backend
 
-From `server/`:
+From the repository root:
 
 ```bash
 npm run dev
@@ -173,7 +122,7 @@ npm start
 
 Expected result: the console indicates that the API server is listening. It should not print credentials.
 
-If the port is occupied, change `PORT` in `.env`. Do not hardcode a port in multiple files; read it from configuration.
+If the port is occupied, change `PORT` in the root `.env`; do not hardcode the port in multiple files.
 
 ## 9. Serve the frontend
 
@@ -187,25 +136,18 @@ This keeps frontend and API on one origin and avoids unnecessary CORS complexity
 
 Do not open the HTML file with `file://` and expect API routing to behave exactly as it does under a web server.
 
-## 10. Implement in a safe sequence
+## 10. Verify the implemented project
 
-Build the project in small, testable increments:
+The repository already implements the catalogue API and responsive frontend, content renderers, safe lab CRUD/query templates, XML outputs for Assignment 11 queries 1/3/4, dashboard, views/procedure/trigger demo, and 45 seed components. After configuring MySQL:
 
-1. `/api/health` and MySQL connection.
-2. `GET /api/categories`.
-3. `GET /api/categories/:id` with children/components.
-4. `GET /api/components/:id` with ordered content and specifications.
-5. `GET /api/search`.
-6. Home/category/search/detail pages using API data.
-7. Renderers for `TEXT`, `TABLE`, `EQUATION`, `DIAGRAM`, `GRAPH`, and `DOCUMENT`.
-8. CRUD procedures and corresponding lab routes.
-9. Filter/aggregate/join/subquery/correlated-subquery routes using allowlisted templates.
-10. XML serializers/routes for assignment query 1, 3, and 4.
-11. Dashboard statistics.
-12. Views, triggers, indexes, and measured timing report.
-13. Seed 40–50 components and validate all resources.
+1. Import `electrodb.sql` into a disposable development database.
+2. Run `npm test`, `npm run check`, and `npm run check:assets`.
+3. Start from the repository root with `npm run dev`.
+4. Verify `/api/health`, category browsing, search, component details, and `/lab`.
+5. Exercise the lab CRUD, query, login-data, view/audit, dashboard, and XML tools.
+6. Capture real before/after index timings in `database/10_query_timing_results.md`.
 
-At every step, test the API independently before connecting it to the UI.
+A server start without a working database is only a frontend/API boot check; it does not verify SQL imports, stored programs, triggers, or timings.
 
 ## 11. Figma handoff workflow
 
@@ -235,8 +177,7 @@ Follow the attached design guideline and change log as the project
 contract. Before changing files, inspect the existing code and SQL.
 Do not invent existing schema details; verify them in the files.
 
-The assignment requires MySQL MySQL stored programs. Do not mix MySQL syntax with
-MySQL syntax. The frontend must fetch catalogue data from the Node.js
+The project uses MySQL stored programs; it is not Oracle PL/SQL. MySQL only supports row-level triggers, so document the uppercase normalization trigger as the closest equivalent to the rubric's statement-trigger wording. Do not mix Oracle syntax into MySQL scripts. The frontend must fetch catalogue data from the Node.js
 API, not hardcode the catalogue. Store equations as LaTeX source.
 Keep characteristic tables and equations separate. All diagrams, including state-machine diagrams, are stored in `component_diagrams` and use the same SVG renderer. Diagram type is not stored; use the title/caption to identify the diagram for readers.
 Do not add public login, shopping, reviews, or other out-of-scope
@@ -268,8 +209,8 @@ it and report any MySQL-version assumptions.
 
 **MySQL stored programs procedures**
 ```text
-Inspect the actual schema first. Implement separate MySQL MySQL stored programs
-insert, update, and delete procedures for components. Use the real
+Inspect the actual schema first. Implement separate MySQL stored
+procedures for component insert, update, and delete. Use the real
 column names, validate input, define transaction/error behavior, and
 provide a SQL test script for success and failure cases. Do not claim
 tests passed unless they were executed.
@@ -316,7 +257,7 @@ results without fabricating numbers.
 
 ### Prompting practices to avoid
 
-Avoid vague prompts such as “make the project work” or “write all the code” without giving the current repository state. Do not ask the assistant to assume a schema it has not inspected. Do not accept code that uses MySQL `AUTO_INCREMENT` in MySQL scripts, or MySQL `:NEW` trigger syntax in MySQL. Do not ask it to report a successful run if no run occurred.
+Avoid vague prompts such as “make the project work” or “write all the code” without giving the current repository state. Do not ask the assistant to assume a schema it has not inspected. In MySQL scripts, use MySQL `AUTO_INCREMENT` and `NEW`/`OLD` trigger references; do not paste Oracle `VARCHAR2`, `:NEW`, `DBMS_OUTPUT`, or Oracle trigger syntax into them. Do not ask it to report a successful run if no run occurred.
 
 ## 13. Assignment 10 verification checklist
 
@@ -330,7 +271,7 @@ Avoid vague prompts such as “make the project work” or “write all the code
 - [ ] Sum without grouping.
 - [ ] Sum with grouping.
 - [ ] BEFORE trigger checks at least two integrity conditions.
-- [ ] Statement-trigger uppercase requirement implemented validly for MySQL.
+- [ ] Uppercase normalization key is maintained by row-level triggers; instructor accepts the documented MySQL equivalent.
 - [ ] AFTER trigger logs INSERT/UPDATE/DELETE to `application_audit_log`.
 - [ ] Restricted-hours trigger blocks modifications on Monday from 2–4 pm with a clear message.
 
@@ -363,16 +304,15 @@ Avoid vague prompts such as “make the project work” or “write all the code
 ### API cannot connect to MySQL
 - Verify the service name, host, port, username, and password.
 - Check that the MySQL service is running and reachable.
-- Verify driver and Instant Client requirements.
-- Test the same credentials in SQL Developer first.
+- Verify that the `mysql2` driver is installed and test the credentials in MySQL Workbench or the MySQL command-line client.
+- `mysql2` does not require Oracle Instant Client.
 - Never “fix” a connection problem by switching to a DBA account.
 
-### `ORA-` compilation/runtime errors
-- Read the complete error and line number.
-- Inspect object validity and compiler errors.
-- Confirm that column names match the actual DDL.
-- Check trigger timing/level and whether `:NEW`/`:OLD` is legal in that trigger.
-- Run the smallest reproducible SQL test.
+### MySQL routine or trigger errors
+- Read the complete MySQL error code and line number.
+- Confirm that column names match the actual DDL and routines were imported after the schema.
+- Use `NEW.column`/`OLD.column` only in a row trigger; MySQL has no statement-level triggers.
+- Run the smallest reproducible SQL test in MySQL Workbench or the MySQL command-line client.
 
 ### Frontend page is blank
 - Check browser console and network tab.
