@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="100%" height="100%">
+  <title>PNP BJT</title>
+  <defs>
+    <style>
+      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
+      .body { stroke: #1e293b; stroke-width: 2.5; stroke-linecap: round; }
+      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; }
+      .circle { stroke: #cbd5e1; stroke-width: 2; fill: #f8fafc; }
+    </style>
+  </defs>
+  <circle cx="100" cy="90" r="55" class="circle" />
+  <!-- Base lead -->
+  <line x1="20" y1="90" x2="80" y2="90" class="wire" />
+  <line x1="80" y1="60" x2="80" y2="120" class="body" stroke-width="4" />
+  <text x="35" y="82" class="lbl">B</text>
+
+  <!-- Collector -->
+  <line x1="80" y1="75" x2="135" y2="45" class="body" />
+  <line x1="135" y1="45" x2="135" y2="20" class="wire" />
+  <text x="145" y="35" class="lbl">C</text>
+
+  <!-- Emitter with Arrow -->
+  <line x1="80" y1="105" x2="135" y2="135" class="body" />
+  <polygon points="98,96 85,89 93,104" fill="#1e293b" />
+  <line x1="135" y1="135" x2="135" y2="160" class="wire" />
+  <text x="145" y="155" class="lbl">E</text>
+
+  <text x="100" y="175" class="lbl" style="text-anchor: middle;">PNP BJT</text>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="100%" height="100%">
+  <title>4:1 MUX</title>
+  <defs>
+    <style>
+      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
+      .body { stroke: #1e293b; stroke-width: 2.5; fill: #eff6ff; }
+      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #1e293b; }
+      .title { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+    </style>
+  </defs>
+  <!-- Trapezoid Body -->
+  <polygon points="60,20 140,40 140,120 60,140" class="body" />
+  <text x="100" y="85" class="title">4:1 MUX</text>
+
+  <!-- Inputs -->
+  
+      <line x1="20" y1="45" x2="60" y2="45" class="wire" />
+      <text x="65" y="49" class="lbl">D0</text>
+    
+      <line x1="20" y1="68.33333333333333" x2="60" y2="68.33333333333333" class="wire" />
+      <text x="65" y="72.33333333333333" class="lbl">D1</text>
+    
+      <line x1="20" y1="91.66666666666666" x2="60" y2="91.66666666666666" class="wire" />
+      <text x="65" y="95.66666666666666" class="lbl">D2</text>
+    
+      <line x1="20" y1="115" x2="60" y2="115" class="wire" />
+      <text x="65" y="119" class="lbl">D3</text>
+    
+
+  <!-- Output -->
+  <line x1="140" y1="80" x2="180" y2="80" class="wire" />
+  <text x="145" y="84" class="lbl" style="text-anchor: end;">Y</text>
+
+  <!-- Select lines (bottom) -->
+  
+      <line x1="85" y1="130" x2="85" y2="155" class="wire" />
+      <text x="85" y="125" class="lbl" style="text-anchor: middle;">S0</text>
+    
+      <line x1="115" y1="130" x2="115" y2="155" class="wire" />
+      <text x="115" y="125" class="lbl" style="text-anchor: middle;">S1</text>
+    
+</svg>

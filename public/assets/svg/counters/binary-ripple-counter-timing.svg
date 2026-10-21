@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 220" width="100%" height="100%">
+  <title>Binary Ripple Counter Timing Timing Diagram</title>
+  <defs>
+    <style>
+      .clk-wave { stroke: #0284c7; stroke-width: 2.5; fill: none; }
+      .q0-wave { stroke: #16a34a; stroke-width: 2.5; fill: none; }
+      .q1-wave { stroke: #d97706; stroke-width: 2.5; fill: none; }
+      .q2-wave { stroke: #dc2626; stroke-width: 2.5; fill: none; }
+      .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 4; }
+      .lbl { font-family: monospace; font-size: 12px; font-weight: bold; fill: #334155; }
+      .state-lbl { font-family: system-ui, sans-serif; font-size: 11px; fill: #64748b; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Labels -->
+  <text x="15" y="45" class="lbl">CLK</text>
+  <text x="15" y="95" class="lbl">Q0</text>
+  <text x="15" y="145" class="lbl">Q1</text>
+  <text x="15" y="195" class="lbl">Q2</text>
+
+  <!-- Grid lines -->
+  <line x1="60" y1="20" x2="60" y2="210" class="grid" />
+  <line x1="110" y1="20" x2="110" y2="210" class="grid" />
+  <line x1="160" y1="20" x2="160" y2="210" class="grid" />
+  <line x1="210" y1="20" x2="210" y2="210" class="grid" />
+  <line x1="260" y1="20" x2="260" y2="210" class="grid" />
+  <line x1="310" y1="20" x2="310" y2="210" class="grid" />
+  <line x1="360" y1="20" x2="360" y2="210" class="grid" />
+  <line x1="410" y1="20" x2="410" y2="210" class="grid" />
+  <line x1="460" y1="20" x2="460" y2="210" class="grid" />
+
+  <!-- States at top -->
+  <text x="85" y="20" class="state-lbl">0</text>
+  <text x="135" y="20" class="state-lbl">1</text>
+  <text x="185" y="20" class="state-lbl">2</text>
+  <text x="235" y="20" class="state-lbl">3</text>
+  <text x="285" y="20" class="state-lbl">4</text>
+  <text x="335" y="20" class="state-lbl">5</text>
+  <text x="385" y="20" class="state-lbl">6</text>
+  <text x="435" y="20" class="state-lbl">7</text>
+
+  <!-- CLK Waveform -->
+  <path d="M 60,50 L 85,50 L 85,30 L 110,30 L 110,50 L 135,50 L 135,30 L 160,30 L 160,50 L 185,50 L 185,30 L 210,30 L 210,50 L 235,50 L 235,30 L 260,30 L 260,50 L 285,50 L 285,30 L 310,30 L 310,50 L 335,50 L 335,30 L 360,30 L 360,50 L 385,50 L 385,30 L 410,30 L 410,50 L 435,50 L 435,30 L 460,30" class="clk-wave" />
+
+  <!-- Q0 Waveform (toggles on every cycle) -->
+  <path d="M 60,100 L 110,100 L 110,80 L 160,80 L 160,100 L 210,100 L 210,80 L 260,80 L 260,100 L 310,100 L 310,80 L 360,80 L 360,100 L 410,100 L 410,80 L 460,80" class="q0-wave" />
+
+  <!-- Q1 Waveform (toggles every 2 cycles) -->
+  <path d="M 60,150 L 160,150 L 160,130 L 260,130 L 260,150 L 360,150 L 360,130 L 460,130" class="q1-wave" />
+
+  <!-- Q2 Waveform (toggles every 4 cycles) -->
+  <path d="M 60,200 L 260,200 L 260,180 L 460,180" class="q2-wave" />
+</svg>

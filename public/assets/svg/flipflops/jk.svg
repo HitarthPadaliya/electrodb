@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 180" width="100%" height="100%">
+  <title>JK Flip-Flop Symbol</title>
+  <defs>
+    <style>
+      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+      .body { stroke: #1e293b; stroke-width: 2.5; fill: #f8fafc; }
+      .text-title { font-family: system-ui, sans-serif; font-size: 14px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .text-pin { font-family: monospace; font-size: 12px; font-weight: bold; fill: #1e293b; }
+      .clk-tri { stroke: #1e293b; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+  <rect x="60" y="20" width="100" height="140" rx="4" class="body" />
+  <text x="110" y="45" class="text-title">JK Flip-Flop</text>
+  
+  <!-- Inputs -->
+  
+      <line x1="20" y1="60" x2="60" y2="60" class="wire" />
+      <text x="68" y="64" class="text-pin">J</text>
+    
+      <line x1="20" y1="95" x2="60" y2="95" class="wire" />
+      <text x="68" y="99" class="text-pin">K</text>
+    
+  
+  <!-- Clock Input -->
+  <line x1="20" y1="130" x2="60" y2="130" class="wire" />
+  <path d="M 60,123 L 70,130 L 60,137" class="clk-tri" />
+  <text x="10" y="134" class="text-pin">CLK</text>
+  
+  <!-- Outputs -->
+  
+      <line x1="160" y1="60" x2="200" y2="60" class="wire" />
+      <text x="142" y="64" class="text-pin">Q</text>
+    
+      <line x1="160" y1="110" x2="200" y2="110" class="wire" />
+      <text x="142" y="114" class="text-pin">Q'</text>
+    
+</svg>

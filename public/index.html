@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElectroDB — Electronic Components Reference Catalogue</title>
+  
+  <!-- Modern Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/assets/css/styles.css">
+
+  <!-- KaTeX for LaTeX Math Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="#/" class="logo-area">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <h1>ElectroDB</h1>
+          <span>Electronic Components Reference</span>
+        </div>
+      </a>
+
+      <!-- Quick Search -->
+      <div class="header-search">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="search" 
+          id="global-search-input" 
+          class="search-input" 
+          placeholder="Search components (e.g. Decade Counter, JK Flip-Flop)..." 
+          aria-label="Search components"
+        />
+      </div>
+
+      <!-- Navigation -->
+      <nav class="header-nav">
+        <a href="#/" class="nav-link active">Home</a>
+        <a href="#/categories/1" class="nav-link">Digital</a>
+        <a href="#/categories/2" class="nav-link">Semiconductors</a>
+        <a href="#/lab" class="nav-link lab-link">🧪 Lab Console</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main id="app-content" class="main-content">
+    <!-- Populated by JavaScript Router -->
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div>
+        <strong>ElectroDB</strong> — SVNIT CS203 Database Management Systems (DBMS) Course Project.
+        <br>
+        <span style="font-size: 0.75rem; color: #64748b;">
+          Database: MySQL / MariaDB 10.4+ | Node.js Express REST API | Semantic Data-Driven Frontend
+        </span>
+      </div>
+      <div>
+        <a href="#/lab" style="color: #60a5fa; text-decoration: none; font-weight: 500;">
+          Launch Academic Lab Console »
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Global Modal Box (for SVG zoom & XML exports) -->
+  <div id="global-modal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title" style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Details</h3>
+        <button class="modal-close-btn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body">
+        <!-- Content injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/app.js"></script>
+</body>
+</html>
