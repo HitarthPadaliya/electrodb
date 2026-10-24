@@ -13,7 +13,8 @@
 --   * Separate truth/characteristic/excitation tables and equations
 --   * Specifications and component specifications
 --   * Application user records for the access-control demonstration
---   * Audit log
+--   * Sessions, bookmarks, collections and recently viewed components
+--   * Audit log, including triggers on app_users
 --   * Views, indexes, stored procedures, functions, cursors, and triggers
 --   * Consolidates the standalone Assignment 10 stored-program examples;
 --     duplicate routine/trigger definitions are intentionally not repeated
@@ -245,6 +246,9 @@ CREATE TABLE component_specifications (
 CREATE TABLE app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
+  -- Login identifier. Nullable so rows created before accounts existed stay valid;
+  -- a UNIQUE key still permits several NULLs while keeping real addresses unique.
+  email VARCHAR(255) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role_code ENUM('NAIVE_USER','APP_DEVELOPER','DBA') NOT NULL DEFAULT 'NAIVE_USER',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -253,6 +257,7 @@ CREATE TABLE app_users (
   last_login_at TIMESTAMP NULL,
   PRIMARY KEY (user_id),
   UNIQUE KEY uq_app_users_username (username),
+  UNIQUE KEY uq_app_users_email (email),
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB;
 
@@ -1074,7 +1079,134 @@ END$$
 DELIMITER ;
 
 -- ------------------------------
--- 20. Verification queries
+-- 20. Accounts: sessions and personal collections
+--     Mirrors database/11_auth_and_personalization.sql. This file is a fresh
+--     install, so the objects are created outright rather than migrated.
+--
+--     The cookie carries a random token; only its SHA-256 digest is stored here,
+--     so a database dump cannot be replayed as a live session.
+-- ------------------------------
+CREATE TABLE user_sessions (
+  session_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen_at TIMESTAMP NULL,
+  expires_at DATETIME NOT NULL,
+  PRIMARY KEY (session_id),
+  UNIQUE KEY uq_user_sessions_token (token_hash),
+  KEY idx_user_sessions_user (user_id),
+  KEY idx_user_sessions_expiry (expires_at),
+  CONSTRAINT fk_user_sessions_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- One row per (user, component): saving twice cannot create a duplicate.
+CREATE TABLE bookmarks (
+  bookmark_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (bookmark_id),
+  UNIQUE KEY uq_bookmarks_user_component (user_id, component_id),
+  KEY idx_bookmarks_user_created (user_id, created_at),
+  CONSTRAINT fk_bookmarks_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_bookmarks_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE collections (
+  collection_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(80) NOT NULL,
+  description VARCHAR(280) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (collection_id),
+  UNIQUE KEY uq_collections_user_name (user_id, name),
+  KEY idx_collections_user (user_id),
+  CONSTRAINT fk_collections_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT chk_collections_name CHECK (CHAR_LENGTH(TRIM(name)) > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE collection_components (
+  collection_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (collection_id, component_id),
+  KEY idx_collection_components_component (component_id),
+  CONSTRAINT fk_collection_components_collection
+    FOREIGN KEY (collection_id) REFERENCES collections(collection_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_collection_components_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- DATETIME(6): two views inside the same second still have a definite order.
+CREATE TABLE recently_viewed (
+  user_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  last_viewed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (user_id, component_id),
+  KEY idx_recently_viewed_user_time (user_id, last_viewed_at),
+  CONSTRAINT fk_recently_viewed_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_recently_viewed_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Audit trail for account changes (mirrors database/12_app_user_audit.sql).
+-- Password material is never logged: an update records only whether it changed.
+DELIMITER $$
+
+CREATE TRIGGER trg_app_users_audit_ai
+AFTER INSERT ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'INSERT', CAST(NEW.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), NEW.username, NULL,
+     JSON_OBJECT('username', NEW.username, 'email', NEW.email,
+                 'role_code', NEW.role_code, 'is_active', NEW.is_active));
+END$$
+
+CREATE TRIGGER trg_app_users_audit_au
+AFTER UPDATE ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'UPDATE', CAST(NEW.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), NEW.username,
+     JSON_OBJECT('username', OLD.username, 'email', OLD.email, 'role_code', OLD.role_code,
+                 'is_active', OLD.is_active, 'password_changed', NOT (OLD.password_hash <=> NEW.password_hash)),
+     JSON_OBJECT('username', NEW.username, 'email', NEW.email, 'role_code', NEW.role_code,
+                 'is_active', NEW.is_active, 'password_changed', NOT (OLD.password_hash <=> NEW.password_hash)));
+END$$
+
+CREATE TRIGGER trg_app_users_audit_ad
+AFTER DELETE ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'DELETE', CAST(OLD.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), OLD.username,
+     JSON_OBJECT('username', OLD.username, 'email', OLD.email,
+                 'role_code', OLD.role_code, 'is_active', OLD.is_active), NULL);
+END$$
+
+DELIMITER ;
+
+-- ------------------------------
+-- 21. Verification queries
 -- ------------------------------
 SELECT 'categories' AS table_name, COUNT(*) AS row_count FROM categories
 UNION ALL SELECT 'components', COUNT(*) FROM components
@@ -1082,7 +1214,11 @@ UNION ALL SELECT 'content_types', COUNT(*) FROM content_types
 UNION ALL SELECT 'component_content', COUNT(*) FROM component_content
 UNION ALL SELECT 'component_diagrams', COUNT(*) FROM component_diagrams
 UNION ALL SELECT 'specifications', COUNT(*) FROM specifications
-UNION ALL SELECT 'tags', COUNT(*) FROM tags;
+UNION ALL SELECT 'tags', COUNT(*) FROM tags
+UNION ALL SELECT 'app_users', COUNT(*) FROM app_users
+UNION ALL SELECT 'user_sessions', COUNT(*) FROM user_sessions
+UNION ALL SELECT 'bookmarks', COUNT(*) FROM bookmarks
+UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 
 -- Assignment 11 examples; record actual timings in your report.
 -- 1. Full-table display:

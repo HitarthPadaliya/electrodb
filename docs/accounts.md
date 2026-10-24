@@ -45,6 +45,11 @@ body and always writes `NAIVE_USER`.
 to the existing `application_audit_log`. Password hashes are never logged; an update records only
 `password_changed: true|false`.
 
+**Fresh installs do not need the migrations.** The one-shot `electrodb.sql` (the file the README
+tells you to import) already contains the `email` column, the four tables and the three triggers, so
+a new database is complete in a single import. Run `11` and `12` only against a database built by an
+earlier version of `database/01_schema.sql`.
+
 Rollback statements are at the top of each migration file.
 
 ## 3. How authentication works

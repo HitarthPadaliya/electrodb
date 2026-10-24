@@ -249,9 +249,15 @@ seeded MySQL/MariaDB database.
 ## 4b. Accounts and roles
 
 ```bash
+npm run bootstrap:dba
+```
+
+A database created from `electrodb.sql` already has everything the account features need. For a
+database built from the older `database/01_schema.sql`, apply the two additive migrations first:
+
+```bash
 mysql -u <dba-user> -p electrodb < database/11_auth_and_personalization.sql
 mysql -u <dba-user> -p electrodb < database/12_app_user_audit.sql
-npm run bootstrap:dba
 ```
 
 Registration is public and can only create a `User`. `Developer` and `DBA` are granted by an
