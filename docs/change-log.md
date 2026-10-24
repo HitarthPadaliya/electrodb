@@ -205,3 +205,18 @@ What was added so the styling covers the whole application:
 - Helmet CSP now permits Google Fonts stylesheets and font files while keeping inline script execution disabled.
 
 Catalogue data is still loaded exclusively from the API; the refit adds no hard-coded component records to the frontend.
+
+## 16. Frontend-only preview server
+
+**Change implemented: `npm run preview` (`scripts/preview-server.js`).**
+
+The submitted environment for review does not always have MySQL/MariaDB available. Running
+`npm start` in that state serves the shell but returns `500` for every catalogue call, which
+makes the interface impossible to review or demo.
+
+The preview script serves the same `public/` assets and answers the REST contract from data
+parsed out of `electrodb.sql` at boot (147 components, 23 categories, 13 tags, derived tags,
+diagrams and specifications). It deliberately does **not** replace the application backend:
+there is no connection pool, no stored-procedure execution, and no write support, and it is
+not wired into `server/src/` or the automated tests. Assignment 10/11 database behaviour is
+still demonstrated through `npm start` against a seeded database.

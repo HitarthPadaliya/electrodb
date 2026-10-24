@@ -82,6 +82,7 @@ electrodb/
 │   │   └── svg/                             # 192 SVG vector assets
 └── scripts/
     ├── check-db-connection.js               # Database ping & diagnostic verification
+    ├── preview-server.js                    # Frontend-only preview server (seed-derived data)
     ├── generate-svg-assets.js               # Vector graphics generator
     ├── run-benchmarks.js                    # Query timing & index benchmark suite
     └── verify-install.js                    # End-to-end system verification audit
@@ -159,6 +160,21 @@ http://localhost:3000/
 
 The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
 
+### Previewing the UI without MySQL
+
+`npm run preview` starts `scripts/preview-server.js`, which serves the real `public/` frontend
+and answers the same REST routes with data parsed from `electrodb.sql`. Use it to review or
+demo the interface on a machine without a database server:
+
+```bash
+npm run preview            # http://localhost:3000
+PORT=4000 npm run preview  # custom port
+```
+
+It is a frontend-only stub: it has no connection pool, no stored programs, and no write
+support, so Assignment 10/11 database behaviour must still be demonstrated with `npm start`
+against a seeded MySQL/MariaDB database.
+
 ---
 
 ## 4. Academic Demonstration Features
@@ -195,7 +211,8 @@ The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables
 
 | Command | Purpose |
 |---|---|
-| `npm start` | Launches the server at `http://localhost:3000` |
+| `npm start` | Launches the Express API + frontend at `http://localhost:3000` (requires MySQL) |
+| `npm run preview` | Frontend-only preview at `http://localhost:3000` using data derived from `electrodb.sql`; useful when MySQL is unavailable |
 | `npm test` | Runs the 29 automated integration tests via Node test runner |
 | `npm run check-db` | Tests MariaDB/MySQL connection and prints table row counts |
 | `npm run benchmark` | Executes high-resolution query benchmarking before and after secondary indexes |

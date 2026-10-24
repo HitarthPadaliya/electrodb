@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server/src/server.js",
     "dev": "nodemon server/src/server.js",
+    "preview": "node scripts/preview-server.js",
     "test": "node --test server/tests/api.test.js",
     "check-db": "node scripts/check-db-connection.js",
     "benchmark": "node scripts/run-benchmarks.js",
