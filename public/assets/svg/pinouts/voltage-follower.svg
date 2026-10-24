@@ -1,31 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 398.2 234" role="img" aria-label="LM358 pinout">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 254" role="img" aria-label="LM358 pinout">
   <title>LM358 pinout</title>
-  <line x1="78.8" y1="68" x2="112.8" y2="68" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-  <text x="72.8" y="72" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">1</text>
-  <line x1="78.8" y1="102" x2="112.8" y2="102" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="72.8" y="106" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">2</text>
-  <line x1="78.8" y1="136" x2="112.8" y2="136" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="72.8" y="140" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">3</text>
-  <line x1="78.8" y1="170" x2="112.8" y2="170" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
-  <text x="72.8" y="174" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">4</text>
-  <line x1="285.4" y1="68" x2="319.4" y2="68" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
-  <text x="325.4" y="72" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">8</text>
-  <line x1="285.4" y1="102" x2="319.4" y2="102" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-  <text x="325.4" y="106" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">7</text>
-  <line x1="285.4" y1="136" x2="319.4" y2="136" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="325.4" y="140" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">6</text>
-  <line x1="285.4" y1="170" x2="319.4" y2="170" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="325.4" y="174" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">5</text>
-  <rect x="112.8" y="44" width="172.6" height="150" rx="10" ry="10" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
-  <path d="M185.1,44 A14,14 0 0 0 213.1,44" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
-  <circle cx="56.8" cy="52" r="3.5" fill="none" stroke="#8a8d93" stroke-width="2"/>
-  <text x="124.8" y="73" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">1OUT</text>
-  <text x="124.8" y="107" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">1IN-</text>
-  <text x="124.8" y="141" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">1IN+</text>
-  <text x="124.8" y="175" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">GND</text>
-  <text x="273.4" y="73" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">VCC</text>
-  <text x="273.4" y="107" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2OUT</text>
-  <text x="273.4" y="141" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2IN-</text>
-  <text x="273.4" y="175" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2IN+</text>
-  <text x="199.1" y="125.72" fill="#c5c7c9" font-family="Consolas" font-size="20" font-weight="400" text-anchor="middle">LM358</text>
+  <rect x="84.8" y="36" width="160" height="178" rx="10" ry="10" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <path d="M150.8,36 A14,14 0 0 0 178.8,36" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <circle cx="104.8" cy="55" r="4.5" fill="#8a8d93"/>
+  <line x1="50.8" y1="82" x2="84.8" y2="82" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="100.8" y="86" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">1</text>
+  <text x="42.8" y="87" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1OUT</text>
+  <line x1="50.8" y1="116" x2="84.8" y2="116" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="100.8" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">2</text>
+  <text x="42.8" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1IN-</text>
+  <line x1="50.8" y1="150" x2="84.8" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="100.8" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">3</text>
+  <text x="42.8" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1IN+</text>
+  <line x1="50.8" y1="184" x2="84.8" y2="184" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="100.8" y="188" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">4</text>
+  <text x="42.8" y="189" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">GND</text>
+  <line x1="278.8" y1="82" x2="244.8" y2="82" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="228.8" y="86" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">8</text>
+  <text x="286.8" y="87" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">VCC</text>
+  <line x1="278.8" y1="116" x2="244.8" y2="116" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="228.8" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">7</text>
+  <text x="286.8" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2OUT</text>
+  <line x1="278.8" y1="150" x2="244.8" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="228.8" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">6</text>
+  <text x="286.8" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2IN-</text>
+  <line x1="278.8" y1="184" x2="244.8" y2="184" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="228.8" y="188" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">5</text>
+  <text x="286.8" y="189" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2IN+</text>
+  <text x="164.8" y="131.72" fill="#c5c7c9" font-family="Consolas" font-size="20" font-weight="400" text-anchor="middle">LM358</text>
 </svg>

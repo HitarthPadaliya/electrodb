@@ -17,6 +17,8 @@
  *   label       #e8eaed   pin labels, box name
  *   labelMuted  #c5c7c9   box name / control labels
  *   control     #8a8d93   dashed preset/clear stubs, pin numbers
+ *   preset      #e8b455   preset pins (amber)
+ *   clear       #b48cf0   clear pins (violet)
  *
  * consolasAdvance: every string in the references lands on 0.55em, which is
  * Consolas' monospace advance; all text fitting below relies on it.
@@ -34,6 +36,8 @@ const PALETTE = {
   label: '#e8eaed',
   labelMuted: '#c5c7c9',
   control: '#8a8d93',
+  preset: '#e8b455',
+  clear: '#b48cf0',
   inputText: '#168fe5',
   outputText: '#00dfdf'
 };
@@ -321,27 +325,34 @@ function boxDiagram(spec) {
 function pinoutDiagram(spec) {
   const left = spec.left || [];
   const right = spec.right || [];
-  const PIN_TEXT = 14;
+  const NAME_TEXT = 14;
+  const NUM_TEXT = 12;
   const STUB = 34;
+  const BUBBLE = 6;
   const PITCH = 34;
+  const INSET = 16; // gap between the body edge and the internal pin number
+  const NAME_GAP = 8; // gap between the stub end and the external pin name
+  const TOP_BAND = 46; // room for the pin-1 marker above the first pin row
+  const BOTTOM_BAND = 30;
+  const pad = 20;
 
-  const nameWidth = Math.max(0, ...left.map(p => textWidth(p.label, PIN_TEXT)));
-  const outWidth = Math.max(0, ...right.map(p => textWidth(p.label, PIN_TEXT)));
-  const numberWidth = 20;
-  const pad = 16;
-
-  const leftPad = pad + numberWidth + STUB + nameWidth + 12;
-  const rightPad = pad + numberWidth + STUB + outWidth + 12;
+  // Pin names now sit outside the package, so the padding outside the body is
+  // name width + stub; numbers live inside and only need a small inset.
+  const nameWidth = Math.max(0, ...left.map(p => textWidth(p.label, NAME_TEXT)));
+  const outWidth = Math.max(0, ...right.map(p => textWidth(p.label, NAME_TEXT)));
+  const leftPad = pad + nameWidth + STUB;
+  const rightPad = pad + outWidth + STUB;
 
   const rows = Math.max(left.length, right.length, 1);
-  const bodyH = Math.max(150, (rows - 1) * PITCH + 44);
-  // Keep a clear centre column for the part number: left pin names + part name
-  // + right pin names must never collide.
+  const bodyH = Math.max(150, (rows - 1) * PITCH + TOP_BAND + BOTTOM_BAND);
+
+  const widestNum = Math.max(1, ...[...left, ...right].map(p => String(p.num).length));
+  const numWidth = widestNum * NUM_TEXT * ADVANCE;
   const partW = textWidth(spec.part || '', 20);
-  const bodyW = Math.max(150, nameWidth + outWidth + partW + 56);
+  const bodyW = Math.max(160, partW + 2 * (INSET + numWidth + 26));
 
   const bodyX = leftPad;
-  const bodyY = 44;
+  const bodyY = 36;
   const bodyRight = bodyX + bodyW;
   const bodyBottom = bodyY + bodyH;
 
@@ -349,41 +360,41 @@ function pinoutDiagram(spec) {
   const height = bodyBottom + 40;
 
   const cx = bodyX + bodyW / 2;
-  const cyMid = bodyY + bodyH / 2;
 
+  const SET_TYPES = new Set(['preset', 'clear']);
+  const inverted = pin => pin.type === 'alow' || (SET_TYPES.has(pin.type) && pin.inv !== false);
   const strokeFor = type =>
-    type === 'out' ? PALETTE.output : type === 'power' || type === 'control' ? PALETTE.control : PALETTE.accent;
+    type === 'out'
+      ? PALETTE.output
+      : type === 'preset'
+        ? PALETTE.preset
+        : type === 'clear'
+          ? PALETTE.clear
+          : type === 'power' || type === 'control' || type === 'alow'
+            ? PALETTE.control
+            : PALETTE.accent;
+  const textFor = type =>
+    type === 'preset' ? PALETTE.preset : type === 'clear' ? PALETTE.clear : PALETTE.label;
 
+  // Lay a column out inside the body: the first row clears the pin-1 band and
+  // a short column is centred against the longest one.
+  const columnYs = pins => {
+    const available = bodyH - TOP_BAND - BOTTOM_BAND;
+    const span = (pins.length - 1) * PITCH;
+    const startY = bodyY + TOP_BAND + (available - span) / 2;
+    return pins.map((_, i) => startY + i * PITCH);
+  };
+  const leftYs = columnYs(left);
+  const rightYs = columnYs(right);
+
+  // Body first: the pin numbers sit *inside* the package, so anything painted
+  // later would cover them.
   const parts = [];
-
-  const leftYs = left.map((pin, i) => cyMid + (i - (left.length - 1) / 2) * PITCH);
-  const rightYs = right.map((pin, i) => cyMid + (i - (right.length - 1) / 2) * PITCH);
-
-  // Pin stubs and external pin numbers first, then the body, so the body can
-  // never cover the internal pin names.
-  left.forEach((pin, i) => {
-    const y = leftYs[i];
-    parts.push(line(bodyX - STUB, y, bodyX, y, strokeFor(pin.type), 2));
-    parts.push(
-      text(bodyX - STUB - 6, y + 4, String(pin.num), { size: 12, fill: PALETTE.control, anchor: 'end' })
-    );
-  });
-  right.forEach((pin, i) => {
-    const y = rightYs[i];
-    parts.push(line(bodyRight, y, bodyRight + STUB, y, strokeFor(pin.type), 2));
-    parts.push(
-      text(bodyRight + STUB + 6, y + 4, String(pin.num), { size: 12, fill: PALETTE.control, anchor: 'start' })
-    );
-  });
-
-  // Body, pin-1 notch and pin-1 marker.
   parts.push(
     `<rect x="${num(bodyX)}" y="${num(bodyY)}" width="${num(bodyW)}" height="${num(
       bodyH
     )}" rx="10" ry="10" fill="${PALETTE.body}" stroke="${PALETTE.bodyStroke}" stroke-width="2"/>`
   );
-  // Notch dips into the body, as on a DIP package; pin 1 is marked outside so
-  // it never collides with an internal pin name.
   // The notch is a half-circle cut into the package edge, so the arc sweeps
   // downward into the body rather than bulging above it.
   parts.push(
@@ -391,23 +402,57 @@ function pinoutDiagram(spec) {
       bodyY
     )}" fill="${PALETTE.body}" stroke="${PALETTE.bodyStroke}" stroke-width="2"/>`
   );
-  if (left.length) {
-    parts.push(hollowCircle(bodyX - STUB - 22, leftYs[0] - 16, 3.5, PALETTE.control, 2));
-  }
+  // Pin 1 is marked with a dot inside the package, in the corner beside pin 1.
+  parts.push(dot(bodyX + 20, bodyY + 19, 4.5, PALETTE.control));
 
-  // Internal pin names.
-  left.forEach((pin, i) => {
-    parts.push(text(bodyX + 12, leftYs[i] + 5, pin.label, { size: PIN_TEXT, fill: PALETTE.label, anchor: 'start' }));
-  });
-  right.forEach((pin, i) => {
-    parts.push(text(bodyRight - 12, rightYs[i] + 5, pin.label, { size: PIN_TEXT, fill: PALETTE.label, anchor: 'end' }));
-  });
+  [...left.map((pin, i) => ({ pin, y: leftYs[i], side: 'left' })),
+   ...right.map((pin, i) => ({ pin, y: rightYs[i], side: 'right' }))].forEach(({ pin, y, side }) => {
+    const isLeft = side === 'left';
+    const edge = isLeft ? bodyX : bodyRight;
+    const dir = isLeft ? -1 : 1;
+    const stroke = strokeFor(pin.type);
+    const bubble = inverted(pin);
 
-  const part = fitLabel(spec.part || '', bodyW - 40, { maxSize: 20, minSize: 11 });
-  const blockH = part.lines.length * part.lineHeight;
-  part.lines.forEach((label, i) => {
+    // Stub stops at the bubble so the wire never runs through it.
+    const stubStart = edge + dir * STUB;
+    const stubEnd = edge + dir * (bubble ? BUBBLE * 2 : 0);
+    parts.push(line(stubStart, y, stubEnd, y, stroke, 2));
+
+    if (bubble) {
+      // Inversion bubble sits against the outside of the body edge.
+      parts.push(hollowCircle(edge + dir * BUBBLE, y, BUBBLE, stroke, 2));
+    }
+
+    // Pin number: inside the package, just clear of the edge.
     parts.push(
-      text(cx, cyMid - blockH / 2 + part.lineHeight * 0.78 + i * part.lineHeight, label, {
+      text(isLeft ? bodyX + INSET : bodyRight - INSET, y + 4, String(pin.num), {
+        size: NUM_TEXT,
+        fill: PALETTE.control,
+        anchor: isLeft ? 'start' : 'end'
+      })
+    );
+
+    // Pin name: outside the package, beyond the stub. Preset and clear keep
+    // their own colour so they stand apart from ordinary control pins.
+    parts.push(
+      text(
+        isLeft ? stubStart - NAME_GAP : stubStart + NAME_GAP,
+        y + 5,
+        pin.label,
+        {
+          size: NAME_TEXT,
+          fill: textFor(pin.type),
+          anchor: isLeft ? 'end' : 'start'
+        }
+      )
+    );
+  });
+
+  const part = fitLabel(spec.part || '', bodyW - 2 * (INSET + numWidth + 16), { maxSize: 20, minSize: 11 });
+  part.lines.forEach((label, i) => {
+    const blockH = part.lines.length * part.lineHeight;
+    parts.push(
+      text(cx, bodyY + bodyH / 2 - blockH / 2 + part.lineHeight * 0.78 + i * part.lineHeight, label, {
         size: part.size,
         fill: PALETTE.labelMuted,
         anchor: 'middle'

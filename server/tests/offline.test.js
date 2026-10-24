@@ -206,11 +206,83 @@ describe('Diagram generator contract', () => {
     assert.ok(Number(moore[2]) > height - 40, 'the captions sit near the bottom of the drawing');
   });
 
-  it('draws the IC pinout with numbers outside and names inside', () => {
-    const { svg } = kit.pinoutDiagram(SPECS['nand-gate'].pinout);
+  it('draws the IC pinout with numbers inside and names outside', () => {
+    const spec = SPECS['nand-gate'].pinout;
+    const { svg } = kit.pinoutDiagram(spec);
+
     assert.ok(svg.includes('74LS00'), 'part number is in the body');
     assert.ok(svg.includes('#8a8d93'), 'pin numbers use the muted grey');
     assert.ok(svg.includes('#21262d'), 'the body border matches the reference');
+
+    // Body edges, read from the package rectangle.
+    const rect = svg.match(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/);
+    const bodyX = Number(rect[1]);
+    const bodyRight = bodyX + Number(rect[3]);
+
+    const texts = [...svg.matchAll(/<text x="([\d.]+)"[^>]*text-anchor="(\w+)"[^>]*>([^<]*)</g)].map(m => ({
+      x: Number(m[1]),
+      anchor: m[2],
+      text: m[3]
+    }));
+    const at = (label, anchor) => texts.find(t => t.text === label && t.anchor === anchor);
+
+    const pin1 = at('1', 'start');
+    assert.ok(pin1 && pin1.x > bodyX && pin1.x < bodyRight, 'pin number 1 sits inside the body');
+    const name1A = at('1A', 'end');
+    assert.ok(name1A && name1A.x < bodyX, 'pin name 1A sits outside the body');
+  });
+
+  it('places each inversion bubble against the body edge, only for active-low pins', () => {
+    const spec = SPECS['d-flip-flop'].pinout; // 74LS74: CLR/PRE are active low
+    const { svg } = kit.pinoutDiagram(spec);
+    const rect = svg.match(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/);
+    const bodyX = Number(rect[1]);
+    const bodyRight = bodyX + Number(rect[3]);
+
+    const bubbles = [...svg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="6"[^>]*stroke="([^"]+)"/g)].map(m => ({
+      cx: Number(m[1]),
+      cy: Number(m[2]),
+      stroke: m[3]
+    }));
+
+    // 74LS74 has four active-low control pins: 1CLR, 1PRE, 2PRE, 2CLR.
+    assert.strictEqual(bubbles.length, 4, 'one bubble per active-low pin');
+
+    const tolerance = 0.01;
+    bubbles.forEach(b => {
+      const onLeft = Math.abs(b.cx - (bodyX - 6)) < tolerance;
+      const onRight = Math.abs(b.cx - (bodyRight + 6)) < tolerance;
+      assert.ok(onLeft || onRight, `bubble at ${b.cx} sits against a body edge`);
+
+      // The bubble must be the same colour as the pin group it belongs to.
+      const expected = b.stroke === kit.PALETTE.preset || b.stroke === kit.PALETTE.clear;
+      assert.ok(expected, 'bubbles are drawn in the preset/clear colours');
+
+      // No stub may run through the bubble: wires stop at its far edge.
+      const wireThrough = new RegExp(`<line[^>]*y1="${b.cy}"[^>]*y2="${b.cy}"`).test(svg)
+        ? [...svg.matchAll(new RegExp(`<line x1="([\\d.]+)"[^>]*y1="${b.cy}"[^>]*x2="([\\d.]+)"`, 'g'))].some(m => {
+            const [x1, x2] = [Number(m[1]), Number(m[2])];
+            return (x1 < b.cx + 6 && x2 > b.cx + 6) || (x1 > b.cx - 6 && x2 < b.cx - 6 + 12 && x1 < b.cx);
+          })
+        : false;
+      assert.ok(!wireThrough, 'the stub stops at the bubble');
+    });
+  });
+
+  it('gives preset and clear their own distinct colours', () => {
+    const { svg } = kit.pinoutDiagram(SPECS['d-flip-flop'].pinout);
+
+    assert.ok(svg.includes(kit.PALETTE.preset), 'preset pins use the amber colour');
+    assert.ok(svg.includes(kit.PALETTE.clear), 'clear pins use the violet colour');
+    assert.notStrictEqual(kit.PALETTE.preset, kit.PALETTE.clear, 'the two colours differ');
+    assert.notStrictEqual(kit.PALETTE.preset, kit.PALETTE.control, 'and differ from ordinary pins');
+    assert.notStrictEqual(kit.PALETTE.clear, kit.PALETTE.control, 'and differ from ordinary pins');
+
+    // An active-high reset keeps the colour but loses the bubble.
+    const ls90 = kit.pinoutDiagram(SPECS['decade-counter'].pinout).svg;
+    assert.ok(ls90.includes(kit.PALETTE.preset), 'R9 keeps the preset colour');
+    assert.ok(ls90.includes(kit.PALETTE.clear), 'R0 keeps the clear colour');
+    assert.strictEqual((ls90.match(/<circle[^>]*r="6"/g) || []).length, 0, 'active-high resets have no bubble');
   });
 
   it('puts the Moore and Mealy machines in one side-by-side svg', () => {

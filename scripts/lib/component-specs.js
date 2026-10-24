@@ -14,213 +14,216 @@
  */
 
 const pin = (num, label, type = 'in') => ({ num, label, type });
+// inv: false marks an active-high pin that still belongs to the preset/clear
+// group, so it takes the colour but is not drawn with an inversion bubble.
+const p = (num, label, type = 'in', inv = true) => ({ num, label, type, ...(inv ? {} : { inv: false }) });
 
 // ---------------------------------------------------------------- shared pinouts
 const PINOUTS = {
   '7400': {
     part: '74LS00',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
+    left: [pin(1, '1A'), pin(2, '1B'), p(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), p(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
   },
   '7402': {
     part: '74LS02',
-    left: [pin(1, '1Y', 'out'), pin(2, '1A'), pin(3, '1B'), pin(4, '2Y', 'out'), pin(5, '2A'), pin(6, '2B'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4Y', 'out'), pin(12, '4B'), pin(11, '4A'), pin(10, '3Y', 'out'), pin(9, '3B'), pin(8, '3A')]
+    left: [p(1, '1Y', 'out'), pin(2, '1A'), pin(3, '1B'), p(4, '2Y', 'out'), pin(5, '2A'), pin(6, '2B'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), p(13, '4Y', 'out'), pin(12, '4B'), pin(11, '4A'), p(10, '3Y', 'out'), pin(9, '3B'), pin(8, '3A')]
   },
   '7404': {
     part: '74LS04',
-    left: [pin(1, '1A'), pin(2, '1Y', 'out'), pin(3, '2A'), pin(4, '2Y', 'out'), pin(5, '3A'), pin(6, '3Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '6A'), pin(12, '6Y', 'out'), pin(11, '5A'), pin(10, '5Y', 'out'), pin(9, '4A'), pin(8, '4Y', 'out')]
+    left: [pin(1, '1A'), p(2, '1Y', 'out'), pin(3, '2A'), p(4, '2Y', 'out'), pin(5, '3A'), p(6, '3Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '6A'), p(12, '6Y', 'out'), pin(11, '5A'), p(10, '5Y', 'out'), pin(9, '4A'), p(8, '4Y', 'out')]
   },
   '7407': {
     part: '74LS07',
-    left: [pin(1, '1A'), pin(2, '1Y', 'out'), pin(3, '2A'), pin(4, '2Y', 'out'), pin(5, '3A'), pin(6, '3Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '6A'), pin(12, '6Y', 'out'), pin(11, '5A'), pin(10, '5Y', 'out'), pin(9, '4A'), pin(8, '4Y', 'out')]
+    left: [pin(1, '1A'), p(2, '1Y', 'out'), pin(3, '2A'), p(4, '2Y', 'out'), pin(5, '3A'), p(6, '3Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '6A'), p(12, '6Y', 'out'), pin(11, '5A'), p(10, '5Y', 'out'), pin(9, '4A'), p(8, '4Y', 'out')]
   },
   '7408': {
     part: '74LS08',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
+    left: [pin(1, '1A'), pin(2, '1B'), p(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), p(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
   },
   '7410': {
     part: '74LS10',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '2A'), pin(4, '2B'), pin(5, '2C'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '1C'), pin(12, '1Y', 'out'), pin(11, '3C'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
+    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '2A'), pin(4, '2B'), pin(5, '2C'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '1C'), p(12, '1Y', 'out'), pin(11, '3C'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
   },
   '7414': {
     part: '74LS14',
-    left: [pin(1, '1A'), pin(2, '1Y', 'out'), pin(3, '2A'), pin(4, '2Y', 'out'), pin(5, '3A'), pin(6, '3Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '6A'), pin(12, '6Y', 'out'), pin(11, '5A'), pin(10, '5Y', 'out'), pin(9, '4A'), pin(8, '4Y', 'out')]
+    left: [pin(1, '1A'), p(2, '1Y', 'out'), pin(3, '2A'), p(4, '2Y', 'out'), pin(5, '3A'), p(6, '3Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '6A'), p(12, '6Y', 'out'), pin(11, '5A'), p(10, '5Y', 'out'), pin(9, '4A'), p(8, '4Y', 'out')]
   },
   '7420': {
     part: '74LS20',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, 'NC'), pin(4, '1C'), pin(5, '1D'), pin(6, '1Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '2D'), pin(12, '2C'), pin(11, 'NC'), pin(10, '2B'), pin(9, '2A'), pin(8, '2Y', 'out')]
+    left: [pin(1, '1A'), pin(2, '1B'), pin(3, 'NC'), pin(4, '1C'), pin(5, '1D'), p(6, '1Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '2D'), pin(12, '2C'), pin(11, 'NC'), pin(10, '2B'), pin(9, '2A'), p(8, '2Y', 'out')]
   },
   '7424': {
     part: '74LS05',
-    left: [pin(1, '1A'), pin(2, '1Y', 'out'), pin(3, '2A'), pin(4, '2Y', 'out'), pin(5, '3A'), pin(6, '3Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '6A'), pin(12, '6Y', 'out'), pin(11, '5A'), pin(10, '5Y', 'out'), pin(9, '4A'), pin(8, '4Y', 'out')]
+    left: [pin(1, '1A'), p(2, '1Y', 'out'), pin(3, '2A'), p(4, '2Y', 'out'), pin(5, '3A'), p(6, '3Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '6A'), p(12, '6Y', 'out'), pin(11, '5A'), p(10, '5Y', 'out'), pin(9, '4A'), p(8, '4Y', 'out')]
   },
   '7432': {
     part: '74LS32',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
+    left: [pin(1, '1A'), pin(2, '1B'), p(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), p(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
   },
   '7451': {
     part: '74LS51',
-    left: [pin(1, '1A'), pin(2, '2A'), pin(3, '2B'), pin(4, '2C'), pin(5, '2D'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '1C'), pin(12, '1B'), pin(11, '1D'), pin(10, '1E'), pin(9, '1F'), pin(8, '1Y', 'out')]
-  },
-  '7486': {
-    part: '74LS86',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
-  },
-  '74266': {
-    part: '74LS266',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), pin(8, '3Y', 'out')]
-  },
-  '74260': {
-    part: '74LS260',
-    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1C'), pin(4, '1D'), pin(5, '1E'), pin(6, '1Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '2E'), pin(12, '2D'), pin(11, '2C'), pin(10, '2B'), pin(9, '2A'), pin(8, '2Y', 'out')]
-  },
-  '74125': {
-    part: '74LS125',
-    left: [pin(1, '1OE', 'control'), pin(2, '1A'), pin(3, '1Y', 'out'), pin(4, '2OE', 'control'), pin(5, '2A'), pin(6, '2Y', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '4OE', 'control'), pin(12, '4A'), pin(11, '4Y', 'out'), pin(10, '3OE', 'control'), pin(9, '3A'), pin(8, '3Y', 'out')]
-  },
-  '74138': {
-    part: '74LS138',
-    left: [pin(1, 'A'), pin(2, 'B'), pin(3, 'C'), pin(4, 'G2A', 'control'), pin(5, 'G2B', 'control'), pin(6, 'G1', 'control'), pin(7, 'Y7', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'Y0', 'out'), pin(14, 'Y1', 'out'), pin(13, 'Y2', 'out'), pin(12, 'Y3', 'out'), pin(11, 'Y4', 'out'), pin(10, 'Y5', 'out'), pin(9, 'Y6', 'out')]
-  },
-  '74139': {
-    part: '74LS139',
-    left: [pin(1, '1G', 'control'), pin(2, '1A'), pin(3, '1B'), pin(4, '1Y0', 'out'), pin(5, '1Y1', 'out'), pin(6, '1Y2', 'out'), pin(7, '1Y3', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, '2G', 'control'), pin(14, '2A'), pin(13, '2B'), pin(12, '2Y0', 'out'), pin(11, '2Y1', 'out'), pin(10, '2Y2', 'out'), pin(9, '2Y3', 'out')]
-  },
-  '74147': {
-    part: '74LS47',
-    left: [pin(1, 'B'), pin(2, 'C'), pin(3, 'LT', 'control'), pin(4, 'BI', 'control'), pin(5, 'RBI', 'control'), pin(6, 'D'), pin(7, 'A'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'f', 'out'), pin(14, 'g', 'out'), pin(13, 'a', 'out'), pin(12, 'b', 'out'), pin(11, 'c', 'out'), pin(10, 'd', 'out'), pin(9, 'e', 'out')]
-  },
-  '74148': {
-    part: '74LS148',
-    left: [pin(1, 'I4'), pin(2, 'I5'), pin(3, 'I6'), pin(4, 'I7'), pin(5, 'EI', 'control'), pin(6, 'A2', 'out'), pin(7, 'A1', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'EO', 'out'), pin(14, 'GS', 'out'), pin(13, 'I3'), pin(12, 'I2'), pin(11, 'I1'), pin(10, 'I0'), pin(9, 'A0', 'out')]
-  },
-  '74151': {
-    part: '74LS151',
-    left: [pin(1, 'D3'), pin(2, 'D2'), pin(3, 'D1'), pin(4, 'D0'), pin(5, 'Y', 'out'), pin(6, 'W', 'out'), pin(7, 'G', 'control'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'D4'), pin(14, 'D5'), pin(13, 'D6'), pin(12, 'D7'), pin(11, 'A'), pin(10, 'B'), pin(9, 'C')]
-  },
-  '74153': {
-    part: '74LS153',
-    left: [pin(1, '1G', 'control'), pin(2, 'B'), pin(3, '1C0'), pin(4, '1C1'), pin(5, '1C2'), pin(6, '1C3'), pin(7, '1Y', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, '2G', 'control'), pin(14, 'A'), pin(13, '2C0'), pin(12, '2C1'), pin(11, '2C2'), pin(10, '2C3'), pin(9, '2Y', 'out')]
-  },
-  '74157': {
-    part: '74LS157',
-    left: [pin(1, 'S', 'control'), pin(2, '1A'), pin(3, '1B'), pin(4, '1Y', 'out'), pin(5, '2A'), pin(6, '2B'), pin(7, '2Y', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'E', 'control'), pin(14, '4A'), pin(13, '4B'), pin(12, '4Y', 'out'), pin(11, '3A'), pin(10, '3B'), pin(9, '3Y', 'out')]
-  },
-  '74150': {
-    part: '74LS150',
-    left: [pin(1, 'D7'), pin(2, 'D6'), pin(3, 'D5'), pin(4, 'D4'), pin(5, 'D3'), pin(6, 'D2'), pin(7, 'D1'), pin(8, 'D0'), pin(9, 'STB', 'control'), pin(10, 'W', 'out'), pin(11, 'S3'), pin(12, 'GND', 'power')],
-    right: [pin(24, 'VCC', 'power'), pin(23, 'D8'), pin(22, 'D9'), pin(21, 'D10'), pin(20, 'D11'), pin(19, 'D12'), pin(18, 'D13'), pin(17, 'D14'), pin(16, 'D15'), pin(15, 'S0'), pin(14, 'S1'), pin(13, 'S2')]
-  },
-  '74154': {
-    part: '74LS154',
-    left: [pin(1, 'Y0', 'out'), pin(2, 'Y1', 'out'), pin(3, 'Y2', 'out'), pin(4, 'Y3', 'out'), pin(5, 'Y4', 'out'), pin(6, 'Y5', 'out'), pin(7, 'Y6', 'out'), pin(8, 'Y7', 'out'), pin(9, 'Y8', 'out'), pin(10, 'Y9', 'out'), pin(11, 'Y10', 'out'), pin(12, 'GND', 'power')],
-    right: [pin(24, 'VCC', 'power'), pin(23, 'A'), pin(22, 'B'), pin(21, 'C'), pin(20, 'D'), pin(19, 'G2', 'control'), pin(18, 'G1', 'control'), pin(17, 'Y15', 'out'), pin(16, 'Y14', 'out'), pin(15, 'Y13', 'out'), pin(14, 'Y12', 'out'), pin(13, 'Y11', 'out')]
-  },
-  '74LS90': {
-    part: '74LS90',
-    left: [pin(1, 'CKB'), pin(2, 'R0(1)', 'control'), pin(3, 'R0(2)', 'control'), pin(4, 'NC'), pin(5, 'VCC', 'power'), pin(6, 'R9(1)', 'control'), pin(7, 'R9(2)', 'control')],
-    right: [pin(14, 'CKA'), pin(13, 'NC'), pin(12, 'QA', 'out'), pin(11, 'QD', 'out'), pin(10, 'GND', 'power'), pin(9, 'QB', 'out'), pin(8, 'QC', 'out')]
-  },
-  '74LS160': {
-    part: '74LS160',
-    left: [pin(1, 'CLR', 'control'), pin(2, 'CLK'), pin(3, 'A'), pin(4, 'B'), pin(5, 'C'), pin(6, 'D'), pin(7, 'ENP', 'control'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'RCO', 'out'), pin(14, 'QA', 'out'), pin(13, 'QB', 'out'), pin(12, 'QC', 'out'), pin(11, 'QD', 'out'), pin(10, 'ENT', 'control'), pin(9, 'LOAD', 'control')]
-  },
-  '74LS193': {
-    part: '74LS193',
-    left: [pin(1, 'B'), pin(2, 'QB', 'out'), pin(3, 'QA', 'out'), pin(4, 'DOWN'), pin(5, 'UP'), pin(6, 'QC', 'out'), pin(7, 'QD', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'A'), pin(14, 'CLR', 'control'), pin(13, 'BO', 'out'), pin(12, 'CO', 'out'), pin(11, 'LOAD', 'control'), pin(10, 'C'), pin(9, 'D')]
-  },
-  '74LS273': {
-    part: '74LS273',
-    left: [pin(1, 'CLR', 'control'), pin(2, 'Q0', 'out'), pin(3, 'D0'), pin(4, 'D1'), pin(5, 'Q1', 'out'), pin(6, 'Q2', 'out'), pin(7, 'D2'), pin(8, 'D3'), pin(9, 'Q3', 'out'), pin(10, 'GND', 'power')],
-    right: [pin(20, 'VCC', 'power'), pin(19, 'Q7', 'out'), pin(18, 'D7'), pin(17, 'D6'), pin(16, 'Q6', 'out'), pin(15, 'Q5', 'out'), pin(14, 'D5'), pin(13, 'D4'), pin(12, 'Q4', 'out'), pin(11, 'CLK')]
+    left: [pin(1, '1A'), pin(2, '2A'), pin(3, '2B'), pin(4, '2C'), pin(5, '2D'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '1C'), pin(12, '1B'), pin(11, '1D'), pin(10, '1E'), pin(9, '1F'), p(8, '1Y', 'out')]
   },
   '7473': {
     part: '74LS73',
-    left: [pin(1, 'CLK1'), pin(2, 'CLR1', 'control'), pin(3, 'K1'), pin(4, 'VCC', 'power'), pin(5, 'CLK2'), pin(6, 'CLR2', 'control'), pin(7, 'J2')],
-    right: [pin(14, 'J1'), pin(13, 'Q1′', 'out'), pin(12, 'Q1', 'out'), pin(11, 'GND', 'power'), pin(10, 'K2'), pin(9, 'Q2', 'out'), pin(8, 'Q2′', 'out')]
+    left: [pin(1, 'CLK1'), p(2, 'CLR1', 'clear'), pin(3, 'K1'), p(4, 'VCC', 'power'), pin(5, 'CLK2'), p(6, 'CLR2', 'clear'), pin(7, 'J2')],
+    right: [pin(14, 'J1'), p(13, 'Q1′', 'out'), p(12, 'Q1', 'out'), p(11, 'GND', 'power'), pin(10, 'K2'), p(9, 'Q2', 'out'), p(8, 'Q2′', 'out')]
   },
   '7474': {
     part: '74LS74',
-    left: [pin(1, '1CLR', 'control'), pin(2, '1D'), pin(3, 'CLK1'), pin(4, '1PRE', 'control'), pin(5, '1Q', 'out'), pin(6, '1Q′', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, '2CLR', 'control'), pin(12, '2D'), pin(11, 'CLK2'), pin(10, '2PRE', 'control'), pin(9, '2Q', 'out'), pin(8, '2Q′', 'out')]
+    left: [p(1, '1CLR', 'clear'), pin(2, '1D'), pin(3, 'CLK1'), p(4, '1PRE', 'preset'), p(5, '1Q', 'out'), p(6, '1Q′', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), p(13, '2CLR', 'clear'), pin(12, '2D'), pin(11, 'CLK2'), p(10, '2PRE', 'preset'), p(9, '2Q', 'out'), p(8, '2Q′', 'out')]
   },
-  '74107': {
-    part: '74LS107',
-    left: [pin(1, 'J1'), pin(2, 'Q1′', 'out'), pin(3, 'Q1', 'out'), pin(4, 'K1'), pin(5, 'Q2', 'out'), pin(6, 'Q2′', 'out'), pin(7, 'GND', 'power')],
-    right: [pin(14, 'VCC', 'power'), pin(13, 'CLR1', 'control'), pin(12, 'CLK1'), pin(11, 'K2'), pin(10, '2CLR', 'control'), pin(9, '2CLK'), pin(8, 'J2')]
-  },
-  '74112': {
-    part: '74LS112',
-    left: [pin(1, 'CLK1'), pin(2, 'K1'), pin(3, 'J1'), pin(4, '1PRE', 'control'), pin(5, '1Q', 'out'), pin(6, '1Q′', 'out'), pin(7, '2Q′', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, '1CLR', 'control'), pin(14, '2CLR', 'control'), pin(13, 'CLK2'), pin(12, 'K2'), pin(11, 'J2'), pin(10, '2PRE', 'control'), pin(9, '2Q', 'out')]
-  },
-  '74175': {
-    part: '74LS175',
-    left: [pin(1, 'CLR', 'control'), pin(2, '1Q', 'out'), pin(3, '1Q′', 'out'), pin(4, '1D'), pin(5, '2D'), pin(6, '2Q', 'out'), pin(7, '2Q′', 'out'), pin(8, 'GND', 'power')],
-    right: [pin(16, 'VCC', 'power'), pin(15, 'CLK'), pin(14, '4Q′', 'out'), pin(13, '4Q', 'out'), pin(12, '4D'), pin(11, '3D'), pin(10, '3Q', 'out'), pin(9, '3Q′', 'out')]
-  },
-  '28C256': {
-    part: '28C256',
-    left: [pin(1, 'A14'), pin(2, 'A12'), pin(3, 'A7'), pin(4, 'A6'), pin(5, 'A5'), pin(6, 'A4'), pin(7, 'A3'), pin(8, 'A2'), pin(9, 'A1'), pin(10, 'A0'), pin(11, 'D0'), pin(12, 'D1'), pin(13, 'D2'), pin(14, 'GND', 'power')],
-    right: [pin(28, 'VCC', 'power'), pin(27, 'WE', 'control'), pin(26, 'A13'), pin(25, 'A8'), pin(24, 'A9'), pin(23, 'A11'), pin(22, 'OE', 'control'), pin(21, 'A10'), pin(20, 'CE', 'control'), pin(19, 'D7', 'out'), pin(18, 'D6', 'out'), pin(17, 'D5', 'out'), pin(16, 'D4', 'out'), pin(15, 'D3', 'out')]
+  '7486': {
+    part: '74LS86',
+    left: [pin(1, '1A'), pin(2, '1B'), p(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), p(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
   },
   '62256': {
     part: '62256',
-    left: [pin(1, 'A14'), pin(2, 'A12'), pin(3, 'A7'), pin(4, 'A6'), pin(5, 'A5'), pin(6, 'A4'), pin(7, 'A3'), pin(8, 'A2'), pin(9, 'A1'), pin(10, 'A0'), pin(11, 'D0'), pin(12, 'D1'), pin(13, 'D2'), pin(14, 'GND', 'power')],
-    right: [pin(28, 'VCC', 'power'), pin(27, 'WE', 'control'), pin(26, 'CS2'), pin(25, 'A8'), pin(24, 'A9'), pin(23, 'A11'), pin(22, 'OE', 'control'), pin(21, 'A10'), pin(20, 'CS1', 'control'), pin(19, 'D7', 'out'), pin(18, 'D6', 'out'), pin(17, 'D5', 'out'), pin(16, 'D4', 'out'), pin(15, 'D3', 'out')]
+    left: [pin(1, 'A14'), pin(2, 'A12'), pin(3, 'A7'), pin(4, 'A6'), pin(5, 'A5'), pin(6, 'A4'), pin(7, 'A3'), pin(8, 'A2'), pin(9, 'A1'), pin(10, 'A0'), pin(11, 'D0'), pin(12, 'D1'), pin(13, 'D2'), p(14, 'GND', 'power')],
+    right: [p(28, 'VCC', 'power'), p(27, 'WE', 'alow'), pin(26, 'CS2'), pin(25, 'A8'), pin(24, 'A9'), pin(23, 'A11'), p(22, 'OE', 'alow'), pin(21, 'A10'), p(20, 'CS1', 'alow'), p(19, 'D7', 'out'), p(18, 'D6', 'out'), p(17, 'D5', 'out'), p(16, 'D4', 'out'), p(15, 'D3', 'out')]
+  },
+  '74107': {
+    part: '74LS107',
+    left: [pin(1, 'J1'), p(2, 'Q1′', 'out'), p(3, 'Q1', 'out'), pin(4, 'K1'), p(5, 'Q2', 'out'), p(6, 'Q2′', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), p(13, 'CLR1', 'clear'), pin(12, 'CLK1'), pin(11, 'K2'), p(10, '2CLR', 'clear'), pin(9, '2CLK'), pin(8, 'J2')]
+  },
+  '74112': {
+    part: '74LS112',
+    left: [pin(1, 'CLK1'), pin(2, 'K1'), pin(3, 'J1'), p(4, '1PRE', 'preset'), p(5, '1Q', 'out'), p(6, '1Q′', 'out'), p(7, '2Q′', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, '1CLR', 'clear'), p(14, '2CLR', 'clear'), pin(13, 'CLK2'), pin(12, 'K2'), pin(11, 'J2'), p(10, '2PRE', 'preset'), p(9, '2Q', 'out')]
+  },
+  '74125': {
+    part: '74LS125',
+    left: [p(1, '1OE', 'alow'), pin(2, '1A'), p(3, '1Y', 'out'), p(4, '2OE', 'alow'), pin(5, '2A'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), p(13, '4OE', 'alow'), pin(12, '4A'), p(11, '4Y', 'out'), p(10, '3OE', 'alow'), pin(9, '3A'), p(8, '3Y', 'out')]
+  },
+  '74138': {
+    part: '74LS138',
+    left: [pin(1, 'A'), pin(2, 'B'), pin(3, 'C'), p(4, 'G2A', 'alow'), p(5, 'G2B', 'alow'), p(6, 'G1', 'control'), p(7, 'Y7', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, 'Y0', 'out'), p(14, 'Y1', 'out'), p(13, 'Y2', 'out'), p(12, 'Y3', 'out'), p(11, 'Y4', 'out'), p(10, 'Y5', 'out'), p(9, 'Y6', 'out')]
+  },
+  '74139': {
+    part: '74LS139',
+    left: [p(1, '1G', 'alow'), pin(2, '1A'), pin(3, '1B'), p(4, '1Y0', 'out'), p(5, '1Y1', 'out'), p(6, '1Y2', 'out'), p(7, '1Y3', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, '2G', 'alow'), pin(14, '2A'), pin(13, '2B'), p(12, '2Y0', 'out'), p(11, '2Y1', 'out'), p(10, '2Y2', 'out'), p(9, '2Y3', 'out')]
+  },
+  '74147': {
+    part: '74LS47',
+    left: [pin(1, 'B'), pin(2, 'C'), p(3, 'LT', 'alow'), p(4, 'BI', 'alow'), p(5, 'RBI', 'alow'), pin(6, 'D'), pin(7, 'A'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, 'f', 'out'), p(14, 'g', 'out'), p(13, 'a', 'out'), p(12, 'b', 'out'), p(11, 'c', 'out'), p(10, 'd', 'out'), p(9, 'e', 'out')]
+  },
+  '74148': {
+    part: '74LS148',
+    left: [pin(1, 'I4'), pin(2, 'I5'), pin(3, 'I6'), pin(4, 'I7'), p(5, 'EI', 'alow'), p(6, 'A2', 'out'), p(7, 'A1', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, 'EO', 'out'), p(14, 'GS', 'out'), pin(13, 'I3'), pin(12, 'I2'), pin(11, 'I1'), pin(10, 'I0'), p(9, 'A0', 'out')]
+  },
+  '74150': {
+    part: '74LS150',
+    left: [pin(1, 'D7'), pin(2, 'D6'), pin(3, 'D5'), pin(4, 'D4'), pin(5, 'D3'), pin(6, 'D2'), pin(7, 'D1'), pin(8, 'D0'), p(9, 'STB', 'alow'), p(10, 'W', 'out'), pin(11, 'S3'), p(12, 'GND', 'power')],
+    right: [p(24, 'VCC', 'power'), pin(23, 'D8'), pin(22, 'D9'), pin(21, 'D10'), pin(20, 'D11'), pin(19, 'D12'), pin(18, 'D13'), pin(17, 'D14'), pin(16, 'D15'), pin(15, 'S0'), pin(14, 'S1'), pin(13, 'S2')]
+  },
+  '74151': {
+    part: '74LS151',
+    left: [pin(1, 'D3'), pin(2, 'D2'), pin(3, 'D1'), pin(4, 'D0'), p(5, 'Y', 'out'), p(6, 'W', 'out'), p(7, 'G', 'alow'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), pin(15, 'D4'), pin(14, 'D5'), pin(13, 'D6'), pin(12, 'D7'), pin(11, 'A'), pin(10, 'B'), pin(9, 'C')]
+  },
+  '74153': {
+    part: '74LS153',
+    left: [p(1, '1G', 'alow'), pin(2, 'B'), pin(3, '1C0'), pin(4, '1C1'), pin(5, '1C2'), pin(6, '1C3'), p(7, '1Y', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, '2G', 'alow'), pin(14, 'A'), pin(13, '2C0'), pin(12, '2C1'), pin(11, '2C2'), pin(10, '2C3'), p(9, '2Y', 'out')]
+  },
+  '74154': {
+    part: '74LS154',
+    left: [p(1, 'Y0', 'out'), p(2, 'Y1', 'out'), p(3, 'Y2', 'out'), p(4, 'Y3', 'out'), p(5, 'Y4', 'out'), p(6, 'Y5', 'out'), p(7, 'Y6', 'out'), p(8, 'Y7', 'out'), p(9, 'Y8', 'out'), p(10, 'Y9', 'out'), p(11, 'Y10', 'out'), p(12, 'GND', 'power')],
+    right: [p(24, 'VCC', 'power'), pin(23, 'A'), pin(22, 'B'), pin(21, 'C'), pin(20, 'D'), p(19, 'G2', 'control'), p(18, 'G1', 'control'), p(17, 'Y15', 'out'), p(16, 'Y14', 'out'), p(15, 'Y13', 'out'), p(14, 'Y12', 'out'), p(13, 'Y11', 'out')]
+  },
+  '74157': {
+    part: '74LS157',
+    left: [p(1, 'S', 'control'), pin(2, '1A'), pin(3, '1B'), p(4, '1Y', 'out'), pin(5, '2A'), pin(6, '2B'), p(7, '2Y', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, 'E', 'alow'), pin(14, '4A'), pin(13, '4B'), p(12, '4Y', 'out'), pin(11, '3A'), pin(10, '3B'), p(9, '3Y', 'out')]
+  },
+  '74175': {
+    part: '74LS175',
+    left: [p(1, 'CLR', 'clear'), p(2, '1Q', 'out'), p(3, '1Q′', 'out'), pin(4, '1D'), pin(5, '2D'), p(6, '2Q', 'out'), p(7, '2Q′', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), pin(15, 'CLK'), p(14, '4Q′', 'out'), p(13, '4Q', 'out'), pin(12, '4D'), pin(11, '3D'), p(10, '3Q', 'out'), p(9, '3Q′', 'out')]
+  },
+  '74260': {
+    part: '74LS260',
+    left: [pin(1, '1A'), pin(2, '1B'), pin(3, '1C'), pin(4, '1D'), pin(5, '1E'), p(6, '1Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '2E'), pin(12, '2D'), pin(11, '2C'), pin(10, '2B'), pin(9, '2A'), p(8, '2Y', 'out')]
+  },
+  '74266': {
+    part: '74LS266',
+    left: [pin(1, '1A'), pin(2, '1B'), p(3, '1Y', 'out'), pin(4, '2A'), pin(5, '2B'), p(6, '2Y', 'out'), p(7, 'GND', 'power')],
+    right: [p(14, 'VCC', 'power'), pin(13, '4B'), pin(12, '4A'), p(11, '4Y', 'out'), pin(10, '3B'), pin(9, '3A'), p(8, '3Y', 'out')]
+  },
+  '74LS90': {
+    part: '74LS90',
+    left: [pin(1, 'CKB'), p(2, 'R0(1)', 'clear', false), p(3, 'R0(2)', 'clear', false), pin(4, 'NC'), p(5, 'VCC', 'power'), p(6, 'R9(1)', 'preset', false), p(7, 'R9(2)', 'preset', false)],
+    right: [pin(14, 'CKA'), pin(13, 'NC'), p(12, 'QA', 'out'), p(11, 'QD', 'out'), p(10, 'GND', 'power'), p(9, 'QB', 'out'), p(8, 'QC', 'out')]
+  },
+  '74LS160': {
+    part: '74LS160',
+    left: [p(1, 'CLR', 'clear'), pin(2, 'CLK'), pin(3, 'A'), pin(4, 'B'), pin(5, 'C'), pin(6, 'D'), p(7, 'ENP', 'alow'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), p(15, 'RCO', 'out'), p(14, 'QA', 'out'), p(13, 'QB', 'out'), p(12, 'QC', 'out'), p(11, 'QD', 'out'), p(10, 'ENT', 'alow'), p(9, 'LOAD', 'alow')]
+  },
+  '74LS193': {
+    part: '74LS193',
+    left: [pin(1, 'B'), p(2, 'QB', 'out'), p(3, 'QA', 'out'), pin(4, 'DOWN'), pin(5, 'UP'), p(6, 'QC', 'out'), p(7, 'QD', 'out'), p(8, 'GND', 'power')],
+    right: [p(16, 'VCC', 'power'), pin(15, 'A'), p(14, 'CLR', 'clear'), p(13, 'BO', 'out'), p(12, 'CO', 'out'), p(11, 'LOAD', 'alow'), pin(10, 'C'), pin(9, 'D')]
+  },
+  '74LS273': {
+    part: '74LS273',
+    left: [p(1, 'CLR', 'clear'), p(2, 'Q0', 'out'), pin(3, 'D0'), pin(4, 'D1'), p(5, 'Q1', 'out'), p(6, 'Q2', 'out'), pin(7, 'D2'), pin(8, 'D3'), p(9, 'Q3', 'out'), p(10, 'GND', 'power')],
+    right: [p(20, 'VCC', 'power'), p(19, 'Q7', 'out'), pin(18, 'D7'), pin(17, 'D6'), p(16, 'Q6', 'out'), p(15, 'Q5', 'out'), pin(14, 'D5'), pin(13, 'D4'), p(12, 'Q4', 'out'), pin(11, 'CLK')]
+  },
+  '28C256': {
+    part: '28C256',
+    left: [pin(1, 'A14'), pin(2, 'A12'), pin(3, 'A7'), pin(4, 'A6'), pin(5, 'A5'), pin(6, 'A4'), pin(7, 'A3'), pin(8, 'A2'), pin(9, 'A1'), pin(10, 'A0'), pin(11, 'D0'), pin(12, 'D1'), pin(13, 'D2'), p(14, 'GND', 'power')],
+    right: [p(28, 'VCC', 'power'), p(27, 'WE', 'alow'), pin(26, 'A13'), pin(25, 'A8'), pin(24, 'A9'), pin(23, 'A11'), p(22, 'OE', 'alow'), pin(21, 'A10'), p(20, 'CE', 'alow'), p(19, 'D7', 'out'), p(18, 'D6', 'out'), p(17, 'D5', 'out'), p(16, 'D4', 'out'), p(15, 'D3', 'out')]
   },
   'ADC0804': {
     part: 'ADC0804',
-    left: [pin(1, 'CS', 'control'), pin(2, 'RD', 'control'), pin(3, 'WR', 'control'), pin(4, 'CLK'), pin(5, 'INTR', 'out'), pin(6, 'VIN+'), pin(7, 'VIN-'), pin(8, 'AGND', 'power'), pin(9, 'VREF/2'), pin(10, 'DGND', 'power')],
-    right: [pin(20, 'VCC', 'power'), pin(19, 'D7', 'out'), pin(18, 'D6', 'out'), pin(17, 'D5', 'out'), pin(16, 'D4', 'out'), pin(15, 'D3', 'out'), pin(14, 'D2', 'out'), pin(13, 'D1', 'out'), pin(12, 'D0', 'out'), pin(11, 'CLKR')]
+    left: [p(1, 'CS', 'alow'), p(2, 'RD', 'alow'), p(3, 'WR', 'alow'), pin(4, 'CLK'), p(5, 'INTR', 'out'), pin(6, 'VIN+'), pin(7, 'VIN-'), p(8, 'AGND', 'power'), pin(9, 'VREF/2'), p(10, 'DGND', 'power')],
+    right: [p(20, 'VCC', 'power'), p(19, 'D7', 'out'), p(18, 'D6', 'out'), p(17, 'D5', 'out'), p(16, 'D4', 'out'), p(15, 'D3', 'out'), p(14, 'D2', 'out'), p(13, 'D1', 'out'), p(12, 'D0', 'out'), pin(11, 'CLKR')]
   },
   'LM358': {
     part: 'LM358',
-    left: [pin(1, '1OUT', 'out'), pin(2, '1IN-'), pin(3, '1IN+'), pin(4, 'GND', 'power')],
-    right: [pin(8, 'VCC', 'power'), pin(7, '2OUT', 'out'), pin(6, '2IN-'), pin(5, '2IN+')]
+    left: [p(1, '1OUT', 'out'), pin(2, '1IN-'), pin(3, '1IN+'), p(4, 'GND', 'power')],
+    right: [p(8, 'VCC', 'power'), p(7, '2OUT', 'out'), pin(6, '2IN-'), pin(5, '2IN+')]
   },
   'LM741': {
     part: 'LM741',
-    left: [pin(1, 'OF1'), pin(2, 'IN-'), pin(3, 'IN+'), pin(4, 'V-', 'power')],
-    right: [pin(8, 'NC'), pin(7, 'V+', 'power'), pin(6, 'OUT', 'out'), pin(5, 'OF2')]
+    left: [pin(1, 'OF1'), pin(2, 'IN-'), pin(3, 'IN+'), p(4, 'V-', 'power')],
+    right: [pin(8, 'NC'), p(7, 'V+', 'power'), p(6, 'OUT', 'out'), pin(5, 'OF2')]
   },
   'LM7805': {
     part: 'LM7805',
-    left: [pin(1, 'IN', 'power')],
-    right: [pin(3, 'OUT', 'out'), pin(2, 'GND', 'power')]
+    left: [p(1, 'IN', 'power')],
+    right: [p(3, 'OUT', 'out'), p(2, 'GND', 'power')]
   },
   'LM317': {
     part: 'LM317',
-    left: [pin(1, 'ADJ', 'control')],
-    right: [pin(3, 'IN', 'power'), pin(2, 'OUT', 'out')]
+    left: [p(1, 'ADJ', 'control')],
+    right: [p(3, 'IN', 'power'), p(2, 'OUT', 'out')]
   },
   'DS18B20': {
     part: 'DS18B20',
-    left: [pin(1, 'GND', 'power')],
-    right: [pin(3, 'VDD', 'power'), pin(2, 'DQ', 'out')]
+    left: [p(1, 'GND', 'power')],
+    right: [p(3, 'VDD', 'power'), p(2, 'DQ', 'out')]
   }
 };
 
