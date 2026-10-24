@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300..700&family=Poppins:wght@200;300;400;500;600;700&family=Lexend:wght@200..700&family=Inter:wght@300..700&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/assets/css/styles.css?v=14">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=15">
 
   <!-- KaTeX for LaTeX Math Rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
@@ -41,7 +41,9 @@
       <a href="#/catalog" data-route="catalog">Catalog</a>
       <a href="#/categories" data-route="categories">Categories</a>
       <a href="#/tags" data-route="tags">Tags</a>
-      <a href="#/lab" data-route="lab" class="lab-mobile-link">Lab Console</a>
+      <a href="#/dashboard" data-route="dashboard" data-requires="user" hidden>Dashboard</a>
+      <a href="#/bookmarks" data-route="bookmarks" data-requires="user" hidden>Bookmarks</a>
+      <a href="#/lab" data-route="lab" class="lab-mobile-link" data-requires="author" hidden>Lab Console</a>
     </nav>
 
     <div class="header-actions">
@@ -62,9 +64,11 @@
         />
       </div>
 
-      <a href="#/lab" class="lab-link" data-route="lab">
+      <a href="#/lab" class="lab-link" data-route="lab" data-requires="author" hidden>
         <span aria-hidden="true">⚗</span> Lab Console
       </a>
+
+      <div class="nav-account" id="nav-account"><!-- session controls --></div>
 
       <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
@@ -92,7 +96,8 @@
   <div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
 
   <!-- Scripts -->
-  <script src="/assets/js/api.js?v=14"></script>
-  <script src="/assets/js/app.js?v=14"></script>
+  <script src="/assets/js/api.js?v=15"></script>
+  <script src="/assets/js/account.js?v=15"></script>
+  <script src="/assets/js/app.js?v=15"></script>
 </body>
 </html>

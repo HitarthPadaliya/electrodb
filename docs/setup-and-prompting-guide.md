@@ -106,6 +106,16 @@ DB_PASSWORD=replace_me_locally
 
 PUBLIC_BASE_URL=http://localhost:3000
 ENABLE_LAB_CONSOLE=true
+
+SESSION_COOKIE_NAME=electrodb_sid
+SESSION_TTL_HOURS=168
+SESSION_COOKIE_SECURE=false
+TRUST_PROXY=false
+PERSONAL_STORE=mysql
+
+BOOTSTRAP_DBA_USERNAME=electrodb_dba
+BOOTSTRAP_DBA_EMAIL=dba@electrodb.local
+BOOTSTRAP_DBA_PASSWORD=replace_with_a_long_unique_password
 ```
 
 These are placeholders. Replace the connection string and credentials with values provided by your MySQL setup. Do not paste real secrets into a public chat or commit `.env`.
@@ -128,8 +138,20 @@ Run the scripts in the documented order, using the schema owner/admin connection
 8. `07_seed_data.sql` — categories, components, content, specifications.
 9. `08_assignment10_demo.sql` — stored-program demonstrations.
 10. `09_assignment11_queries.sql` — eight query demonstrations and view/index exercises.
+11. `11_auth_and_personalization.sql` — adds `app_users.email`, sessions, bookmarks, collections and recently viewed. Additive only.
+12. `12_app_user_audit.sql` — `AFTER INSERT/UPDATE/DELETE` audit triggers on `app_users`.
 
 Check every compilation error. Do not proceed while a procedure, function, or trigger is invalid. In MySQL, inspect compilation errors with the SQL tool's error view or the relevant `USER_ERRORS` query.
+
+Then create the first administrator. Public registration can only ever create an ordinary user, so
+the first DBA is made from the command line with database credentials:
+
+```bash
+npm run bootstrap:dba        # reads BOOTSTRAP_DBA_* from .env
+```
+
+Delete the `BOOTSTRAP_DBA_*` values from `.env` afterwards. Full details, including what each
+migration touches and how to roll it back, are in `docs/accounts.md`.
 
 ### Important database safety notes
 
@@ -404,7 +426,8 @@ Once configured:
 4. Start the backend from `server/`.
 5. Open `http://localhost:3000/`.
 6. Test category browsing, search, and a component detail page.
-7. Open the lab console and test CRUD/query/XML/dashboard demonstrations.
+7. Sign in with the bootstrap DBA, open the lab console and test CRUD/query/XML/dashboard demonstrations.
+7a. Register an ordinary account, bookmark a component, create a collection and load the dashboard.
 8. Run assignment SQL tests in the approved SQL client.
 9. Capture real query timings before and after indexes.
 10. Run automated tests and inspect browser console/network errors.

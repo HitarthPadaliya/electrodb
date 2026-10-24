@@ -13,7 +13,9 @@
     "benchmark": "node scripts/run-benchmarks.js",
     "verify": "node scripts/verify-install.js",
     "svg:restyle": "node scripts/restyle-svgs.js",
-    "svg:circuits": "node scripts/build-circuit-diagrams.js"
+    "svg:circuits": "node scripts/build-circuit-diagrams.js",
+    "test:personal": "node --test server/tests/personal.test.js",
+    "bootstrap:dba": "node scripts/bootstrap-dba.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

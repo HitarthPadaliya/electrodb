@@ -4,6 +4,8 @@ ElectroDB is a full-stack educational reference catalogue for electronic compone
 
 Visitors browse a hierarchical category tree, search components, open detail pages, and view structured educational content: descriptions, truth/characteristic/excitation tables, LaTeX characteristic equations, SVG circuit symbols, timing waveforms, state machine diagrams, and normalized technical specifications.
 
+Browsing never requires an account. A lightweight account layer adds **bookmarks**, **collections**, a **dashboard** and **recently viewed** components, with three roles — `User`, `Developer` and `DBA` — enforced by the API on every request. Passwords are hashed with `scrypt`, sessions live in an HttpOnly cookie backed by a server-side row, and the first administrator is created from the command line (`npm run bootstrap:dba`), never through the web interface. See `docs/accounts.md`.
+
 The application also features a dedicated **Lab Console** that exercises the database layer directly: stored procedures, cursors, triggers and roles, index timing benchmarks presented as tables, and a statistics dashboard.
 
 ---
@@ -59,14 +61,22 @@ electrodb/
 │   │   │   └── repository.js                # Data access layer
 │   │   ├── routes/
 │   │   │   ├── catalogueRoutes.js           # Public catalogue endpoints
-│   │   │   └── labRoutes.js                 # lab console endpoints
+│   │   │   ├── authRoutes.js                # register / login / logout / me
+│   │   │   ├── userRoutes.js                # profile, bookmarks, collections, dashboard
+│   │   │   ├── adminRoutes.js               # DBA account administration
+│   │   │   ├── contentRoutes.js             # category/tag management (Developer/DBA)
+│   │   │   └── labRoutes.js                 # lab console endpoints (Developer/DBA)
 │   │   ├── controllers/
 │   │   ├── services/
 │   │   ├── validators/                      # Allowlisted tables, operators, functions
+│   │   ├── security/                        # Password hashing, session tokens, role mapping
+│   │   ├── db/personalStore.js              # Selects the MySQL or in-memory account store
 │   │   ├── serializers/xml.js               # Dedicated XML serializer (Query 1, 3, 4)
 │   │   └── middleware/errorHandler.js       # Centralized error handler
 │   └── tests/
-│       └── api.test.js                      # 29 automated unit and integration tests
+│       ├── api.test.js                      # Database integration tests (needs MySQL)
+│       ├── offline.test.js                  # DB-free contract and security tests
+│       └── personal.test.js                 # Accounts, roles and personalization (in-memory store)
 ├── electrodb-frontend/                      # Static design reference used for the refit
 │   ├── index.html                           # Reference layout: navbar, hero, breadcrumbs, tables
 │   ├── styles.css                           # Reference palette, typography, and spacing tokens
@@ -77,7 +87,8 @@ electrodb/
 │   ├── assets/
 │   │   ├── css/styles.css                   # Refitted design system (dark cyan/teal theme)
 │   │   ├── js/
-│   │   │   ├── api.js                       # API client (catalogue, tags, catalog, lab)
+│   │   │   ├── api.js                       # API client (catalogue, accounts, lab)
+│   │   │   ├── account.js                   # Session, auth pages, bookmarks, collections, dashboard
 │   │   │   └── app.js                       # SPA router, renderers, KaTeX, lab console
 │   │   └── svg/                             # 192 SVG vector assets
 └── scripts/
@@ -157,7 +168,13 @@ http://localhost:3000/
 | `#/tags/<id-or-slug>` | Components carrying a tag |
 | `#/components/<id-or-slug>` | Component detail: hero (title + description + symbol), circuit diagram, tables, equations, supporting diagrams, specifications |
 | `#/search?q=...` | Search results |
-| `#/lab` | Lab console (stored programs, index benchmarks, dashboard) |
+| `#/login`, `#/register` | Sign in / create an account (supports `?next=` to return to the page you wanted) |
+| `#/profile` | Your details, password change, sign out |
+| `#/bookmarks` | Components you saved |
+| `#/collections`, `#/collections/<id>` | Your named lists and their contents |
+| `#/dashboard` | Counts, recently viewed, collections — all from the database |
+| `#/admin` | Account administration (DBA only) |
+| `#/lab` | Lab console (Developer & DBA only) |
 
 The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
 
@@ -229,14 +246,30 @@ seeded MySQL/MariaDB database.
 
 ---
 
+## 4b. Accounts and roles
+
+```bash
+mysql -u <dba-user> -p electrodb < database/11_auth_and_personalization.sql
+mysql -u <dba-user> -p electrodb < database/12_app_user_audit.sql
+npm run bootstrap:dba
+```
+
+Registration is public and can only create a `User`. `Developer` and `DBA` are granted by an
+existing DBA at `#/admin`, or by the bootstrap script. The preview server ships three demo accounts
+(`dba@preview.local`, `developer@preview.local`, `user@preview.local`, password `Electrodb#2025`)
+backed by an in-memory store, so the pages can be reviewed without MySQL. Full details, the API
+reference and the honest testing report are in [`docs/accounts.md`](docs/accounts.md).
+
 ## 5. Verification Scripts & Commands
 
 | Command | Purpose |
 |---|---|
 | `npm start` | Launches the Express API + frontend at `http://localhost:3000` (requires MySQL) |
 | `npm run preview` | Frontend-only preview at `http://localhost:3000` using data derived from `electrodb.sql`; useful when MySQL is unavailable |
-| `npm test` | Runs the 30 database integration tests (needs seeded MySQL) |
-| `npm run test:offline` | Runs the 4 DB-free contract tests (diagram mapping, SVG restyle) |
+| `npm test` | Runs the database integration tests (needs a seeded MySQL) |
+| `npm run test:offline` | Runs the 42 DB-free contract and security tests |
+| `npm run test:personal` | Runs the 55 account, role and personalization tests (in-memory store, no DB) |
+| `npm run bootstrap:dba` | Creates or repairs the first DBA account from `BOOTSTRAP_DBA_*` |
 | `npm run svg:restyle` | Recolours catalogue artwork to the reference palette |
 | `npm run svg:circuits` | Regenerates circuit diagrams for every component |
 | `npm run check-db` | Tests MariaDB/MySQL connection and prints table row counts |

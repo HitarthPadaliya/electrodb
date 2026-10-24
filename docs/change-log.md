@@ -474,3 +474,53 @@ Two consequences worth having:
 
 `prefers-reduced-motion` now zeroes `transition-delay` as well as `transition-duration` and
 `animation-delay`, so the reduced-motion state is the finished, lit arrow with no staged waits.
+
+## 24. Accounts, roles, bookmarks and collections
+
+The catalogue stays public; everything that belongs to a person now needs an account. This is an
+**extension**, not a rebuild: the same Express app, the same schema files and the same frontend
+shell, with a new layer on top.
+
+**Data.** Two additive migrations. `11_auth_and_personalization.sql` adds `app_users.email` (guarded
+by an `information_schema` check so it is safe to re-run) and four new tables — `user_sessions`,
+`bookmarks`, `collections`, `collection_components` — all with explicit foreign keys, unique keys
+for the idempotent operations (`(user_id, component_id)`, `(collection_id, component_id)`) and
+cascade rules that never touch the component rows themselves. `12_app_user_audit.sql` adds audit
+triggers on `app_users`; the password hash is never written to the log, only whether it changed.
+
+**Authentication without new dependencies.** `crypto.scrypt` with the parameters stored inside the
+hash string, `timingSafeEqual` for comparison, and a dummy verification for unknown addresses so the
+response time does not distinguish them. The session is a 32-byte random token in an HttpOnly,
+SameSite=Lax cookie; the database holds only its SHA-256 digest, which means a dump cannot be
+replayed and no signing secret has to be managed. Every login mints a new token, so a planted cookie
+is never promoted. Changing a password, changing a role or disabling an account revokes sessions
+immediately rather than waiting for expiry.
+
+**One interface, two stores.** The services talk to `personalMysqlStore` in production and
+`personalMemoryStore` in the preview server and the tests. Both implement the same contract, so the
+routes, middleware and services under test are the real ones — only persistence differs. The honest
+limit of that arrangement is written down in `docs/accounts.md` §9: it proves the logic, not the SQL.
+
+**Authorization is server-side only.** `attachUser` resolves the cookie against the database on
+every `/api` request; `requireAuth` / `requireRole` / `requireContentAuthor` / `requireAdmin` guard
+the routers; services take the user id from `req.user` and never from the body. There is no
+`userId` parameter anywhere in the personal endpoints to tamper with. Another account's collection
+answers `404` rather than `403`, so ids cannot be probed. The Lab Console — previously open — now
+needs a Developer or DBA, its account endpoints need a DBA, and deleting a component needs a DBA.
+Administration refuses self-role-changes, self-deactivation and demoting the last active DBA.
+
+**Interface.** Navigation is role-aware (guest / user / developer / DBA) but that is presentation
+only. New pages: sign in, register, profile, bookmarks, collections and a collection page, dashboard,
+and account administration. Protected routes redirect to `#/login?next=…` and return there. The
+bookmark control sits on every component card and on the component page; signed out, it explains
+why and links to the sign-in page that comes back to where you were, so the context is never lost.
+The control is a `<button>` beside the card link rather than inside it — valid markup, and reachable
+with a keyboard. State is reported through `aria-pressed`, form errors through `role="alert"`.
+
+**Bootstrap.** `npm run bootstrap:dba` creates or repairs the first administrator from
+`BOOTSTRAP_DBA_*` environment values. There is no web path to that role by design.
+
+**Evidence.** 55 new route-level tests plus the offline suite (42 tests, 8 of them new), a jsdom walk through the
+signed-out and signed-in flows, and a CSS parse check. What could not be run here — the migrations,
+the triggers and the MySQL store, because this environment has no MySQL binary — is listed as
+unverified in `docs/accounts.md` §9 rather than claimed as working.

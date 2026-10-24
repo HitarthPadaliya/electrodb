@@ -34,10 +34,13 @@ const app = {
   // ----------------------------------------------------------------
   // Bootstrapping
   // ----------------------------------------------------------------
-  init() {
+  async init() {
     this.contentEl = document.getElementById('app-content');
     this.initCursorGlow();
     this.bindEvents();
+    // The session has to be known before the first paint so the header and any
+    // bookmark control render in the right state.
+    await account.loadSession();
     this.handleRouting();
   },
 
@@ -109,6 +112,9 @@ const app = {
         this.handleInsertComponent(e);
       } else if (kind === 'create-user') {
         this.handleCreateUser(e);
+      } else if (['login', 'register', 'profile', 'password', 'collection'].includes(kind)) {
+        e.preventDefault();
+        account.handleForm(kind, e.target);
       }
     });
 
@@ -117,6 +123,13 @@ const app = {
       const control = e.target.closest('[data-change]');
       if (control && control.getAttribute('data-change') === 'catalog-filter') {
         this.onCatalogFilterChange(control.value);
+      }
+
+      // Administration: a role change is applied through the API, which is the
+      // only place the decision is actually made.
+      const roleSelect = e.target.closest('[data-action="admin-set-role"]');
+      if (roleSelect) {
+        account.setUserRole(Number(roleSelect.getAttribute('data-arg')), roleSelect.value);
       }
     });
 
@@ -247,6 +260,31 @@ const app = {
       case 'retry':
         this.handleRouting();
         break;
+      case 'sign-out':
+        account.signOut();
+        break;
+      case 'toggle-bookmark':
+        account.toggleBookmark(arg, element);
+        break;
+      case 'open-collection-picker':
+        this.openModal('Add to a collection', '<div id="collection-picker"><p class="modal-lead">Loading your collections…</p></div>');
+        account.collectionPicker(Number(arg), document.getElementById('collection-picker'));
+        break;
+      case 'add-to-collection':
+        account.addToCollection(Number(arg));
+        break;
+      case 'remove-from-collection':
+        account.removeFromCollection(Number(element.getAttribute('data-collection')), Number(arg));
+        break;
+      case 'delete-collection':
+        account.deleteCollection(Number(arg));
+        break;
+      case 'clear-recent':
+        account.clearRecent();
+        break;
+      case 'admin-refresh':
+        account.renderAdmin();
+        break;
       default:
         console.warn('Unknown action:', action);
     }
@@ -322,8 +360,37 @@ const app = {
           await this.renderComponentDetail(segments[1]);
         } else if (section === 'search') {
           await this.renderSearch(params.get('q') || '', Number(params.get('page')) || 1);
+        } else if (section === 'login') {
+          account.renderLogin(params);
+        } else if (section === 'register') {
+          if (account.isSignedIn()) {
+            window.location.hash = '#/dashboard';
+            return;
+          }
+          account.renderRegister();
+        } else if (section === 'profile') {
+          await account.renderProfile();
+        } else if (section === 'bookmarks') {
+          await account.renderBookmarks();
+        } else if (section === 'collections' && segments.length === 1) {
+          await account.renderCollections();
+        } else if (section === 'collections' && segments.length >= 2) {
+          await account.renderCollection(segments[1]);
+        } else if (section === 'dashboard') {
+          await account.renderDashboard();
+        } else if (section === 'admin') {
+          await account.renderAdmin();
         } else if (section === 'lab') {
-          await this.renderLabConsole();
+          // The Lab Console is an internal tool. Hiding the link is a courtesy;
+          // the API refuses these routes to anyone who is not Developer or DBA.
+          if (account.canAuthor()) {
+            await this.renderLabConsole();
+          } else if (account.isSignedIn()) {
+            account.renderForbidden();
+          } else {
+            window.location.hash = `#/login?next=${encodeURIComponent('#/lab')}`;
+            return;
+          }
         } else {
           this.renderNotFound();
         }
@@ -876,8 +943,15 @@ const app = {
   async renderComponentDetail(idOrSlug) {
     const res = await api.getComponent(idOrSlug);
     const comp = res.data;
+    const compId = comp.componentId !== undefined ? comp.componentId : comp.component_id;
 
     this.setTitle(comp.name);
+
+    // Recently viewed is the signed-in user's own history, so it is recorded
+    // here and only here; the API decides whose history that is.
+    if (account.isSignedIn() && compId) {
+      api.auth.recordView(compId).catch(() => {});
+    }
 
     const categoryId = comp.category ? comp.category.categoryId || comp.category.id : null;
     const categoryName = comp.category ? comp.category.name : 'Catalog';
@@ -923,6 +997,12 @@ const app = {
             ${tagPills ? `<div class="hero-tags">${tagPills}</div>` : ''}
 
             <div class="component-actions">
+              ${compId ? account.bookmarkButton(compId, { labelled: true }) : ''}
+              ${
+                compId
+                  ? `<button class="btn btn-secondary" type="button" data-action="open-collection-picker" data-arg="${compId}">Add to collection</button>`
+                  : ''
+              }
               ${
                 comp.datasheetUrl
                   ? `<a class="btn btn-primary" href="${this.escapeHtml(comp.datasheetUrl)}" target="_blank" rel="noopener noreferrer">Manufacturer datasheet</a>`
@@ -1988,25 +2068,31 @@ const app = {
   },
 
   componentCard(comp) {
-    const slug = comp.slug || comp.component_id || comp.componentId;
+    const id = comp.componentId !== undefined ? comp.componentId : comp.component_id;
+    const slug = comp.slug || id;
     const name = comp.name || 'Untitled component';
     const description = comp.short_description || comp.shortDescription || '';
     const symbol = comp.circuit_symbol_path || comp.circuitSymbolPath;
 
-    // Cards stay deliberately minimal: name, symbol, summary. Category and
-    // "illustrative" badges only appear on the component's own page.
+    // Cards stay deliberately minimal: name, symbol, summary, and one quiet
+    // save control. Category and status badges only appear on the component's
+    // own page. The link and the button are siblings because a button inside a
+    // link is neither valid markup nor usable with a keyboard.
     return `
-      <a class="component-card component-card--plain" href="#/components/${encodeURIComponent(slug)}">
-        <div class="component-card-top">
-          <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
-          ${
-            symbol
-              ? `<img class="component-card-symbol" src="${this.escapeHtml(this.asset(symbol))}" alt="" loading="lazy" data-hide-on-error>`
-              : ''
-          }
-        </div>
-        ${description ? `<p class="component-card-desc">${this.escapeHtml(description)}</p>` : '<p class="component-card-desc"></p>'}
-      </a>
+      <div class="component-card component-card--plain" data-component-id="${this.escapeHtml(id)}">
+        <a class="component-card-link" href="#/components/${encodeURIComponent(slug)}">
+          <div class="component-card-top">
+            <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
+            ${
+              symbol
+                ? `<img class="component-card-symbol" src="${this.escapeHtml(this.asset(symbol))}" alt="" loading="lazy" data-hide-on-error>`
+                : ''
+            }
+          </div>
+          ${description ? `<p class="component-card-desc">${this.escapeHtml(description)}</p>` : '<p class="component-card-desc"></p>'}
+        </a>
+        <div class="component-card-foot">${account.bookmarkButton(id, { labelled: true })}</div>
+      </div>
     `;
   },
 

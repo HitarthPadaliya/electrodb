@@ -14,7 +14,9 @@ const api = {
     }
 
     try {
-      const res = await fetch(url, { ...options, headers });
+      // The session is an HttpOnly cookie: every request must carry it, and no
+      // token is ever stored in JavaScript.
+      const res = await fetch(url, { credentials: 'same-origin', ...options, headers });
       const contentType = res.headers.get('content-type') || '';
 
       if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
@@ -71,6 +73,109 @@ const api = {
 
   search(q, page = 1, pageSize = 20) {
     return this.request(`/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`);
+  },
+
+  // ---------------------------------------------------------------- Accounts
+  // All of these rely on the HttpOnly session cookie; the client never holds a
+  // token and never sends a user id of its own.
+  auth: {
+    me() {
+      return api.request('/auth/me');
+    },
+
+    register(payload) {
+      return api.request('/auth/register', { method: 'POST', body: payload });
+    },
+
+    login(payload) {
+      return api.request('/auth/login', { method: 'POST', body: payload });
+    },
+
+    logout() {
+      return api.request('/auth/logout', { method: 'POST' });
+    },
+
+    changePassword(payload) {
+      return api.request('/auth/change-password', { method: 'POST', body: payload });
+    },
+
+    updateProfile(payload) {
+      return api.request('/users/me', { method: 'PATCH', body: payload });
+    },
+
+    listBookmarks(page = 1, pageSize = 24) {
+      return api.request(`/users/me/bookmarks?page=${page}&pageSize=${pageSize}`);
+    },
+
+    addBookmark(componentId) {
+      return api.request('/users/me/bookmarks', { method: 'POST', body: { componentId } });
+    },
+
+    removeBookmark(componentId) {
+      return api.request(`/users/me/bookmarks/${encodeURIComponent(componentId)}`, { method: 'DELETE' });
+    },
+
+    listCollections() {
+      return api.request('/users/me/collections');
+    },
+
+    createCollection(payload) {
+      return api.request('/users/me/collections', { method: 'POST', body: payload });
+    },
+
+    updateCollection(collectionId, payload) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`, {
+        method: 'PATCH',
+        body: payload
+      });
+    },
+
+    deleteCollection(collectionId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`, { method: 'DELETE' });
+    },
+
+    getCollection(collectionId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`);
+    },
+
+    addToCollection(collectionId, componentId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}/components`, {
+        method: 'POST',
+        body: { componentId }
+      });
+    },
+
+    removeFromCollection(collectionId, componentId) {
+      return api.request(
+        `/users/me/collections/${encodeURIComponent(collectionId)}/components/${encodeURIComponent(componentId)}`,
+        { method: 'DELETE' }
+      );
+    },
+
+    recent(limit = 8) {
+      return api.request(`/users/me/recently-viewed?limit=${limit}`);
+    },
+
+    recordView(componentId) {
+      return api.request('/users/me/recently-viewed', { method: 'POST', body: { componentId } });
+    },
+
+    clearRecent() {
+      return api.request('/users/me/recently-viewed', { method: 'DELETE' });
+    },
+
+    dashboard() {
+      return api.request('/users/me/dashboard');
+    },
+
+    // Administration (DBA only; the server enforces the role)
+    listUsers(query = '') {
+      return api.request(`/admin/users?q=${encodeURIComponent(query)}`);
+    },
+
+    updateUser(userId, payload) {
+      return api.request(`/admin/users/${encodeURIComponent(userId)}`, { method: 'PATCH', body: payload });
+    }
   },
 
   // Lab Console

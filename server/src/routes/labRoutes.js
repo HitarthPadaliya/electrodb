@@ -1,6 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const labController = require('../controllers/labController');
+const { requireAuth, requireAdmin, requireContentAuthor, requireSameOrigin } = require('../middleware/auth');
+
+// The Lab Console exposes content management, account administration and raw
+// query demonstrations. It is an internal tool: it requires a signed-in
+// Developer or DBA, and the account endpoints require a DBA.
+router.use(requireSameOrigin);
+router.use(requireAuth);
+router.use(requireContentAuthor);
 
 // Assignment 11 Query 1 (Full Table JSON & XML)
 router.get('/components', labController.getComponents);
@@ -9,7 +17,8 @@ router.get('/components.xml', labController.getComponentsXml);
 // Assignment 10 Component Stored Procedure CRUD
 router.post('/components', labController.createComponent);
 router.patch('/components/:id', labController.updateComponent);
-router.delete('/components/:id', labController.deleteComponent);
+// Deleting a component is destructive: DBA only.
+router.delete('/components/:id', requireAdmin, labController.deleteComponent);
 
 // Assignment 11 Query 3 (Aggregate JSON & XML)
 router.get('/aggregate', labController.getAggregate);
@@ -35,11 +44,12 @@ router.get('/cursors/limited', labController.getCursorsLimited);
 // Assignment 10 Sum
 router.get('/sum', labController.getSum);
 
-// Assignment 10 App Users CRUD
-router.get('/users', labController.getAppUsers);
-router.post('/users', labController.createAppUser);
-router.patch('/users/:id', labController.updateAppUser);
-router.delete('/users/:id', labController.deleteAppUser);
+// Assignment 10 App Users CRUD - DBA only (the supported account API lives at
+// /api/admin/users; these stored-procedure endpoints remain for the coursework)
+router.get('/users', requireAdmin, labController.getAppUsers);
+router.post('/users', requireAdmin, labController.createAppUser);
+router.patch('/users/:id', requireAdmin, labController.updateAppUser);
+router.delete('/users/:id', requireAdmin, labController.deleteAppUser);
 
 // Assignment 10 Audit Log
 router.get('/audit-log', labController.getAuditLogs);

@@ -20,6 +20,8 @@ const { SPECS } = require('../../scripts/lib/component-specs');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const repoRoot = path.resolve(__dirname, '../..');
+
 function stubComponent(overrides = {}) {
   return {
     component_id: 42,
@@ -526,5 +528,87 @@ describe('Asset freshness', () => {
     assert.ok(/no-store/.test(server), 'static responses are not stored');
     assert.ok(/ETag/.test(server), 'a validator is provided for revalidation');
     assert.ok(/304/.test(server), 'matching validators short-circuit to 304');
+  });
+});
+
+describe('Account security primitives', () => {
+  const tokens = require('../src/security/tokens');
+  const roles = require('../src/security/roles');
+  const passwords = require('../src/security/passwords');
+
+  it('sets an HttpOnly, SameSite=Lax session cookie', () => {
+    const cookie = tokens.serializeSessionCookie('abc123', 3600);
+    assert.match(cookie, /HttpOnly/i);
+    assert.match(cookie, /SameSite=Lax/i);
+    assert.match(cookie, /Path=\//);
+    assert.match(cookie, /Max-Age=3600/);
+    assert.ok(!/Secure/i.test(cookie), 'Secure is off outside production by default');
+  });
+
+  it('clears the session cookie with an empty value and no max-age', () => {
+    const cookie = tokens.clearSessionCookie();
+    assert.match(cookie, /electrodb_sid=;/);
+    assert.match(cookie, /Max-Age=0/i);
+  });
+
+  it('stores only a digest of the session token', () => {
+    const { token, hash } = tokens.createToken();
+    assert.ok(token.length >= 40, 'token should be long enough to be unguessable');
+    assert.match(hash, /^[a-f0-9]{64}$/);
+    assert.notStrictEqual(token, hash);
+    assert.strictEqual(tokens.hashToken(token), hash);
+    assert.strictEqual(new Set([tokens.createToken().token, tokens.createToken().token]).size, 2);
+  });
+
+  it('maps the three application roles onto the schema enum', () => {
+    assert.strictEqual(roles.toRoleCode('User'), 'NAIVE_USER');
+    assert.strictEqual(roles.toRoleCode('Developer'), 'APP_DEVELOPER');
+    assert.strictEqual(roles.toRoleCode('DBA'), 'DBA');
+    assert.strictEqual(roles.toApiRole('NAIVE_USER'), 'User');
+    assert.strictEqual(roles.toApiRole('APP_DEVELOPER'), 'Developer');
+    assert.strictEqual(roles.toApiRole('DBA'), 'DBA');
+    // An unknown or missing role must never be treated as privileged.
+    assert.strictEqual(roles.toApiRole('SOMETHING_ELSE'), 'User');
+    assert.strictEqual(roles.toRoleCode('Root'), null);
+    assert.strictEqual(roles.hasRole({ role: 'User' }, roles.ADMIN_ROLES), false);
+  });
+
+  it('hashes passwords with a per-password salt and verifies them', async () => {
+    const a = await passwords.hashPassword('correct horse battery staple');
+    const b = await passwords.hashPassword('correct horse battery staple');
+    assert.match(a, /^scrypt\$16384\$8\$1\$/);
+    assert.notStrictEqual(a, b, 'the same password must not produce the same hash');
+    assert.strictEqual(await passwords.verifyPassword('correct horse battery staple', a), true);
+    assert.strictEqual(await passwords.verifyPassword('wrong horse battery staple', a), false);
+    assert.strictEqual(await passwords.verifyPassword('anything', 'not-a-hash'), false);
+  });
+
+  it('rejects weak passwords before they reach the database', () => {
+    for (const weak of ['short', 'alllowercaseonly', '1234567890123']) {
+      const result = passwords.validatePasswordStrength(weak);
+      assert.strictEqual(result.ok, false, `expected ${weak} to be rejected`);
+    }
+    assert.strictEqual(passwords.validatePasswordStrength('Correct1-Horse').ok, true);
+  });
+
+  it('keeps the browser out of the token business', () => {
+    const apiSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/api.js'), 'utf8');
+    const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
+
+    assert.match(apiSource, /credentials: 'same-origin'/);
+    for (const source of [apiSource, accountSource]) {
+      assert.ok(!/localStorage|sessionStorage/.test(source), 'no token or identity may be stored client-side');
+      assert.ok(!/document\.cookie\s*=/.test(source), 'the session cookie is HttpOnly; JS must not write cookies');
+    }
+  });
+
+  it('loads the account module before the application shell', () => {
+    const html = fs.readFileSync(path.join(repoRoot, 'public/index.html'), 'utf8');
+    const apiIndex = html.indexOf('/assets/js/api.js');
+    const accountIndex = html.indexOf('/assets/js/account.js');
+    const appIndex = html.indexOf('/assets/js/app.js');
+    assert.ok(apiIndex > -1 && accountIndex > -1 && appIndex > -1);
+    assert.ok(apiIndex < accountIndex && accountIndex < appIndex, 'script order matters');
+    assert.match(html, /app\.js\?v=\d+/);
   });
 });

@@ -654,6 +654,69 @@ function handleApi(req, res, url) {
   return json(res, { error: { code: 'NOT_FOUND', message: `Unknown preview endpoint: ${p}` } }, 404);
 }
 
+// ---------------------------------------------------------------- account API
+// The account, bookmark, collection and administration routes below are the
+// real routers, middleware and services from `server/src`, backed by the
+// in-memory store. The preview therefore enforces exactly the same
+// authorization rules as the Express application; only persistence differs.
+process.env.PERSONAL_STORE = 'memory';
+
+const express = require('express');
+const errorHandler = require('../server/src/middleware/errorHandler');
+const { attachUser } = require('../server/src/middleware/auth');
+const { getStore } = require('../server/src/db/personalStore');
+const passwords = require('../server/src/security/passwords');
+
+const PREVIEW_PASSWORD = 'Electrodb#2025';
+const PREVIEW_ACCOUNTS = [
+  { key: 'dba', username: 'preview_dba', email: 'dba@preview.local', roleCode: 'DBA' },
+  { key: 'developer', username: 'preview_developer', email: 'developer@preview.local', roleCode: 'APP_DEVELOPER' },
+  { key: 'user', username: 'preview_user', email: 'user@preview.local', roleCode: 'NAIVE_USER' }
+];
+
+const accountApi = express();
+accountApi.disable('x-powered-by');
+accountApi.use(express.json({ limit: '64kb' }));
+accountApi.use('/api', attachUser);
+accountApi.use('/api/auth', require('../server/src/routes/authRoutes'));
+accountApi.use('/api/users', require('../server/src/routes/userRoutes'));
+accountApi.use('/api/admin', require('../server/src/routes/adminRoutes'));
+accountApi.use('/api', (req, res) =>
+  json(res, { error: { code: 'NOT_FOUND', message: `Unknown account endpoint: ${req.method} ${req.path}` } }, 404)
+);
+accountApi.use(errorHandler);
+
+/** Mirror the seed catalogue into the store and create the demo accounts. */
+async function seedAccounts() {
+  const store = getStore();
+  store.components.seed(components);
+
+  const passwordHash = await passwords.hashPassword(PREVIEW_PASSWORD);
+  const accounts = {};
+  for (const account of PREVIEW_ACCOUNTS) {
+    accounts[account.key] = await store.users.create({
+      username: account.username,
+      email: account.email,
+      passwordHash,
+      roleCode: account.roleCode
+    });
+  }
+
+  // A little history, so the personal pages are not all empty on first load.
+  const demo = accounts.user;
+  const picks = components.slice(0, 3).map(component => component.component_id);
+  for (const componentId of picks) await store.bookmarks.add(demo.userId, componentId);
+  for (const componentId of picks.slice(0, 2)) await store.recent.record(demo.userId, componentId);
+
+  const collection = await store.collections.create(demo.userId, {
+    name: 'Revision shortlist',
+    description: 'Gates and adders worth re-reading before the exam.'
+  });
+  await store.collections.addItem(demo.userId, collection.collectionId, picks[0]);
+
+  return accounts;
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8', '.svg': 'image/svg+xml',
@@ -662,8 +725,11 @@ const MIME = {
   '.woff2': 'font/woff2', '.ico': 'image/x-icon'
 };
 
+const ACCOUNT_PATH = /^\/api\/(auth|users|admin)(\/|$)/;
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (ACCOUNT_PATH.test(url.pathname)) return accountApi(req, res);
   if (url.pathname.startsWith('/api/')) {
     try {
       return handleApi(req, res, url);
@@ -706,8 +772,17 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(filePath).pipe(res);
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`ElectroDB frontend preview (seed-derived data) on http://${HOST}:${PORT}`);
-  console.log(`Seed-derived catalogue: ${components.length} components, ${categories.length} categories, ${tags.length} tags`);
-  console.log('Preview data only — run `npm start` with MySQL for the real API.');
-});
+seedAccounts()
+  .then(() => {
+    server.listen(PORT, HOST, () => {
+      console.log(`ElectroDB frontend preview (seed-derived data) on http://${HOST}:${PORT}`);
+      console.log(`Seed-derived catalogue: ${components.length} components, ${categories.length} categories, ${tags.length} tags`);
+      console.log(`Demo accounts (password ${PREVIEW_PASSWORD}):`);
+      PREVIEW_ACCOUNTS.forEach(account => console.log(`  ${account.roleCode.padEnd(14)} ${account.email}`));
+      console.log('Preview data only — run `npm start` with MySQL for the real API.');
+    });
+  })
+  .catch(err => {
+    console.error('Could not start the preview server:', err);
+    process.exit(1);
+  });
