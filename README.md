@@ -4,7 +4,7 @@ ElectroDB is a full-stack educational reference catalogue for electronic compone
 
 Visitors browse a hierarchical category tree, search components, open detail pages, and view structured educational content: descriptions, truth/characteristic/excitation tables, LaTeX characteristic equations, SVG circuit symbols, timing waveforms, state machine diagrams, and normalized technical specifications.
 
-The application also features a dedicated **Lab Console** that exercises the database layer directly: stored procedures, cursors, triggers and roles, plus full-table display, XML serialization, joins, subqueries, aggregate and filter controls, index timing benchmarks, and a statistics dashboard.
+The application also features a dedicated **Lab Console** that exercises the database layer directly: stored procedures, cursors, triggers and roles, index timing benchmarks presented as tables, and a statistics dashboard.
 
 ---
 
@@ -157,7 +157,7 @@ http://localhost:3000/
 | `#/tags/<id-or-slug>` | Components carrying a tag |
 | `#/components/<id-or-slug>` | Component detail: hero (title + description + symbol), circuit diagram, tables, equations, supporting diagrams, specifications |
 | `#/search?q=...` | Search results |
-| `#/lab` | Lab console (stored programs, SQL demonstrations, views, benchmarks, dashboard) |
+| `#/lab` | Lab console (stored programs, index benchmarks, dashboard) |
 
 The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
 

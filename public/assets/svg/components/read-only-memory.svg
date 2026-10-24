@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392.8 240" role="img" aria-label="ROM symbol">
   <title>ROM symbol</title>
   <line x1="77.8" y1="80" x2="107.8" y2="80" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <line x1="77.8" y1="120" x2="107.8" y2="120" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="107.8" cy="120" r="6" fill="none" stroke="#e8eaed" stroke-width="2"/>
-  <line x1="77.8" y1="160" x2="107.8" y2="160" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="107.8" cy="160" r="6" fill="none" stroke="#e8eaed" stroke-width="2"/>
+  <line x1="77.8" y1="120" x2="101.8" y2="120" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <line x1="77.8" y1="160" x2="101.8" y2="160" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
   <line x1="287.8" y1="120" x2="317.8" y2="120" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
   <rect x="107.8" y="40" width="180" height="160" rx="12" ry="12" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <circle cx="107.8" cy="120" r="6" fill="none" stroke="#e8eaed" stroke-width="2"/>
+  <circle cx="107.8" cy="160" r="6" fill="none" stroke="#e8eaed" stroke-width="2"/>
   <text x="197.8" y="126.05" fill="#c5c7c9" font-family="Consolas" font-size="18" font-weight="400" text-anchor="middle">ROM</text>
   <text x="64.8" y="85.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A0-A12</text>
   <text x="64.8" y="125.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">CE</text>

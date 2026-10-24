@@ -593,32 +593,34 @@ WHERE c.category_id=6;
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)','Operation'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0,0,'Hold'),JSON_ARRAY(0,0,1,1,'Hold'),JSON_ARRAY(0,1,0,0,'Reset'),JSON_ARRAY(0,1,1,0,'Reset'),
-           JSON_ARRAY(1,0,0,1,'Set'),JSON_ARRAY(1,0,1,1,'Set'),JSON_ARRAY(1,1,0,1,'Toggle'),JSON_ARRAY(1,1,1,0,'Toggle')))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'\\(\\overline{Q_n}\\)','Toggle')))
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'X','Invalid')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,'\\(Q_n\\)','Hold'),JSON_ARRAY(1,'\\(\\overline{Q_n}\\)','Toggle')))
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'Reset'),JSON_ARRAY(1,1,'Set')))
        END,
-       NULL,'Q(next) is the output after the active clock edge. X means don''t care where applicable.',3
+       NULL,'Qn is the stored state; Qn+1 is the state after the active clock edge.',3
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'characteristic_table', 'Characteristic Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)'),'rows',JSON_ARRAY(
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
            JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,1),JSON_ARRAY(1,1,1,0)))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
+           JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,'X'),JSON_ARRAY(1,1,1,'X')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
        END,
        NULL,NULL,4
 FROM components c JOIN content_types ct ON ct.code='TABLE'

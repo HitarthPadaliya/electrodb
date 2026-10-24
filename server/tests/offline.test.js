@@ -303,6 +303,83 @@ describe('Diagram generator contract', () => {
   });
 });
 
+describe('Educational tables', () => {
+  const tables = require('../../scripts/lib/content-tables');
+
+  it('states the operation next to a next state written in terms of Q_n', () => {
+    const jk = tables.truthTableFor('jk-flip-flop');
+
+    assert.deepStrictEqual(jk.columns, ['\\(J\\)', '\\(K\\)', '\\(Q_{n+1}\\)', 'Operation']);
+    assert.strictEqual(jk.rows.length, 4, 'one row per behaviour, not per state');
+    assert.deepStrictEqual(jk.rows[0], [0, 0, '\\(Q_n\\)', 'Hold']);
+    assert.deepStrictEqual(jk.rows[1], [0, 1, 0, 'Reset']);
+    assert.deepStrictEqual(jk.rows[3], [1, 1, '\\(\\overline{Q_n}\\)', 'Toggle']);
+    assert.ok(!jk.columns.some(column => /^Q$|^Q\\(next\\)$/.test(column)), 'no duplicate Q column');
+  });
+
+  it('picks the right truth table for each flip-flop family', () => {
+    assert.strictEqual(tables.truthTableFor('d-flip-flop').rows.length, 2);
+    assert.strictEqual(tables.truthTableFor('toggle-latch').rows[1][1], '\\(\\overline{Q_n}\\)');
+    assert.strictEqual(tables.truthTableFor('gated-sr-latch').rows[3][3], 'Invalid');
+    assert.strictEqual(tables.truthTableFor('jk-preset-clear-flip-flop').rows.length, 4);
+  });
+
+  it('keeps the characteristic table exhaustive', () => {
+    const jk = tables.characteristicTableFor('jk-flip-flop');
+    assert.strictEqual(jk.rows.length, 8);
+    assert.deepStrictEqual(jk.columns, ['\\(J\\)', '\\(K\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)']);
+  });
+
+  it('mirrors the same tables into the SQL seeds', () => {
+    const expected = String.raw`JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_{n+1}\\)','Operation')`;
+    const toggle = String.raw`JSON_ARRAY(1,1,'\\(\\overline{Q_n}\\)','Toggle')`;
+
+    ['electrodb.sql', 'database/07_seed_data.sql'].forEach(rel => {
+      const sql = fs.readFileSync(path.join(__dirname, '../..', rel), 'utf8');
+      assert.ok(sql.includes(expected), `${rel} has the JK header`);
+      assert.ok(sql.includes(toggle), `${rel} has the toggle row`);
+    });
+  });
+});
+
+describe('Lab console content', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../../public/assets/js/app.js'), 'utf8');
+
+  it('offers stored programs, index benchmarks and the dashboard only', () => {
+    assert.ok(!app.includes('SQL Demos'), 'the SQL demos tab is gone');
+    assert.ok(!app.includes('data-arg="tab-views"'), 'the views tab is gone');
+    assert.ok(!app.includes('Demo mode'), 'the demo pill is gone');
+    assert.ok(!app.includes('class="lab-lead"'), 'the lab description is gone');
+    assert.ok(app.includes('data-arg="tab-benchmarks"'), 'the benchmark tab stays');
+  });
+
+  it('presents the benchmark report as tables instead of a text dump', () => {
+    assert.ok(app.includes('parseBenchmarkReport'), 'the markdown report is parsed');
+    assert.ok(app.includes('renderBenchmarkTable'), 'tables are rendered');
+    assert.ok(!app.includes('report-viewer'), 'the monospaced dump is gone');
+    assert.ok(!app.includes('reportLineLimit'), 'the line-count slider is gone');
+  });
+});
+
+describe('Table typography', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../../public/assets/js/app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../../public/assets/css/styles.css'), 'utf8');
+
+  it('sets header maths in bold and body maths in normal weight', () => {
+    assert.ok(app.includes('boldsymbol{'), 'headers use mathbold (\\boldsymbol)');
+    assert.ok(!app.includes('mathtt{'), 'the source LaTeX is not printed as a fallback');
+    assert.ok(/const body = header \?/.test(app), 'the weight is chosen per header/cell');
+  });
+
+  it('styles tables from the reference palette', () => {
+    const table = css.slice(css.indexOf('.edu-table {'), css.indexOf('.spec-table {'));
+    assert.ok(/border-collapse:\s*collapse/.test(table), 'collapsed borders, as in the reference');
+    assert.ok(/var\(--table-head\)/.test(table), 'the header band uses the reference token');
+    assert.ok(/var\(--table-even\)/.test(table), 'zebra rows use the reference token');
+    assert.ok(/var\(--table-hover\)/.test(table), 'hover uses the reference token');
+  });
+});
+
 describe('Detail page layout', () => {
   it('keeps the IC pinout in its own section, apart from the specifications', () => {
     const source = fs.readFileSync(path.join(__dirname, '../../public/assets/js/app.js'), 'utf8');

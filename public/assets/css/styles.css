@@ -456,19 +456,20 @@ select:focus-visible,
   outline: none;
 }
 
-/* Route content swaps in immediately; the short fade keeps it from popping. */
+/* Route content swaps in immediately; a short opacity-only fade keeps it from
+   popping. It deliberately does not translate: moving a full page of cards and
+   drawings on every click is what made navigation feel janky. Opacity is also
+   the only property the compositor has to touch. */
 .page {
-  animation: page-in var(--dur-2) var(--ease-out) both;
+  animation: page-in var(--dur-1) var(--ease-out);
 }
 
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -574,7 +575,13 @@ select:focus-visible,
   opacity: 0.65;
 }
 
+/* One motion language for every arrow in the UI: the arrow itself travels in
+   the direction it points - right arrows slide right, left arrows slide left.
+   No ripples, no filled circles. */
 .section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
   color: var(--accent);
   font-family: var(--font-nav);
   font-size: 0.78rem;
@@ -585,8 +592,19 @@ select:focus-visible,
   transition: color var(--dur-2) var(--ease-out);
 }
 
+.link-arrow {
+  display: inline-block;
+  line-height: 1;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
 .section-link:hover {
   color: var(--accent-hover);
+}
+
+.section-link:hover .link-arrow,
+a:hover > .link-arrow {
+  transform: translateX(4px);
 }
 
 .section-sub {
@@ -1086,28 +1104,58 @@ select:focus-visible,
   font-variant-numeric: tabular-nums;
 }
 
+/* The tile arrow is a small conveyor: the arrow slides out to the right while
+   a second one slides in behind it. No border, no filled disc - just motion in
+   the direction the tile leads. */
 .subcategory-arrow {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid transparent;
-  border-radius: 50%;
+  justify-content: flex-end;
+  width: 22px;
+  height: 22px;
+  overflow: hidden;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+.subcategory-arrow-glyph {
+  display: inline-block;
+  line-height: 1;
+  opacity: 1;
+  transform: translateX(0);
   transition:
     transform var(--dur-2) var(--ease-out),
-    color var(--dur-2) var(--ease-out),
-    border-color var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out);
+    opacity var(--dur-1) linear;
+}
+
+.subcategory-arrow::after {
+  content: '\2192';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  line-height: 1;
+  opacity: 0;
+  transform: translate(-14px, -50%);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    opacity var(--dur-1) linear;
 }
 
 .subcategory-card:hover .subcategory-arrow {
-  color: var(--bg);
-  background: var(--secondary);
-  border-color: var(--secondary);
-  transform: translateX(3px);
+  color: var(--secondary);
+}
+
+.subcategory-card:hover .subcategory-arrow-glyph {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.subcategory-card:hover .subcategory-arrow::after {
+  opacity: 1;
+  transform: translate(0, -50%);
 }
 
 .subcategory-card:hover .subcategory-foot {
@@ -1485,7 +1533,7 @@ select:focus-visible,
 }
 
 .back-link:hover .back-link-arrow {
-  transform: translateX(-3px);
+  transform: translateX(-4px);
 }
 
 .detail-section {
@@ -1567,82 +1615,44 @@ select:focus-visible,
 }
 
 /* Tables.
-   A quiet, light-grey surface: the header is its own band with a rule under
-   it, the rows are separated by hairlines, and nothing in the table is ever
-   tinted with the accent colour. */
+   Taken straight from electrodb-frontend/: collapsed borders, one blue-tinted
+   header band, zebra rows and a deep-blue hover. The table is centred in its
+   column and only as wide as its content, so a four-column truth table does
+   not stretch across the whole page. */
 .table-responsive {
   width: 100%;
+  margin-top: 1.35rem;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  box-shadow: 0 20px 48px -40px rgba(0, 0, 0, 0.9);
 }
 
 .edu-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  width: auto;
+  min-width: min(100%, 320px);
+  margin: 0 auto;
+  border-collapse: collapse;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-variant-numeric: tabular-nums;
 }
 
-/* Header: a distinct band, sentence case and one step larger than the cells,
-   closed off by a double rule. */
-.edu-table thead {
-  background: #171c24;
-}
-
 .edu-table th {
-  position: relative;
-  padding: 1rem 1.1rem 0.85rem;
-  color: var(--fg);
+  padding: 0.8rem 1.35rem;
+  color: var(--white);
   font-family: var(--font-nav);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 900;
   letter-spacing: 0.01em;
   text-transform: none;
   white-space: nowrap;
-  border-bottom: 2px solid var(--border-strong);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.edu-table th:not(:last-child) {
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.edu-table th:first-child {
-  border-top-left-radius: calc(var(--radius-md) - 1px);
-}
-
-.edu-table th:last-child {
-  border-top-right-radius: calc(var(--radius-md) - 1px);
+  background-color: var(--table-head);
+  border: 1px solid rgba(0, 167, 218, 0.28);
 }
 
 .edu-table td {
-  padding: 0.7rem 1.1rem;
+  padding: 0.6rem 1.35rem;
   color: var(--fg-light);
-  border-bottom: 1px solid rgba(33, 38, 45, 0.65);
-}
-
-/* Symbols rendered through KaTeX must inherit the table's grey, never the
-   accent colour. */
-.edu-table .katex,
-.edu-table th .katex,
-.edu-table td .katex {
-  color: var(--fg-light);
-  font-size: 1em;
-}
-
-.edu-table th .katex {
-  color: var(--fg);
-  font-weight: 700;
-}
-
-.edu-table td:not(:last-child) {
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(33, 38, 45, 0.85);
 }
 
 .edu-table tbody tr {
@@ -1650,20 +1660,25 @@ select:focus-visible,
 }
 
 .edu-table tbody tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.018);
+  background-color: var(--table-even);
 }
 
 .edu-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--table-hover);
 }
 
-.edu-table tbody tr:last-child td {
-  border-bottom: 0;
+/* Symbols rendered through KaTeX inherit their cell's colour, never the accent.
+   Headers are already bold through \boldsymbol, so no extra weight is added
+   here - that would double-bold the maths. */
+.edu-table .katex,
+.edu-table th .katex,
+.edu-table td .katex {
+  color: inherit;
+  font-size: 1em;
 }
 
-/* A grey marker on the hovered row, never the accent. */
-.edu-table tbody tr:hover td:first-child {
-  box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.32);
+.edu-table th .katex {
+  color: var(--white);
 }
 
 .edu-table .cell-highlight {
@@ -1683,6 +1698,7 @@ select:focus-visible,
 }
 
 .spec-table {
+  width: 100%;
   text-align: left;
 }
 
@@ -1715,20 +1731,24 @@ select:focus-visible,
 
 /* Equations */
 /* Equations sit directly on the page: no card, no border, no scroller. They
-   are scaled to fill the column (see fitEquations in app.js). */
+   are scaled to fill the column (see fitEquations in app.js), which is why the
+   block clips instead of scrolling: an equation can never push a horizontal
+   scrollbar onto the page. */
 .equation-block {
-  margin: 1.35rem 0 0;
-  overflow: visible;
+  margin: 1.5rem 0 0;
+  overflow: hidden;
   text-align: center;
 }
 
 .equation-block .katex {
   color: var(--fg);
-  font-size: 1.5rem;
+  font-size: 1.7rem;
+  line-height: 1.25;
 }
 
 .equation-block .katex-display {
-  margin: 0;
+  margin: 0.15em 0;
+  overflow: visible;
   text-align: center;
 }
 
@@ -1843,6 +1863,21 @@ select:focus-visible,
 .page-btn:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent-hover);
+}
+
+/* Pagination arrows travel the way they point, matching every other arrow. */
+.page-arrow {
+  display: inline-block;
+  line-height: 1;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.page-btn:hover:not(:disabled) .page-arrow--left {
+  transform: translateX(-3px);
+}
+
+.page-btn:hover:not(:disabled) .page-arrow--right {
+  transform: translateX(3px);
 }
 
 .page-btn.active {
@@ -1987,40 +2022,8 @@ input[type='range']:focus-visible {
   color: var(--fg);
 }
 
-.lab-lead {
-  margin: 0;
-  max-width: 82ch;
-  color: var(--fg-light);
-  font-size: clamp(0.95rem, 1.1vw, 1.05rem);
-  line-height: 1.65;
-}
-
-.lab-meta-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 1.1rem;
-}
-
-.lab-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.32rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 223, 193, 0.4);
-  background: rgba(0, 223, 193, 0.08);
-  color: var(--secondary);
-  font-family: var(--font-nav);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* One segmented control for every tab, so Stored Programs, SQL Demos, Views,
-   Benchmarks and the Dashboard read as peers rather than mixed button styles. */
+/* One segmented control for every tab, so Stored Programs, Index Benchmarks and
+   the Dashboard read as peers rather than mixed button styles. */
 .lab-tabs {
   display: flex;
   max-width: 100%;
@@ -2233,19 +2236,77 @@ input[type='range']:focus-visible {
   word-break: break-word;
 }
 
-.report-viewer {
-  margin-top: 0.75rem;
-  padding: 1.35rem;
-  max-height: 560px;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: #04070c;
-  color: #b9c6d3;
+/* Benchmark report: the markdown report is presented as a stack of tables,
+   each with its own caption, instead of a scrolling wall of monospaced text. */
+.bench-heading {
+  margin: 1.9rem 0 0;
+  color: var(--fg);
+  font-family: var(--font-accent);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.bench-heading:first-child {
+  margin-top: 0.35rem;
+}
+
+.bench-table {
+  font-size: 0.9rem;
+}
+
+.bench-table th {
+  font-size: 0.84rem;
+  letter-spacing: 0.05em;
+}
+
+.bench-table td {
+  vertical-align: top;
+}
+
+.bench-cell-id {
+  color: var(--secondary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bench-cell-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bench-cell-faster {
+  color: var(--success);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bench-cell-slower {
+  color: var(--danger);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bench-cell-text,
+.bench-cell-sql {
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bench-cell-text {
+  max-width: 420px;
+  color: var(--fg-light);
+}
+
+.bench-cell-sql {
+  max-width: 400px;
+  color: #9db4c6;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .metrics-note {

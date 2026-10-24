@@ -195,20 +195,40 @@ function boxDiagram(spec) {
 
   const parts = [];
 
-  // Pin stubs first so the body draws over them.
+  // Preset and clear keep their own colours in every drawing, not just on the
+  // IC pinouts, so a dashed control stub is never read as an ordinary pin.
+  const controlTone = label => {
+    const name = String(label || '').trim().toUpperCase();
+    if (/^(PRE|PRESET)$/.test(name)) return PALETTE.preset;
+    if (/^(CLR|CLEAR)$/.test(name)) return PALETTE.clear;
+    return null;
+  };
+
+  const BUBBLE = 6;
+
+  // Stubs first: the body draws over their inner end. Everything that must stay
+  // fully visible (inversion bubbles, the clock wedge) waits until after the
+  // body, otherwise the body fill hides half of the circle.
+  const clockMarks = [];
+  const bubbles = [];
+
   const inputPitch = inputs.length >= 3 ? PITCH : Math.min(60, PITCH);
   const inputYs = inputs.map((pin, i) => cyMid + (i - (inputs.length - 1) / 2) * inputPitch);
   inputs.forEach((pin, i) => {
     const y = inputYs[i];
-    parts.push(line(boxX - STUB, y, boxX - (pin.clock ? 12 : 0), y, PALETTE.accent, 2));
+    // The stub stops at the bubble edge so no wire runs through a circle.
+    const stop = boxX - (pin.clock ? 12 : pin.bubble ? BUBBLE : 0);
+    parts.push(line(boxX - STUB, y, stop, y, PALETTE.accent, 2));
     if (pin.clock) {
-      parts.push(
-        `<polygon points="${num(boxX - 12)},${num(y - 8)} ${num(boxX)},${num(y)} ${num(boxX - 12)},${num(
+      // The wedge belongs inside the body, not in the stub: its point at the
+      // edge, its base 12px in, as in the reference artwork.
+      clockMarks.push(
+        `<polygon points="${num(boxX)},${num(y - 8)} ${num(boxX + 12)},${num(y)} ${num(boxX)},${num(
           y + 8
         )}" fill="none" stroke="${PALETTE.accent}" stroke-width="2"/>`
       );
     }
-    if (pin.bubble) parts.push(hollowCircle(boxX, y, 6, PALETTE.label, 2));
+    if (pin.bubble) bubbles.push({ cx: boxX, cy: y, stroke: PALETTE.label });
   });
 
   const outputYs = outputs.map(
@@ -216,25 +236,30 @@ function boxDiagram(spec) {
   );
   outputs.forEach((pin, i) => {
     const y = outputYs[i];
-    const start = pin.bubble ? boxRight + 12 : boxRight;
-    if (pin.bubble) parts.push(hollowCircle(boxRight, y, 6, PALETTE.label, 2));
-    parts.push(line(start, y, boxRight + STUB, y, PALETTE.output, 2.5));
+    parts.push(line(boxRight + (pin.bubble ? BUBBLE : 0), y, boxRight + STUB, y, PALETTE.output, 2.5));
+    if (pin.bubble) bubbles.push({ cx: boxRight, cy: y, stroke: PALETTE.label });
   });
 
   const topXs = top.map((pin, i) => cx + (i - (top.length - 1) / 2) * topSpread);
   top.forEach((pin, i) => {
     const x = topXs[i];
-    if (pin.dashed) parts.push(dashed(x, boxY - 40, x, boxY - 6, PALETTE.control, 2));
-    else parts.push(line(x, boxY - STUB, x, boxY, PALETTE.accent, 2));
-    if (pin.bubble) parts.push(hollowCircle(x, boxY, 6, PALETTE.label, 2));
+    const tone = controlTone(pin.label);
+    const stroke = tone || (pin.dashed ? PALETTE.control : PALETTE.accent);
+    const stop = boxY - (pin.bubble ? BUBBLE : 0);
+    if (pin.dashed) parts.push(dashed(x, boxY - 40, x, stop, stroke, 2));
+    else parts.push(line(x, boxY - STUB, x, stop, stroke, 2));
+    if (pin.bubble) bubbles.push({ cx: x, cy: boxY, stroke: tone || PALETTE.label });
   });
 
   const bottomXs = bottom.map((pin, i) => cx + (i - (bottom.length - 1) / 2) * topSpread);
   bottom.forEach((pin, i) => {
     const x = bottomXs[i];
-    if (pin.dashed) parts.push(dashed(x, boxBottom + 6, x, boxBottom + 40, PALETTE.control, 2));
-    else parts.push(line(x, boxBottom, x, boxBottom + STUB, PALETTE.accent, 2));
-    if (pin.bubble) parts.push(hollowCircle(x, boxBottom, 6, PALETTE.label, 2));
+    const tone = controlTone(pin.label);
+    const stroke = tone || (pin.dashed ? PALETTE.control : PALETTE.accent);
+    const start = boxBottom + (pin.bubble ? BUBBLE : 0);
+    if (pin.dashed) parts.push(dashed(x, start, x, boxBottom + 40, stroke, 2));
+    else parts.push(line(x, start, x, boxBottom + STUB, stroke, 2));
+    if (pin.bubble) bubbles.push({ cx: x, cy: boxBottom, stroke: tone || PALETTE.label });
   });
 
   // Body
@@ -243,6 +268,12 @@ function boxDiagram(spec) {
       boxH
     )}" rx="12" ry="12" fill="${PALETTE.body}" stroke="${PALETTE.bodyStroke}" stroke-width="2"/>`
   );
+
+  // Clock wedges and inversion bubbles sit on top of the body: each circle is
+  // centred on the body edge, so half of it reads inside the block and half
+  // outside, exactly like the reference drawing.
+  parts.push(...clockMarks);
+  bubbles.forEach(bubble => parts.push(hollowCircle(bubble.cx, bubble.cy, BUBBLE, bubble.stroke, 2)));
 
   // Name, wrapped and shrunk so it can never overflow the body.
   const nameLines = [];
@@ -292,11 +323,21 @@ function boxDiagram(spec) {
     );
   });
   top.forEach((pin, i) => {
-    parts.push(text(topXs[i], boxY - 50, pin.label, { size: 14, fill: PALETTE.labelMuted, anchor: 'middle' }));
+    parts.push(
+      text(topXs[i], boxY - 50, pin.label, {
+        size: 14,
+        fill: controlTone(pin.label) || PALETTE.labelMuted,
+        anchor: 'middle'
+      })
+    );
   });
   bottom.forEach((pin, i) => {
     parts.push(
-      text(bottomXs[i], boxBottom + 60, pin.label, { size: 14, fill: PALETTE.labelMuted, anchor: 'middle' })
+      text(bottomXs[i], boxBottom + 60, pin.label, {
+        size: 14,
+        fill: controlTone(pin.label) || PALETTE.labelMuted,
+        anchor: 'middle'
+      })
     );
   });
 

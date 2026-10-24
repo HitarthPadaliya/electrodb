@@ -133,13 +133,8 @@ const app = {
       const input = e.target;
       if (!input || input.type !== 'range') return;
       syncRange(input);
-      const key = input.getAttribute('data-input');
       const output = input.parentElement && input.parentElement.querySelector('.range-row-value');
       if (output) output.textContent = input.value;
-      if (key === 'report-lines') {
-        this.reportLineLimit = Number(input.value);
-        this.loadTimingReport();
-      }
     });
 
     // Paint any sliders that rendered with the markup.
@@ -228,24 +223,6 @@ const app = {
       case 'load-audit-log':
         this.loadAuditLog();
         break;
-      case 'load-query-1':
-        this.loadQuery1(arg === 'true');
-        break;
-      case 'run-query-3':
-        this.runQuery3(arg === 'true');
-        break;
-      case 'run-query-4':
-        this.runQuery4(arg === 'true');
-        break;
-      case 'run-query-5':
-        this.runQuery5();
-        break;
-      case 'run-subquery':
-        this.runSubquery();
-        break;
-      case 'run-correlated':
-        this.runCorrelatedQuery();
-        break;
       case 'run-cursor-all':
         this.runCursorAll();
         break;
@@ -254,12 +231,6 @@ const app = {
         break;
       case 'run-sum-routines':
         this.runSumRoutines();
-        break;
-      case 'load-view-catalog':
-        this.loadViewCatalog();
-        break;
-      case 'load-view-counts':
-        this.loadViewCounts();
         break;
       case 'load-timing-report':
         this.loadTimingReport();
@@ -294,11 +265,11 @@ const app = {
       return;
     }
     const target = `#/search?q=${encodeURIComponent(query)}`;
-    if (window.location.hash === target) {
-      this.handleRouting();
-    } else {
-      window.location.hash = target;
-    }
+    // Already showing this result set: re-rendering would replay the page
+    // animation for a click that changed nothing, which is exactly the kind of
+    // flicker worth avoiding.
+    if (window.location.hash === target) return;
+    window.location.hash = target;
   },
 
   // ----------------------------------------------------------------
@@ -331,7 +302,6 @@ const app = {
 
     this.updateActiveNav(section);
     this.closeMobileNav();
-    this.scrollToTop();
 
     const render = async () => {
       const { segments, params } = route;
@@ -367,6 +337,10 @@ const app = {
     };
 
     await render();
+
+    // Reset the scroll position together with the new markup, in the same task
+    // as the render, so the reader never sees the old page jump first.
+    this.scrollToTop();
   },
 
   updateActiveNav(section) {
@@ -519,7 +493,7 @@ const app = {
         <section class="section">
           <div class="section-head">
             <h2 class="section-title">Component Categories</h2>
-            <a href="#/categories" class="section-link">All categories →</a>
+            <a href="#/categories" class="section-link">All categories <span class="link-arrow" aria-hidden="true">→</span></a>
           </div>
           <div class="categories-grid">${categoryCards}</div>
         </section>
@@ -530,7 +504,7 @@ const app = {
         <section class="section">
           <div class="section-head">
             <h2 class="section-title">From the Catalog</h2>
-            <a href="#/catalog" class="section-link">View all components →</a>
+            <a href="#/catalog" class="section-link">View all components <span class="link-arrow" aria-hidden="true">→</span></a>
           </div>
           <div class="components-grid">
             ${featured.map(comp => this.componentCard(comp)).join('')}
@@ -544,7 +518,7 @@ const app = {
         <section class="section">
           <div class="section-head">
             <h2 class="section-title">Browse by Tag</h2>
-            <a href="#/tags" class="section-link">All tags →</a>
+            <a href="#/tags" class="section-link">All tags <span class="link-arrow" aria-hidden="true">→</span></a>
           </div>
           <div class="tag-cloud">
             ${tags
@@ -651,31 +625,39 @@ const app = {
       `;
     }
 
-    html += `
-      <section class="section">
-        <div class="section-head">
-          <h2 class="section-title">Components</h2>
-          <span class="section-meta">${pagination ? pagination.total : 0} items</span>
-        </div>
-    `;
-
-    if (!components.length) {
+    // A branch category holds components only inside its subcategories, so the
+    // "Components" heading is not printed when there is nothing under it. The
+    // section only appears when there is something to read - either components,
+    // or an empty leaf that deserves an explanation.
+    if (components.length || !children.length) {
       html += `
-        <div class="empty-state">
-          <h3>No components registered at this level</h3>
-          <p>${children.length ? 'Choose one of the subcategories above to explore its components.' : 'This category does not have any published components yet.'}</p>
-        </div>
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Components</h2>
+            <span class="section-meta">${pagination ? pagination.total : 0} items</span>
+          </div>
       `;
-    } else {
-      html += `<div class="components-grid">${components
-        .map(comp => this.componentCard(comp))
-        .join('')}</div>`;
-      if (pagination && pagination.totalPages > 1) {
-        html += this.renderPagination(pagination, `#/categories/${encodeURIComponent(idOrSlug)}`);
+
+      if (!components.length) {
+        html += `
+          <div class="empty-state">
+            <h3>No components registered at this level</h3>
+            <p>This category does not have any published components yet.</p>
+          </div>
+        `;
+      } else {
+        html += `<div class="components-grid">${components
+          .map(comp => this.componentCard(comp))
+          .join('')}</div>`;
+        if (pagination && pagination.totalPages > 1) {
+          html += this.renderPagination(pagination, `#/categories/${encodeURIComponent(idOrSlug)}`);
+        }
       }
+
+      html += '</section>';
     }
 
-    html += '</section></div>';
+    html += '</div>';
     this.contentEl.innerHTML = html;
   },
 
@@ -1146,7 +1128,7 @@ const app = {
     }
 
     return `
-      <div class="table-responsive" style="margin-top: 1.25rem;">
+      <div class="table-responsive">
         <table class="edu-table">
           <thead>
             <tr>${tableJson.columns.map(col => `<th>${this.formatCell(col, { header: true })}</th>`).join('')}</tr>
@@ -1213,8 +1195,12 @@ const app = {
     }
 
     if (tex) {
-      const body = header ? `\\mathbf{${tex}}` : tex;
-      return `<span data-katex-inline="${this.escapeHtml(body)}">${this.escapeHtml(raw)}</span>`;
+      // Headers are set in bold maths (\boldsymbol); cells keep the normal
+      // weight so the two never read as the same emphasis.
+      const body = header ? `\\boldsymbol{${tex}}` : tex;
+      return `<span data-katex-inline="${this.escapeHtml(body)}"${
+        header ? ' class="th-math"' : ''
+      }>${this.escapeHtml(raw.replace(/^\\\(|\\\)$/g, ''))}</span>`;
     }
 
     const highlight = ['X', 'Toggle', 'Reset', 'Set', 'Hold'].includes(raw);
@@ -1272,16 +1258,34 @@ const app = {
       if (!katex) return;
 
       katex.style.fontSize = '';
-      const available = block.clientWidth;
+      // The column width, minus the block's own horizontal padding: the
+      // equation is fitted to the space that actually exists, so the page
+      // never grows a horizontal scrollbar (no slider under the maths).
+      const styles = window.getComputedStyle(block);
+      const gutter = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+      const available = block.clientWidth - gutter;
       if (!available) return; // no layout (e.g. headless DOM): keep the CSS size
 
       const baseSize = parseFloat(window.getComputedStyle(katex).fontSize) || 24;
       const natural = katex.getBoundingClientRect().width;
       if (!natural) return;
 
-      const target = available * 0.8;
-      const scale = Math.min(2, Math.max(0.75, target / natural));
+      // Fill ~94% of the column; short equations are allowed to grow well past
+      // their 1.5rem base size, long ones shrink until they fit.
+      const target = available * 0.94;
+      // Grow well past the 1.7rem base, but stop at a readable ceiling so a
+      // two-symbol equation does not become a poster.
+      const ceiling = 64 / baseSize;
+      let scale = target / natural;
+      scale = Math.min(3.4, ceiling, Math.max(0.6, scale));
       katex.style.fontSize = `${(baseSize * scale).toFixed(2)}px`;
+
+      // One correction pass in case rounding or font fallback changed the
+      // measured width. This is what guarantees "no slider".
+      const fitted = katex.getBoundingClientRect().width;
+      if (fitted > available && fitted > 0) {
+        katex.style.fontSize = `${(baseSize * scale * (available / fitted) * 0.99).toFixed(2)}px`;
+      }
     });
   },
 
@@ -1295,19 +1299,10 @@ const app = {
       <div class="page">
         <header class="lab-header">
           <h1 class="lab-title">Lab Console</h1>
-          <p class="lab-lead">
-            Stored procedures, cursors, triggers, indexed query timing, views, XML serialization, and
-            live table statistics for the ElectroDB schema.
-          </p>
-          <div class="lab-meta-row">
-            <span class="lab-badge"><span aria-hidden="true">&#9679;</span> Demo mode</span>
-          </div>
         </header>
 
         <div class="lab-tabs" role="tablist" aria-label="Lab console sections">
           <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">Stored Programs</button>
-          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-a11">SQL Demos</button>
-          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-views">Views</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-benchmarks">Index Benchmarks</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-dashboard">Dashboard</button>
         </div>
@@ -1395,177 +1390,7 @@ const app = {
           </div>
         </div>
 
-        <!-- Tab 2: SQL demonstrations -->
-        <div id="tab-a11" class="lab-panel" role="tabpanel">
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">Query 1: Full-Table Display (with XML output)</h2>
-                <p class="lab-card-desc">Displays rows from the primary <code>components</code> table, or serializes the first page as XML.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="load-query-1" data-arg="false">HTML table</button>
-                <button class="btn btn-primary btn-sm" type="button" data-action="load-query-1" data-arg="true">XML output</button>
-              </div>
-            </div>
-            <div id="query1-container"></div>
-          </div>
-
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">Query 3: Aggregate Query (with XML output)</h2>
-                <p class="lab-card-desc">Run an allowlisted aggregate function against an allowlisted column.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="run-query-3" data-arg="false">Run aggregate</button>
-                <button class="btn btn-primary btn-sm" type="button" data-action="run-query-3" data-arg="true">XML output</button>
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label" for="q3-fn">Function</label>
-                <select id="q3-fn" class="form-control">
-                  <option value="COUNT" selected>COUNT</option>
-                  <option value="SUM">SUM</option>
-                  <option value="AVG">AVG</option>
-                  <option value="MIN">MIN</option>
-                  <option value="MAX">MAX</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="q3-field">Field</label>
-                <select id="q3-field" class="form-control">
-                  <option value="component_id" selected>component_id</option>
-                  <option value="category_id">category_id</option>
-                </select>
-              </div>
-            </div>
-            <div id="query3-container"></div>
-          </div>
-
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">Query 4: Conditional Query (with XML output)</h2>
-                <p class="lab-card-desc">Filter the table using an allowlisted field, operator, and value.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="run-query-4" data-arg="false">Filter table</button>
-                <button class="btn btn-primary btn-sm" type="button" data-action="run-query-4" data-arg="true">XML output</button>
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label" for="q4-field">Field</label>
-                <select id="q4-field" class="form-control">
-                  <option value="category_id" selected>category_id</option>
-                  <option value="is_published">is_published</option>
-                  <option value="is_illustrative">is_illustrative</option>
-                  <option value="name">name</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="q4-op">Operator</label>
-                <select id="q4-op" class="form-control">
-                  <option value="eq" selected>= (equals)</option>
-                  <option value="neq">!= (not equals)</option>
-                  <option value="gt">&gt; (greater than)</option>
-                  <option value="lt">&lt; (less than)</option>
-                  <option value="like">LIKE (contains)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="q4-val">Value</label>
-                <input type="text" id="q4-val" class="form-control" value="6" />
-              </div>
-            </div>
-            <div id="query4-container"></div>
-          </div>
-
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">Query 5: Two-Table Join Query</h2>
-                <p class="lab-card-desc">Choose two allowlisted tables and a join type; the server maps the selection to a safe join condition.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-primary btn-sm" type="button" data-action="run-query-5">Execute join</button>
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label" for="q5-left">Left table</label>
-                <select id="q5-left" class="form-control">
-                  <option value="components" selected>components</option>
-                  <option value="categories">categories</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="q5-right">Right table</label>
-                <select id="q5-right" class="form-control">
-                  <option value="categories" selected>categories</option>
-                  <option value="component_diagrams">component_diagrams</option>
-                  <option value="component_specifications">component_specifications</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="q5-type">Join type</label>
-                <select id="q5-type" class="form-control">
-                  <option value="inner" selected>INNER JOIN</option>
-                  <option value="left">LEFT JOIN</option>
-                  <option value="right">RIGHT JOIN</option>
-                </select>
-              </div>
-            </div>
-            <div id="query5-container"></div>
-          </div>
-
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">Query 6 &amp; 7: Subquery and Correlated Subquery</h2>
-                <p class="lab-card-desc">Run a nested subquery or a correlated existence query, including the server-side SQL template.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="run-subquery">Subquery (Q6)</button>
-                <button class="btn btn-secondary btn-sm" type="button" data-action="run-correlated">Correlated (Q7)</button>
-              </div>
-            </div>
-            <div id="subquery-container"></div>
-          </div>
-        </div>
-
-        <!-- Tab 3: Views -->
-        <div id="tab-views" class="lab-panel" role="tabpanel">
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">View: v_component_catalog</h2>
-                <p class="lab-card-desc">Joins <code>components</code>, <code>categories</code>, and parent categories into one display-ready view.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="load-view-catalog">Load catalog view</button>
-              </div>
-            </div>
-            <div id="view-catalog-container"></div>
-          </div>
-
-          <div class="lab-card">
-            <div class="lab-card-head">
-              <div>
-                <h2 class="lab-card-title">View: v_category_component_counts</h2>
-                <p class="lab-card-desc">Aggregated view describing how many components belong to each category.</p>
-              </div>
-              <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="load-view-counts">Load counts view</button>
-              </div>
-            </div>
-            <div id="view-counts-container"></div>
-          </div>
-        </div>
-
-        <!-- Tab 4: Benchmarks -->
+        <!-- Tab 2: Benchmarks -->
         <div id="tab-benchmarks" class="lab-panel" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -1577,25 +1402,11 @@ const app = {
                 <button class="btn btn-primary btn-sm" type="button" data-action="load-timing-report">Refresh report</button>
               </div>
             </div>
-            <div class="range-row">
-              <label class="range-row-label" for="report-lines">Report lines shown</label>
-              <output class="range-row-value" id="report-lines-value">24</output>
-              <input
-                type="range"
-                id="report-lines"
-                min="8"
-                max="80"
-                step="4"
-                value="24"
-                data-input="report-lines"
-                aria-label="Number of benchmark report lines to display"
-              />
-            </div>
-            <div id="timing-report-container" class="result-text">Loading report…</div>
+            <div id="timing-report-container" class="result-text">Loading benchmark tables…</div>
           </div>
         </div>
 
-        <!-- Tab 5: Dashboard -->
+        <!-- Tab 3: Dashboard -->
         <div id="tab-dashboard" class="lab-panel" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -1905,318 +1716,256 @@ const app = {
     }
   },
 
-  async loadQuery1(isXml = false) {
-    const container = document.getElementById('query1-container');
-    container.innerHTML = '<p class="result-text">Loading full-table components…</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getComponentsXml(1, 10);
-        this.currentXml = xml;
-        container.innerHTML = `
-          <div class="data-actions">
-            <button class="btn btn-secondary btn-sm" type="button" data-action="download-xml" data-arg="query1_components.xml">Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-      } else {
-        const res = await api.lab.getComponents(1, 10);
-        container.innerHTML = `
-          <div class="table-responsive">
-            <table class="edu-table">
-              <thead><tr><th>ID</th><th>Category</th><th>Name</th><th>Slug</th><th>Short description</th></tr></thead>
-              <tbody>
-                ${res.data.items
-                  .map(
-                    comp => `
-                      <tr>
-                        <td>${this.escapeHtml(comp.component_id)}</td>
-                        <td>${this.escapeHtml(comp.category_id)}</td>
-                        <td><strong>${this.escapeHtml(comp.name)}</strong></td>
-                        <td>${this.escapeHtml(comp.slug)}</td>
-                        <td>${this.escapeHtml(comp.short_description || '')}</td>
-                      </tr>
-                    `
-                  )
-                  .join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runQuery3(isXml = false) {
-    const fn = document.getElementById('q3-fn').value;
-    const field = document.getElementById('q3-field').value;
-    const container = document.getElementById('query3-container');
-    container.innerHTML = '<p class="result-text">Executing aggregate…</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getAggregateXml(fn, field);
-        this.currentXml = xml;
-        container.innerHTML = `
-          <div class="data-actions">
-            <button class="btn btn-secondary btn-sm" type="button" data-action="download-xml" data-arg="query3_aggregate.xml">Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-      } else {
-        const res = await api.lab.getAggregate(fn, field);
-        container.innerHTML = `
-          <div class="alert alert-success">
-            <strong>${this.escapeHtml(res.data.function)}(${this.escapeHtml(res.data.field)})</strong>
-            = <span style="font-size: 1.2rem; font-weight: 700; color: var(--accent-hover);">${this.escapeHtml(res.data.value)}</span>
-            <span style="margin-left: 1rem; color: var(--muted);">evaluated across ${this.escapeHtml(res.data.rowCount)} rows</span>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runQuery4(isXml = false) {
-    const field = document.getElementById('q4-field').value;
-    const op = document.getElementById('q4-op').value;
-    const value = document.getElementById('q4-val').value.trim();
-    const container = document.getElementById('query4-container');
-    container.innerHTML = '<p class="result-text">Executing conditional query…</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getFilterXml(field, op, value);
-        this.currentXml = xml;
-        container.innerHTML = `
-          <div class="data-actions">
-            <button class="btn btn-secondary btn-sm" type="button" data-action="download-xml" data-arg="query4_conditional.xml">Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-      } else {
-        const res = await api.lab.getFilter(field, op, value, 1, 10);
-        container.innerHTML = `
-          <div class="alert alert-success">
-            Matched <strong>${this.escapeHtml(res.data.total)}</strong> components where
-            <code>${this.escapeHtml(res.data.filter.field)} ${this.escapeHtml(res.data.filter.operator)} ${this.escapeHtml(res.data.filter.value)}</code>
-          </div>
-          <div class="table-responsive">
-            <table class="edu-table">
-              <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Slug</th></tr></thead>
-              <tbody>
-                ${res.data.items
-                  .map(
-                    row => `
-                      <tr>
-                        <td>${this.escapeHtml(row.component_id)}</td>
-                        <td><strong>${this.escapeHtml(row.name)}</strong></td>
-                        <td>${this.escapeHtml(row.category_id)}</td>
-                        <td>${this.escapeHtml(row.slug)}</td>
-                      </tr>
-                    `
-                  )
-                  .join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runQuery5() {
-    const left = document.getElementById('q5-left').value;
-    const right = document.getElementById('q5-right').value;
-    const type = document.getElementById('q5-type').value;
-    const container = document.getElementById('query5-container');
-    container.innerHTML = '<p class="result-text">Executing join query…</p>';
-
-    try {
-      const res = await api.lab.getJoin(left, right, type, 1, 10);
-      container.innerHTML = `
-        <div class="alert alert-info">
-          Join condition: <code>${this.escapeHtml(res.data.joinCondition)}</code>
-          <span style="margin-left: 0.5rem; color: var(--muted);">${this.escapeHtml(res.data.joinType)}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>ID</th><th>Name</th><th>Joined resource</th></tr></thead>
-            <tbody>
-              ${res.data.rows
-                .map(
-                  row => `
-                    <tr>
-                      <td>${this.escapeHtml(row.component_id || row.category_id)}</td>
-                      <td><strong>${this.escapeHtml(row.name || '')}</strong></td>
-                      <td>${this.escapeHtml(row.joined_name || row.title || '')}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runSubquery() {
-    const container = document.getElementById('subquery-container');
-    container.innerHTML = '<p class="result-text">Executing subquery across tables…</p>';
-
-    try {
-      const res = await api.lab.getSubquery('categories_in_digital');
-      container.innerHTML = `
-        <div class="alert alert-info">
-          <strong>${this.escapeHtml(res.data.description)}</strong>
-          <pre class="sql-block">${this.escapeHtml(res.data.sql)}</pre>
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Component ID</th><th>Name</th><th>Category</th><th>Slug</th></tr></thead>
-            <tbody>
-              ${res.data.rows
-                .slice(0, 10)
-                .map(
-                  row => `
-                    <tr>
-                      <td>${this.escapeHtml(row.component_id)}</td>
-                      <td>${this.escapeHtml(row.name)}</td>
-                      <td>${this.escapeHtml(row.category_id)}</td>
-                      <td>${this.escapeHtml(row.slug)}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runCorrelatedQuery() {
-    const container = document.getElementById('subquery-container');
-    container.innerHTML = '<p class="result-text">Executing correlated subquery across tables…</p>';
-
-    try {
-      const res = await api.lab.getCorrelated('categories_with_components');
-      container.innerHTML = `
-        <div class="alert alert-info">
-          <strong>${this.escapeHtml(res.data.description)}</strong>
-          <pre class="sql-block">${this.escapeHtml(res.data.sql)}</pre>
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Category ID</th><th>Name</th><th>Slug</th></tr></thead>
-            <tbody>
-              ${res.data.rows
-                .map(
-                  row => `
-                    <tr>
-                      <td>${this.escapeHtml(row.category_id)}</td>
-                      <td>${this.escapeHtml(row.name)}</td>
-                      <td>${this.escapeHtml(row.slug)}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async loadViewCatalog() {
-    const container = document.getElementById('view-catalog-container');
-    container.innerHTML = '<p class="result-text">Loading v_component_catalog…</p>';
-
-    try {
-      const res = await api.lab.getViewCatalog(1, 10);
-      container.innerHTML = `
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>ID</th><th>Component</th><th>Category</th><th>Parent category</th></tr></thead>
-            <tbody>
-              ${res.data.items
-                .map(
-                  row => `
-                    <tr>
-                      <td>${this.escapeHtml(row.component_id)}</td>
-                      <td><strong>${this.escapeHtml(row.component_name)}</strong></td>
-                      <td>${this.escapeHtml(row.category_name)}</td>
-                      <td>${this.escapeHtml(row.parent_category_name || '-')}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async loadViewCounts() {
-    const container = document.getElementById('view-counts-container');
-    container.innerHTML = '<p class="result-text">Loading v_category_component_counts…</p>';
-
-    try {
-      const res = await api.lab.getViewCounts();
-      container.innerHTML = `
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Category ID</th><th>Name</th><th>Slug</th><th>Components</th></tr></thead>
-            <tbody>
-              ${res.data.items
-                .map(
-                  row => `
-                    <tr>
-                      <td>${this.escapeHtml(row.category_id)}</td>
-                      <td><strong>${this.escapeHtml(row.category_name)}</strong></td>
-                      <td>${this.escapeHtml(row.category_slug)}</td>
-                      <td>${this.escapeHtml(row.component_count)}</td>
-                    </tr>
-                  `
-                )
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
   async loadTimingReport() {
     const container = document.getElementById('timing-report-container');
     if (!container) return;
 
     try {
       const res = await api.lab.getTimingReport();
-      const limit = Number(this.reportLineLimit || 24);
-      const lines = String(res.data.report || 'No report available.').split('\n');
-      container.innerHTML = '<div class="report-viewer"></div>';
-      container.firstElementChild.textContent = lines.slice(0, limit).join('\n');
+      const report = String(res.data.report || '');
+      if (!report.trim()) {
+        container.innerHTML = '<p class="result-text">No benchmark report available.</p>';
+        return;
+      }
+      container.innerHTML = this.renderBenchmarkReport(this.parseBenchmarkReport(report));
     } catch (err) {
       container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
     }
+  },
+
+  /* ----------------------------------------------------------------
+     Index benchmark report: markdown in, tables out.
+     ---------------------------------------------------------------- */
+
+  /** One `| a | b |` row -> trimmed cells with the markdown noise removed. */
+  splitMarkdownRow(line) {
+    return String(line)
+      .trim()
+      .replace(/^\|/, '')
+      .replace(/\|$/, '')
+      .split('|')
+      .map(cell => cell.trim().replace(/\*\*/g, '').replace(/`/g, ''));
+  },
+
+  /** Every GitHub-style table in a markdown document, in reading order. */
+  parseMarkdownTables(markdown) {
+    const lines = String(markdown).split('\n');
+    const tables = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const isRow = /^\s*\|/.test(lines[i]);
+      const isDivider = /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || '');
+      if (!isRow || !isDivider) {
+        i += 1;
+        continue;
+      }
+
+      const header = this.splitMarkdownRow(lines[i]);
+      const rows = [];
+      i += 2;
+      while (i < lines.length && /^\s*\|/.test(lines[i])) {
+        rows.push(this.splitMarkdownRow(lines[i]));
+        i += 1;
+      }
+      tables.push({ header, rows });
+    }
+
+    return tables;
+  },
+
+  /** Pull the report's metadata, index list, timings, plans and conclusions out. */
+  parseBenchmarkReport(markdown) {
+    const md = String(markdown);
+
+    // Header bullets: "**Database Engine:** ..." plus the dataset line items.
+    const meta = [];
+    const metaMatches = md.matchAll(/^\*\*([^*\n]+):\*\*\s*(.+)$/gm);
+    for (const match of metaMatches) {
+      const value = match[2].replace(/\s+/g, ' ').trim();
+      // "Dataset Size:" only introduces a list; the list items follow below.
+      if (!value || value.startsWith('-')) continue;
+      meta.push([match[1].trim(), value]);
+    }
+    const datasetMatches = md.matchAll(/^-\s*`?([^`:\n]+)`?\s*table:\s*([\d,]+)\s*rows/gm);
+    for (const match of datasetMatches) meta.push([`${match[1].trim()} (rows)`, match[2].trim()]);
+
+    // "1. **`idx_...` on `table(column)`**" followed by its justification.
+    const indexes = [];
+    const indexMatches = md.matchAll(
+      /^\d+\.\s+\*\*([^\n]+)\*\*[^\n]*\n+\s*-\s+\*\*Justification:\*\*\s*([\s\S]*?)(?=\n\s*\d+\.\s+\*\*|\n##|$)/gm
+    );
+    for (const match of indexMatches) {
+      indexes.push([
+        match[1].replace(/`/g, '').trim(),
+        match[2].replace(/`/g, '').replace(/\s+/g, ' ').trim()
+      ]);
+    }
+
+    // "### Q1: Full-table display query" sections.
+    const queries = [];
+    const lines = md.split('\n');
+    lines.forEach((line, index) => {
+      const heading = line.match(/^###\s+(Q\d+):\s*(.+)$/);
+      if (!heading) return;
+
+      const block = [];
+      let cursor = index + 1;
+      while (cursor < lines.length && !/^#{2,3}\s/.test(lines[cursor])) {
+        block.push(lines[cursor]);
+        cursor += 1;
+      }
+      const text = block.join('\n');
+      const field = label => {
+        const match = text.match(new RegExp(`-\\s*\\*\\*${label}:\\*\\*\\s*(.+)`));
+        return match ? match[1].replace(/`/g, '').trim() : '';
+      };
+      const sql = text.match(/```sql\s*\n([\s\S]*?)```/);
+      const timings = text.match(
+        /Before Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)[\s\S]*?After Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)/
+      );
+      const analysis = text.split(/Analysis & Discussion:\*\*/)[1] || '';
+
+      queries.push({
+        id: heading[1],
+        name: heading[2].trim(),
+        purpose: field('Purpose'),
+        rows: field('Dataset / Result Rows'),
+        key: field('Optimizer Key Used'),
+        sql: sql ? sql[1].trim() : '',
+        beforeMin: timings ? timings[2] : '',
+        beforeMax: timings ? timings[3] : '',
+        afterMin: timings ? timings[5] : '',
+        afterMax: timings ? timings[6] : '',
+        analysis: analysis.replace(/\s+/g, ' ').trim()
+      });
+    });
+
+    // "## 4. Methodological Conclusions" numbered points.
+    const conclusions = [];
+    const conclusionSection = md.split(/^##\s*4\..*$/m)[1] || '';
+    const conclusionMatches = conclusionSection.matchAll(
+      /^\d+\.\s+\*\*([^*]+):\*\*\s*([\s\S]*?)(?=\n\d+\.\s+\*\*|$)/gm
+    );
+    for (const match of conclusionMatches) {
+      conclusions.push([match[1].trim(), match[2].replace(/\s+/g, ' ').trim()]);
+    }
+
+    const tables = this.parseMarkdownTables(md);
+
+    return { meta, summary: tables[0] || null, indexes, queries, conclusions };
+  },
+
+  /** Render the parsed report as a stack of labelled tables. */
+  renderBenchmarkReport(report) {
+    const parts = [];
+
+    if (report.meta.length) {
+      parts.push('<h3 class="bench-heading">Report header</h3>');
+      parts.push(this.renderBenchmarkTable(['Field', 'Value'], report.meta, { className: 'bench-table--meta' }));
+    }
+
+    if (report.summary) {
+      parts.push('<h3 class="bench-heading">Before vs after the candidate indexes</h3>');
+      parts.push(
+        this.renderBenchmarkTable(report.summary.header, report.summary.rows, {
+          className: 'bench-table--summary',
+          cellClass: (cell, column) => {
+            if (column === 0) return 'bench-cell-id';
+            if (column === report.summary.header.length - 1) {
+              return /^-/.test(cell) ? 'bench-cell-slower' : 'bench-cell-faster';
+            }
+            return /^-?[\d.]+( ms|%)?$/.test(cell) ? 'bench-cell-number' : '';
+          }
+        })
+      );
+    }
+
+    if (report.indexes.length) {
+      parts.push('<h3 class="bench-heading">Candidate indexes and their justification</h3>');
+      parts.push(
+        this.renderBenchmarkTable(['Index', 'Justification'], report.indexes, {
+          className: 'bench-table--indexes',
+          cellClass: (cell, column) => (column === 0 ? 'bench-cell-id' : 'bench-cell-text')
+        })
+      );
+    }
+
+    if (report.queries.length) {
+      parts.push('<h3 class="bench-heading">Per-query timings</h3>');
+      parts.push(
+        this.renderBenchmarkTable(
+          ['Query', 'Name', 'Rows', 'Before avg (ms)', 'After avg (ms)', 'Index used'],
+          report.queries.map(query => [
+            query.id,
+            query.name,
+            query.rows || '-',
+            query.beforeMin ? `${query.beforeMin} – ${query.beforeMax}` : '-',
+            query.afterMin ? `${query.afterMin} – ${query.afterMax}` : '-',
+            query.key || '-'
+          ]),
+          {
+            className: 'bench-table--timings',
+            cellClass: (cell, column) =>
+              column === 0 ? 'bench-cell-id' : column >= 2 ? 'bench-cell-number' : ''
+          }
+        )
+      );
+
+      parts.push('<h3 class="bench-heading">Execution plan and analysis</h3>');
+      parts.push(
+        this.renderBenchmarkTable(
+          ['Query', 'SQL', 'Analysis'],
+          report.queries.map(query => [query.id, query.sql || '-', query.analysis || '-']),
+          {
+            className: 'bench-table--detail',
+            cellClass: (cell, column) =>
+              column === 0 ? 'bench-cell-id' : column === 1 ? 'bench-cell-sql' : 'bench-cell-text'
+          }
+        )
+      );
+    }
+
+    if (report.conclusions.length) {
+      parts.push('<h3 class="bench-heading">Methodological conclusions</h3>');
+      parts.push(
+        this.renderBenchmarkTable(
+          ['Point', 'Detail'],
+          report.conclusions,
+          {
+            className: 'bench-table--conclusions',
+            cellClass: (cell, column) => (column === 0 ? 'bench-cell-id' : 'bench-cell-text')
+          }
+        )
+      );
+    }
+
+    return parts.length ? parts.join('\n') : '<p class="result-text">No benchmark report available.</p>';
+  },
+
+  renderBenchmarkTable(header, rows, { className = '', cellClass = () => '' } = {}) {
+    return `
+      <div class="table-responsive">
+        <table class="edu-table bench-table ${className}">
+          <thead>
+            <tr>${header.map(cell => `<th>${this.escapeHtml(cell)}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map(
+                row =>
+                  `<tr>${row
+                    .map((cell, column) => {
+                      const extra = cellClass(cell, column);
+                      return `<td${extra ? ` class="${extra}"` : ''}>${this.escapeHtml(cell)}</td>`;
+                    })
+                    .join('')}</tr>`
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
   },
 
   async loadDashboard() {
@@ -2323,7 +2072,9 @@ const app = {
         ${description ? `<p class="subcategory-desc">${this.escapeHtml(description)}</p>` : ''}
         <span class="subcategory-foot">
           <span class="subcategory-foot-count"><b>${count}</b> component${count === 1 ? '' : 's'}</span>
-          <span class="subcategory-arrow" aria-hidden="true">&#8594;</span>
+          <span class="subcategory-arrow" aria-hidden="true">
+            <span class="subcategory-arrow-glyph">&#8594;</span>
+          </span>
         </span>
       </a>
     `;
@@ -2363,8 +2114,8 @@ const app = {
     let html = '<div class="pagination-bar">';
     html +=
       page > 1
-        ? `<a class="page-btn" href="${href(page - 1)}" rel="prev">« Prev</a>`
-        : '<button class="page-btn" type="button" disabled>« Prev</button>';
+        ? `<a class="page-btn" href="${href(page - 1)}" rel="prev"><span class="page-arrow page-arrow--left" aria-hidden="true">«</span> Prev</a>`
+        : '<button class="page-btn" type="button" disabled><span class="page-arrow page-arrow--left" aria-hidden="true">«</span> Prev</button>';
 
     if (pages[0] > 1) {
       html += `<a class="page-btn" href="${href(1)}">1</a>`;
@@ -2386,8 +2137,8 @@ const app = {
 
     html +=
       page < totalPages
-        ? `<a class="page-btn" href="${href(page + 1)}" rel="next">Next »</a>`
-        : '<button class="page-btn" type="button" disabled>Next »</button>';
+        ? `<a class="page-btn" href="${href(page + 1)}" rel="next">Next <span class="page-arrow page-arrow--right" aria-hidden="true">»</span></a>`
+        : '<button class="page-btn" type="button" disabled>Next <span class="page-arrow page-arrow--right" aria-hidden="true">»</span></button>';
 
     html += '</div>';
     return html;
@@ -2469,10 +2220,17 @@ const app = {
 
 window.addEventListener('DOMContentLoaded', () => app.init());
 
-// Equations are sized to the column, so they must be re-fitted when the
-// column changes width.
+// Equations are sized to the column, so they must be re-fitted whenever the
+// column or the font metrics change - otherwise a late webfont can push a
+// scaled equation past the edge and bring back the horizontal scrollbar.
 let equationResizeTimer = null;
-window.addEventListener('resize', () => {
+const refitEquations = () => {
   clearTimeout(equationResizeTimer);
-  equationResizeTimer = setTimeout(() => app.fitEquations(), 150);
-});
+  equationResizeTimer = setTimeout(() => app.fitEquations(), 120);
+};
+
+window.addEventListener('resize', refitEquations);
+window.addEventListener('load', refitEquations);
+if (document.fonts && typeof document.fonts.ready === 'object') {
+  document.fonts.ready.then(refitEquations).catch(() => {});
+}

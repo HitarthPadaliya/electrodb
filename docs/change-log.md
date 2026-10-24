@@ -303,3 +303,52 @@ Database / backend / tests
 - `server/tests/api.test.js` asserts the symbol/circuit pair and the reference circuit path;
   `server/tests/offline.test.js` (new, `npm run test:offline`) covers the diagram mapping and
   the SVG restyle pipeline without a database.
+
+## 19. Artwork polish, table styling, benchmarks as tables, and calmer motion
+
+**Change implemented: preset/clear colours now cover every drawing, inversion bubbles sit on
+the body edge, tables follow the reference styling, the benchmark report is presented as
+tables, and navigation no longer animates the whole page.**
+
+Diagrams
+- `kit.boxDiagram` draws inversion bubbles *after* the body, centred on the edge, so each
+  circle reads as a full circle straddling the border (half in, half out). Pin stubs stop at
+  the bubble edge instead of running through it.
+- The clock wedge moved inside the body (`boxX … boxX + 12`), matching `jk-flip-flop.svg`.
+- Preset and clear keep their own colours in every generated box symbol (amber `#e8b455` /
+  violet `#b48cf0`), including their dashed stubs, bubbles and labels; ordinary control pins
+  such as `LOAD` stay grey. The two supplied reference drawings remain byte-for-byte as
+  delivered, so `flipflops/jk.svg` still shows the grey dashed stubs of the original file.
+- All 147 symbols (and the pinouts, circuits, state and timing drawings) were regenerated.
+
+Tables and equations
+- `.edu-table` now follows `electrodb-frontend/`: collapsed borders, a blue-tinted header band
+  (`--table-head`), zebra rows (`--table-even`), deep-blue hover (`--table-hover`), heavy
+  header weight, and a table that is centred and only as wide as its content.
+- Table headers are typeset in bold maths (`\boldsymbol`); body cells keep the normal weight.
+- Truth tables carry an **Operation** column and no longer repeat a separate `Q` column: the
+  next state is written as a function of the stored state — `Q_n`, `0`, `1` or
+  `\overline{Q_n}` — so one row describes a whole behaviour. Shared definition:
+  `scripts/lib/content-tables.js`, mirrored in `electrodb.sql` and `database/07_seed_data.sql`.
+- Equations start at `1.7rem` and `fitEquations()` scales each one to ~94% of its column with a
+  64px ceiling and a correction pass, so the maths grows without ever producing a horizontal
+  scrollbar (`overflow: hidden` on the block).
+
+Lab console
+- The **SQL Demos** and **Views** tabs are gone, along with the "Demo mode" pill and the
+  description under the title. The `v_component_catalogue` load button that referenced the
+  misspelled `getViewCatalog` client method went with them.
+- The index benchmark report from `database/10_query_timing_results.md` is parsed in the
+  browser (`parseBenchmarkReport`) and rendered as six tables — report header, before/after
+  summary, candidate indexes, per-query timings, execution plans, and conclusions — instead of
+  a truncated monospaced text dump. The "report lines" slider was removed.
+
+Navigation and micro-interaction
+- Page transitions are an opacity-only 150 ms fade: no more sliding a full page of cards and
+  drawings on every click, and the scroll reset now happens with the new markup.
+- Clicking search twice no longer re-renders (and re-animates) the same result set.
+- Every arrow now travels the way it points: section links, pagination, and the back link
+  slide left/right. The category tile arrow lost its filled circle — the arrow slides out while
+  a second one slides in behind it.
+- A category page shows the "Components" heading only when it actually has components (or is
+  an empty leaf); branch categories show their subcategories alone.

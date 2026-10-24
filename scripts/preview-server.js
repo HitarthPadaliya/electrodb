@@ -19,6 +19,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+const { truthTableFor, characteristicTableFor } = require('./lib/content-tables');
+
 const REPO = path.resolve(__dirname, '..');
 const PUBLIC = path.join(REPO, 'public');
 const PORT = Number(process.env.PORT || 3000);
@@ -227,25 +229,14 @@ function contentFor(component) {
   }
 
   if (cid === 7) {
-    const isJk = component.slug.includes('jk');
     content.push({
       sectionKey: 'truth_table', title: 'Truth Table', type: 'TABLE',
-      content: {
-        columns: isJk ? ['J', 'K', 'Q', 'Q(next)', 'Operation'] : ['D', 'Q', 'Q(next)'],
-        rows: isJk
-          ? [[0, 0, 0, 0, 'Hold'], [0, 0, 1, 1, 'Hold'], [0, 1, 0, 0, 'Reset'], [0, 1, 1, 0, 'Reset'], [1, 0, 0, 1, 'Set'], [1, 0, 1, 1, 'Set'], [1, 1, 0, 1, 'Toggle'], [1, 1, 1, 0, 'Toggle']]
-          : [[0, 0, 0], [0, 1, 0], [1, 0, 1], [1, 1, 1]]
-      },
-      caption: 'Q(next) is the output after the active clock edge.'
+      content: truthTableFor(component.slug),
+      caption: 'Qn is the stored state; Qn+1 is the state after the active clock edge.'
     });
     content.push({
       sectionKey: 'characteristic_table', title: 'Characteristic Table', type: 'TABLE',
-      content: {
-        columns: isJk ? ['J', 'K', 'Q', 'Q(next)'] : ['D', 'Q', 'Q(next)'],
-        rows: isJk
-          ? [[0, 0, 0, 0], [0, 0, 1, 1], [0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 0, 1], [1, 0, 1, 1], [1, 1, 0, 1], [1, 1, 1, 0]]
-          : [[0, 0, 0], [0, 1, 0], [1, 0, 1], [1, 1, 1]]
-      },
+      content: characteristicTableFor(component.slug),
       caption: null
     });
   }
@@ -254,7 +245,7 @@ function contentFor(component) {
     content.push({
       sectionKey: 'truth_table', title: 'Truth Table', type: 'TABLE',
       content: { columns: ['A', 'B', 'Y'], rows: [[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 0]] },
-      caption: 'Illustrative two-input truth table; compound gates expose their own input sets.'
+      caption: 'Two-input truth table; compound gates expose their own input sets.'
     });
   }
 
