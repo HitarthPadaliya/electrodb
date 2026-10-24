@@ -1774,7 +1774,14 @@ const app = {
     return tables;
   },
 
-  /** Pull the report's metadata, index list, timings, plans and conclusions out. */
+  /**
+   * Pull the report's header facts, the summary table and the per-query timing
+   * ranges out of the markdown.
+   *
+   * Only those three views are kept: the candidate-index list, the per-query
+   * execution plans and the closing methodology notes stay in the markdown
+   * source instead of being repeated on screen.
+   */
   parseBenchmarkReport(markdown) {
     const md = String(markdown);
 
@@ -1790,19 +1797,9 @@ const app = {
     const datasetMatches = md.matchAll(/^-\s*`?([^`:\n]+)`?\s*table:\s*([\d,]+)\s*rows/gm);
     for (const match of datasetMatches) meta.push([`${match[1].trim()} (rows)`, match[2].trim()]);
 
-    // "1. **`idx_...` on `table(column)`**" followed by its justification.
-    const indexes = [];
-    const indexMatches = md.matchAll(
-      /^\d+\.\s+\*\*([^\n]+)\*\*[^\n]*\n+\s*-\s+\*\*Justification:\*\*\s*([\s\S]*?)(?=\n\s*\d+\.\s+\*\*|\n##|$)/gm
-    );
-    for (const match of indexMatches) {
-      indexes.push([
-        match[1].replace(/`/g, '').trim(),
-        match[2].replace(/`/g, '').replace(/\s+/g, ' ').trim()
-      ]);
-    }
-
-    // "### Q1: Full-table display query" sections.
+    // "### Q1: Full-table display query" sections. Each one contributes a row
+    // to the per-query table: name, rows returned, index used, and the min/max
+    // behind every average.
     const queries = [];
     const lines = md.split('\n');
     lines.forEach((line, index) => {
@@ -1820,58 +1817,49 @@ const app = {
         const match = text.match(new RegExp(`-\\s*\\*\\*${label}:\\*\\*\\s*(.+)`));
         return match ? match[1].replace(/`/g, '').trim() : '';
       };
-      const sql = text.match(/```sql\s*\n([\s\S]*?)```/);
       const timings = text.match(
         /Before Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)[\s\S]*?After Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)/
       );
-      const analysis = text.split(/Analysis & Discussion:\*\*/)[1] || '';
 
       queries.push({
         id: heading[1],
         name: heading[2].trim(),
-        purpose: field('Purpose'),
         rows: field('Dataset / Result Rows'),
         key: field('Optimizer Key Used'),
-        sql: sql ? sql[1].trim() : '',
         beforeMin: timings ? timings[2] : '',
         beforeMax: timings ? timings[3] : '',
         afterMin: timings ? timings[5] : '',
-        afterMax: timings ? timings[6] : '',
-        analysis: analysis.replace(/\s+/g, ' ').trim()
+        afterMax: timings ? timings[6] : ''
       });
     });
 
-    // "## 4. Methodological Conclusions" numbered points.
-    const conclusions = [];
-    const conclusionSection = md.split(/^##\s*4\..*$/m)[1] || '';
-    const conclusionMatches = conclusionSection.matchAll(
-      /^\d+\.\s+\*\*([^*]+):\*\*\s*([\s\S]*?)(?=\n\d+\.\s+\*\*|$)/gm
-    );
-    for (const match of conclusionMatches) {
-      conclusions.push([match[1].trim(), match[2].replace(/\s+/g, ' ').trim()]);
-    }
-
     const tables = this.parseMarkdownTables(md);
 
-    return { meta, summary: tables[0] || null, indexes, queries, conclusions };
+    return { meta, summary: tables[0] || null, queries };
   },
 
-  /** Render the parsed report as a stack of labelled tables. */
+  /** Render the parsed report as three labelled tables. */
   renderBenchmarkReport(report) {
     const parts = [];
 
     if (report.meta.length) {
-      parts.push('<h3 class="bench-heading">Report header</h3>');
-      parts.push(this.renderBenchmarkTable(['Field', 'Value'], report.meta, { className: 'bench-table--meta' }));
+      parts.push('<h3 class="bench-heading">Report</h3>');
+      parts.push(
+        this.renderBenchmarkTable(['Field', 'Value'], report.meta, {
+          className: 'bench-table--meta',
+          cellClass: (cell, column) => (column === 0 ? 'bench-cell-key' : 'bench-cell-value')
+        })
+      );
     }
 
     if (report.summary) {
-      parts.push('<h3 class="bench-heading">Before vs after the candidate indexes</h3>');
+      parts.push('<h3 class="bench-heading">Execution timing summary</h3>');
       parts.push(
         this.renderBenchmarkTable(report.summary.header, report.summary.rows, {
           className: 'bench-table--summary',
           cellClass: (cell, column) => {
             if (column === 0) return 'bench-cell-id';
+            if (column === 1) return 'bench-cell-name';
             if (column === report.summary.header.length - 1) {
               return /^-/.test(cell) ? 'bench-cell-slower' : 'bench-cell-faster';
             }
@@ -1881,21 +1869,11 @@ const app = {
       );
     }
 
-    if (report.indexes.length) {
-      parts.push('<h3 class="bench-heading">Candidate indexes and their justification</h3>');
-      parts.push(
-        this.renderBenchmarkTable(['Index', 'Justification'], report.indexes, {
-          className: 'bench-table--indexes',
-          cellClass: (cell, column) => (column === 0 ? 'bench-cell-id' : 'bench-cell-text')
-        })
-      );
-    }
-
     if (report.queries.length) {
       parts.push('<h3 class="bench-heading">Per-query timings</h3>');
       parts.push(
         this.renderBenchmarkTable(
-          ['Query', 'Name', 'Rows', 'Before avg (ms)', 'After avg (ms)', 'Index used'],
+          ['Query', 'Name', 'Rows', 'Before min–max (ms)', 'After min–max (ms)', 'Index used'],
           report.queries.map(query => [
             query.id,
             query.name,
@@ -1907,34 +1885,13 @@ const app = {
           {
             className: 'bench-table--timings',
             cellClass: (cell, column) =>
-              column === 0 ? 'bench-cell-id' : column >= 2 ? 'bench-cell-number' : ''
-          }
-        )
-      );
-
-      parts.push('<h3 class="bench-heading">Execution plan and analysis</h3>');
-      parts.push(
-        this.renderBenchmarkTable(
-          ['Query', 'SQL', 'Analysis'],
-          report.queries.map(query => [query.id, query.sql || '-', query.analysis || '-']),
-          {
-            className: 'bench-table--detail',
-            cellClass: (cell, column) =>
-              column === 0 ? 'bench-cell-id' : column === 1 ? 'bench-cell-sql' : 'bench-cell-text'
-          }
-        )
-      );
-    }
-
-    if (report.conclusions.length) {
-      parts.push('<h3 class="bench-heading">Methodological conclusions</h3>');
-      parts.push(
-        this.renderBenchmarkTable(
-          ['Point', 'Detail'],
-          report.conclusions,
-          {
-            className: 'bench-table--conclusions',
-            cellClass: (cell, column) => (column === 0 ? 'bench-cell-id' : 'bench-cell-text')
+              column === 0
+                ? 'bench-cell-id'
+                : column === 1
+                  ? 'bench-cell-name'
+                  : column >= 2 && column <= 4
+                    ? 'bench-cell-number'
+                    : ''
           }
         )
       );

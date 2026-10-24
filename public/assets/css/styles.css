@@ -595,7 +595,7 @@ select:focus-visible,
 .link-arrow {
   display: inline-block;
   line-height: 1;
-  transition: transform var(--dur-2) var(--ease-out);
+  transition: transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .section-link:hover {
@@ -604,7 +604,7 @@ select:focus-visible,
 
 .section-link:hover .link-arrow,
 a:hover > .link-arrow {
-  transform: translateX(4px);
+  transform: translateX(5px);
 }
 
 .section-sub {
@@ -1104,44 +1104,43 @@ a:hover > .link-arrow {
   font-variant-numeric: tabular-nums;
 }
 
-/* The tile arrow is a small conveyor: the arrow slides out to the right while
-   a second one slides in behind it. No border, no filled disc - just motion in
-   the direction the tile leads. */
+/* The tile arrow springs forward and pulls a short trail of light behind it,
+   so the tile reads as "this way" without a filled disc, a duplicate glyph or
+   a wrapper that clips the motion. The overshoot easing gives it weight; the
+   trail is drawn as a pseudo-element so nothing is added to the markup. */
 .subcategory-arrow {
   position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  width: 22px;
-  height: 22px;
-  overflow: hidden;
+  justify-content: center;
+  width: 30px;
+  height: 20px;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1;
   transition: color var(--dur-2) var(--ease-out);
+}
+
+.subcategory-arrow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(0, 223, 193, 0), var(--secondary));
+  opacity: 0;
+  transform: translateY(-50%);
+  transition:
+    width 320ms var(--ease-out),
+    opacity 160ms linear;
 }
 
 .subcategory-arrow-glyph {
   display: inline-block;
   line-height: 1;
-  opacity: 1;
-  transform: translateX(0);
-  transition:
-    transform var(--dur-2) var(--ease-out),
-    opacity var(--dur-1) linear;
-}
-
-.subcategory-arrow::after {
-  content: '\2192';
-  position: absolute;
-  top: 50%;
-  right: 0;
-  line-height: 1;
-  opacity: 0;
-  transform: translate(-14px, -50%);
-  transition:
-    transform var(--dur-2) var(--ease-out),
-    opacity var(--dur-1) linear;
+  transition: transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .subcategory-card:hover .subcategory-arrow {
@@ -1149,13 +1148,21 @@ a:hover > .link-arrow {
 }
 
 .subcategory-card:hover .subcategory-arrow-glyph {
-  opacity: 0;
-  transform: translateX(16px);
+  transform: translateX(6px);
 }
 
-.subcategory-card:hover .subcategory-arrow::after {
-  opacity: 1;
-  transform: translate(0, -50%);
+.subcategory-card:hover .subcategory-arrow::before {
+  width: 12px;
+  opacity: 0.85;
+}
+
+/* The press lands one step further along the same line of travel. */
+.subcategory-card:active .subcategory-arrow-glyph {
+  transform: translateX(10px);
+}
+
+.subcategory-card:active .subcategory-arrow::before {
+  width: 17px;
 }
 
 .subcategory-card:hover .subcategory-foot {
@@ -1615,70 +1622,84 @@ a:hover > .link-arrow {
 }
 
 /* Tables.
-   Taken straight from electrodb-frontend/: collapsed borders, one blue-tinted
-   header band, zebra rows and a deep-blue hover. The table is centred in its
-   column and only as wide as its content, so a four-column truth table does
-   not stretch across the whole page. */
+   One framed surface instead of a grid of boxes: hairline row rules, a tinted
+   header band closed by an accent rule, zebra striping that only shifts the
+   surface a little, and a hover state that lights the whole row. Text headers
+   are tracked and quiet; maths headers keep their own typography, because the
+   weight comes from \boldsymbol in the markup, never from CSS. */
 .table-responsive {
   width: 100%;
-  margin-top: 1.35rem;
-  overflow-x: auto;
+  margin-top: 1.4rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(13, 17, 23, 0.96), rgba(9, 13, 20, 0.96));
+  box-shadow: 0 26px 60px -46px rgba(0, 0, 0, 1);
 }
 
 .edu-table {
-  width: auto;
-  min-width: min(100%, 320px);
-  margin: 0 auto;
-  border-collapse: collapse;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-variant-numeric: tabular-nums;
 }
 
 .edu-table th {
-  padding: 0.8rem 1.35rem;
-  color: var(--white);
+  padding: 0.82rem 1.2rem;
+  color: var(--fg);
   font-family: var(--font-nav);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  text-transform: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.045em;
   white-space: nowrap;
-  background-color: var(--table-head);
-  border: 1px solid rgba(0, 167, 218, 0.28);
+  background: linear-gradient(180deg, rgba(0, 167, 218, 0.16), rgba(27, 87, 151, 0.05));
+  border-bottom: 1px solid var(--table-head);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.edu-table th + th {
+  border-left: 1px solid rgba(255, 255, 255, 0.045);
 }
 
 .edu-table td {
-  padding: 0.6rem 1.35rem;
+  padding: 0.66rem 1.15rem;
   color: var(--fg-light);
-  border: 1px solid rgba(33, 38, 45, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  transition:
+    background-color var(--dur-1) linear,
+    color var(--dur-1) linear;
 }
 
-.edu-table tbody tr {
-  transition: background-color var(--dur-1) linear;
+.edu-table tbody tr:first-child td {
+  border-top: 0;
 }
 
-.edu-table tbody tr:nth-child(even) {
+.edu-table td:first-child {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.edu-table tbody tr:nth-child(even) td {
   background-color: var(--table-even);
 }
 
-.edu-table tbody tr:hover {
+.edu-table tbody tr:hover td {
   background-color: var(--table-hover);
+  color: var(--fg);
 }
 
-/* Symbols rendered through KaTeX inherit their cell's colour, never the accent.
-   Headers are already bold through \boldsymbol, so no extra weight is added
-   here - that would double-bold the maths. */
-.edu-table .katex,
-.edu-table th .katex,
-.edu-table td .katex {
+.edu-table tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Symbols rendered through KaTeX follow their cell, never the accent colour. */
+.edu-table .katex {
   color: inherit;
-  font-size: 1em;
-}
-
-.edu-table th .katex {
-  color: var(--white);
+  font-size: 1.02em;
+  letter-spacing: normal;
 }
 
 .edu-table .cell-highlight {
@@ -1689,7 +1710,7 @@ a:hover > .link-arrow {
 .edu-table .cell-value {
   color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
 }
 
 /* Specification tables read as a definition list, not a centred matrix. */
@@ -2239,12 +2260,25 @@ input[type='range']:focus-visible {
 /* Benchmark report: the markdown report is presented as a stack of tables,
    each with its own caption, instead of a scrolling wall of monospaced text. */
 .bench-heading {
-  margin: 1.9rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 2.1rem 0 0;
   color: var(--fg);
-  font-family: var(--font-accent);
-  font-size: 1.02rem;
+  font-family: var(--font-nav);
+  font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.bench-heading::before {
+  content: '';
+  flex-shrink: 0;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), rgba(0, 167, 218, 0));
 }
 
 .bench-heading:first-child {
@@ -2252,26 +2286,49 @@ input[type='range']:focus-visible {
 }
 
 .bench-table {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .bench-table th {
-  font-size: 0.84rem;
-  letter-spacing: 0.05em;
+  padding: 0.7rem 1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
 }
 
 .bench-table td {
-  vertical-align: top;
+  padding: 0.56rem 1rem;
+}
+
+.bench-cell-key {
+  color: var(--muted);
+  font-family: var(--font-nav);
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.bench-cell-value,
+.bench-cell-name {
+  color: var(--fg);
+  text-align: left;
+}
+
+.bench-cell-value {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
 }
 
 .bench-cell-id {
   color: var(--secondary);
   font-family: var(--font-mono);
   font-weight: 700;
+  text-align: left;
   white-space: nowrap;
 }
 
 .bench-cell-number {
+  color: var(--fg-light);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2287,26 +2344,6 @@ input[type='range']:focus-visible {
   color: var(--danger);
   font-weight: 700;
   white-space: nowrap;
-}
-
-.bench-cell-text,
-.bench-cell-sql {
-  text-align: left;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.bench-cell-text {
-  max-width: 420px;
-  color: var(--fg-light);
-}
-
-.bench-cell-sql {
-  max-width: 400px;
-  color: #9db4c6;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  line-height: 1.5;
 }
 
 .metrics-note {

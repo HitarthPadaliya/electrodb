@@ -359,6 +359,14 @@ describe('Lab console content', () => {
     assert.ok(!app.includes('report-viewer'), 'the monospaced dump is gone');
     assert.ok(!app.includes('reportLineLimit'), 'the line-count slider is gone');
   });
+
+  it('keeps only the report header, the summary and the per-query timings', () => {
+    ['Candidate indexes and their justification', 'Execution plan and analysis', 'Methodological conclusions']
+      .forEach(heading => assert.ok(!app.includes(heading), `"${heading}" is not rendered`));
+
+    assert.ok(app.includes('Execution timing summary'), 'the summary table stays');
+    assert.ok(app.includes('Per-query timings'), 'the per-query table stays');
+  });
 });
 
 describe('Table typography', () => {
@@ -371,12 +379,18 @@ describe('Table typography', () => {
     assert.ok(/const body = header \?/.test(app), 'the weight is chosen per header/cell');
   });
 
-  it('styles tables from the reference palette', () => {
+  it('frames the table once and keeps the cells free of a grid', () => {
     const table = css.slice(css.indexOf('.edu-table {'), css.indexOf('.spec-table {'));
-    assert.ok(/border-collapse:\s*collapse/.test(table), 'collapsed borders, as in the reference');
-    assert.ok(/var\(--table-head\)/.test(table), 'the header band uses the reference token');
+
+    assert.ok(
+      /\.table-responsive \{[^}]*border-radius: var\(--radius-md\)/.test(css),
+      'the table sits in one rounded frame'
+    );
+    assert.ok(/border-collapse:\s*separate/.test(table), 'cells are not boxed by a collapsed grid');
+    assert.ok(/border-top: 1px solid rgba\(255, 255, 255, 0\.045\)/.test(table), 'rows are separated by hairlines');
     assert.ok(/var\(--table-even\)/.test(table), 'zebra rows use the reference token');
     assert.ok(/var\(--table-hover\)/.test(table), 'hover uses the reference token');
+    assert.ok(/\.edu-table th \{[^}]*linear-gradient/.test(css), 'the header band is a tint, not a flat block');
   });
 });
 

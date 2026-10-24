@@ -352,3 +352,35 @@ Navigation and micro-interaction
   a second one slides in behind it.
 - A category page shows the "Components" heading only when it actually has components (or is
   an empty leaf); branch categories show their subcategories alone.
+
+## 20. Table restyle and a better tile-arrow animation
+
+**Change implemented: the benchmark tab keeps only the three tables that matter, the data
+tables were restyled from the ground up, and the category tiles got a new arrow motion.**
+
+Benchmark tab
+- The rendered report is now three tables — **Report**, **Execution timing summary** and
+  **Per-query timings**. The "Candidate indexes and their justification", "Execution plan and
+  analysis" and "Methodological conclusions" sections are no longer rendered (they remain in
+  `database/10_query_timing_results.md`); the parser and its `bench-cell-*` helpers were
+  trimmed to match.
+- Per-query rows now show the measured min–max range behind each average, the row count and
+  the index the optimiser used.
+
+Tables
+- Replaced the blue-banded, fully gridded table with one framed surface: a rounded
+  `--card`/`--bg` gradient panel, hairline row rules only (no vertical grid), a tinted header
+  band closed by a single accent rule, `--table-even` zebra rows and a `--table-hover` row
+  highlight that also lights the first cell with a 2px accent edge.
+- Header labels are quieter and tracked (0.8rem / 0.045em); maths headers stay untouched by
+  CSS so `\boldsymbol` remains the only thing making them bold.
+- Bench tables gained explicit cell roles (`bench-cell-key`, `bench-cell-value`,
+  `bench-cell-id`, `bench-cell-name`, `bench-cell-number`, `bench-cell-faster/slower`), so
+  numbers line up in tabular monospace and improvements/deteriorations are colour-coded.
+
+Category / subcategory arrows
+- The two-glyph conveyor is gone. The arrow now springs forward on hover with an overshoot
+  easing and pulls a short teal trail behind it; pressing the tile pushes it one step further
+  along the same line of travel. No filled circle, no clipping box, no duplicated glyph.
+- The section-link arrows share the same spring easing so every right-pointing arrow in the UI
+  moves the same way.
