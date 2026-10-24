@@ -51,6 +51,19 @@
 
   --content-width: 1400px;
   --nav-height: 68px;
+
+  /* Motion — shared timing so every interaction feels like one system */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 150ms;
+  --dur-2: 240ms;
+  --dur-3: 380ms;
+  --transition-surface:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out);
 }
 
 * {
@@ -113,6 +126,21 @@ body::before {
 
 img {
   max-width: 100%;
+}
+
+/*
+ * Catalogue artwork was authored as dark line work on a light canvas.
+ * Inverting it lets the diagrams sit directly on the dark page (as in the
+ * design reference) instead of floating on a bright panel.
+ */
+.main-content img[src*='/assets/svg/'] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.main-content img.no-art {
+  filter: none;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
 }
 
 a {
@@ -178,7 +206,7 @@ select:focus-visible,
   border-radius: var(--radius-sm);
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-2) var(--ease-out);
 }
 
 .skip-link:focus {
@@ -198,10 +226,13 @@ select:focus-visible,
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0, 195, 255, 0.32) 0%, rgba(0, 195, 255, 0.08) 42%, transparent 70%);
   filter: blur(50px);
-  transform: translate(-50%, -50%);
+  left: 0;
+  top: 0;
+  transform: translate3d(-50%, -50%, 0);
   z-index: 9999;
   opacity: 0;
-  transition: opacity 0.4s ease, transform 0.05s ease-out;
+  transition: opacity var(--dur-3) var(--ease-out);
+  will-change: transform;
 }
 
 .cursor-glow.is-active {
@@ -274,7 +305,7 @@ select:focus-visible,
   position: relative;
   text-transform: uppercase;
   text-decoration: none;
-  transition: color 0.25s ease;
+  transition: color var(--dur-2) var(--ease-out);
   white-space: nowrap;
 }
 
@@ -283,17 +314,18 @@ select:focus-visible,
   position: absolute;
   left: 0;
   bottom: 0.15rem;
-  width: 0;
+  width: 100%;
   height: 1px;
   background: var(--accent);
   box-shadow: 0 0 10px rgba(0, 167, 218, 0.8);
-  transition: width 0.25s ease;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-2) var(--ease-out);
 }
 
 .links a:hover,
 .links a.active {
   color: var(--fg);
-  transition: color 0.25s ease;
 }
 
 .links a:hover::after,
@@ -336,7 +368,10 @@ select:focus-visible,
   background-color: #070b12;
   color: var(--fg);
   font-size: 0.85rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
 }
 
 .search-input::placeholder {
@@ -370,7 +405,7 @@ select:focus-visible,
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: var(--transition-surface);
 }
 
 .lab-link:hover {
@@ -400,7 +435,7 @@ select:focus-visible,
   width: 100%;
   background: var(--fg-light);
   border-radius: 999px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out);
 }
 
 .navbar.nav-open .nav-toggle span:nth-child(1) {
@@ -430,14 +465,22 @@ select:focus-visible,
   outline: none;
 }
 
+/* Route content swaps in immediately; the short fade keeps it from popping. */
 .page {
-  animation: page-in 0.35s ease both;
+  animation: page-in var(--dur-2) var(--ease-out) both;
 }
 
 @keyframes page-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
+
 
 /* Breadcrumbs (dummy: Home > Digital Electronics > …) */
 .breadcrumbs {
@@ -454,7 +497,7 @@ select:focus-visible,
   color: var(--accent);
   text-decoration: none;
   font-family: var(--font-body);
-  transition: color 0.15s ease;
+  transition: color var(--dur-2) var(--ease-out);
 }
 
 .breadcrumbs a:hover {
@@ -548,7 +591,7 @@ select:focus-visible,
   text-transform: uppercase;
   text-decoration: none;
   padding-bottom: 0.35rem;
-  transition: color 0.15s ease;
+  transition: color var(--dur-2) var(--ease-out);
 }
 
 .section-link:hover {
@@ -589,9 +632,16 @@ select:focus-visible,
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    filter var(--dur-2) var(--ease-out);
   white-space: nowrap;
   max-width: 100%;
+  will-change: transform;
 }
 
 .btn:disabled {
@@ -608,7 +658,7 @@ select:focus-visible,
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
+  filter: brightness(1.1);
   transform: translateY(-1px);
   box-shadow: 0 18px 36px -16px rgba(0, 167, 218, 0.9);
 }
@@ -650,10 +700,7 @@ select:focus-visible,
    ---------------------------------------------------------------- */
 .hero {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
-  align-items: center;
-  gap: clamp(1.5rem, 3vw, 3rem);
+  display: block;
   margin-top: 3rem;
   padding: clamp(1.5rem, 3.4vw, 3.25rem);
   border: 1px solid var(--border);
@@ -693,7 +740,7 @@ select:focus-visible,
 .hero-text {
   position: relative;
   z-index: 1;
-  min-width: 0;
+  max-width: 78ch;
 }
 
 .eyebrow {
@@ -738,7 +785,7 @@ select:focus-visible,
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: rgba(5, 9, 16, 0.85);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
 .hero-search:focus-within {
@@ -777,7 +824,7 @@ select:focus-visible,
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+  transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
 .hero-search button:hover {
@@ -804,7 +851,7 @@ select:focus-visible,
   text-decoration: none;
   font-family: var(--font-body);
   font-size: 0.83rem;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  transition: var(--transition-surface);
 }
 
 .tag:hover {
@@ -852,59 +899,6 @@ select:focus-visible,
   color: var(--muted);
 }
 
-.hero-art {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 240px;
-}
-
-.hero-art::before {
-  content: '';
-  position: absolute;
-  width: 82%;
-  height: 82%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 167, 218, 0.3), transparent 66%);
-  filter: blur(26px);
-}
-
-.hero-art-frame {
-  position: relative;
-  width: min(100%, 380px);
-  padding: clamp(0.75rem, 1.6vw, 1.25rem);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 167, 218, 0.28);
-  background:
-    radial-gradient(circle at 50% 38%, rgba(0, 167, 218, 0.14), transparent 68%),
-    linear-gradient(155deg, #0b1018 0%, #05080e 100%);
-  box-shadow: 0 34px 70px -34px rgba(0, 167, 218, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-  transition: transform 0.35s ease, border-color 0.35s ease;
-}
-
-.hero-art-frame:hover {
-  transform: translateY(-3px);
-  border-color: rgba(0, 223, 193, 0.5);
-}
-
-.hero-art-frame img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.hero-art-caption {
-  font-family: var(--font-nav);
-  font-size: 0.66rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 /* ----------------------------------------------------------------
    Categories & tags
    ---------------------------------------------------------------- */
@@ -925,7 +919,7 @@ select:focus-visible,
   background: linear-gradient(160deg, var(--card) 0%, var(--card-soft) 100%);
   color: inherit;
   text-decoration: none;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--transition-surface);
   overflow: hidden;
 }
 
@@ -936,7 +930,7 @@ select:focus-visible,
   height: 2px;
   background: linear-gradient(90deg, var(--accent), var(--secondary));
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-2) var(--ease-out);
 }
 
 .category-card:hover {
@@ -951,15 +945,21 @@ select:focus-visible,
 
 .category-card-head {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.55rem;
+}
+
+.category-card-head .count-pill {
+  order: -1;
 }
 
 .category-title {
+  min-width: 0;
   margin: 0;
+  overflow-wrap: break-word;
   font-family: var(--font-accent);
-  font-size: 1.22rem;
+  font-size: 1.16rem;
   font-weight: 600;
   line-height: 1.25;
   color: var(--fg);
@@ -1007,6 +1007,7 @@ select:focus-visible,
   color: #9aa0a8;
   font-size: 0.72rem;
   white-space: nowrap;
+  transition: border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
 }
 
 .category-card:hover .subcat-pill {
@@ -1014,52 +1015,98 @@ select:focus-visible,
   color: var(--fg-light);
 }
 
-.diagram-spotlight {
+/* Category exploration — deliberately distinct from component cards:
+   a row-based list with a leading marker and a sliding arrow. */
+.category-tiles {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: clamp(1.25rem, 2.5vw, 2.25rem);
-  align-items: center;
-  padding: clamp(1.1rem, 2.4vw, 1.9rem);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(700px 300px at 8% 0%, rgba(0, 167, 218, 0.1), transparent 62%),
-    linear-gradient(150deg, #0d1117 0%, #080b12 76%);
-  box-shadow: var(--shadow-card);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.65rem;
 }
 
-.diagram-spotlight-art {
+.category-tile {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.9rem;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(0, 167, 218, 0.22);
-  background: linear-gradient(160deg, #060a11 0%, #0a1018 100%);
+  gap: 0.9rem;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.012);
+  color: inherit;
+  text-decoration: none;
   overflow: hidden;
+  transition: var(--transition-surface);
 }
 
-.diagram-spotlight-art img {
-  display: block;
-  width: 100%;
-  max-height: 300px;
-  object-fit: contain;
+.category-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--secondary);
+  opacity: 0;
+  transform: scaleY(0.35);
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
 }
 
-.diagram-spotlight-text h3 {
-  margin: 0 0 0.75rem;
+.category-tile:hover {
+  border-color: rgba(0, 223, 193, 0.4);
+  background: rgba(0, 223, 193, 0.045);
+  transform: translateX(3px);
+}
+
+.category-tile:hover::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.category-tile-mark {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: rgba(0, 223, 193, 0.85);
+  box-shadow: 0 0 12px rgba(0, 223, 193, 0.5);
+}
+
+.category-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.category-tile-name {
   font-family: var(--font-accent);
-  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--fg);
+  transition: color var(--dur-2) var(--ease-out);
 }
 
-.diagram-spotlight-text p {
-  margin: 0 0 1.25rem;
+.category-tile:hover .category-tile-name {
+  color: var(--secondary);
+}
+
+.category-tile-meta {
+  font-family: var(--font-nav);
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
   color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.7;
+}
+
+.category-tile-arrow {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 1rem;
+  transition: transform var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+
+.category-tile:hover .category-tile-arrow {
+  color: var(--secondary);
+  transform: translateX(4px);
 }
 
 .tag-cloud {
@@ -1080,7 +1127,7 @@ select:focus-visible,
   text-decoration: none;
   font-family: var(--font-body);
   font-size: 0.9rem;
-  transition: all 0.18s ease;
+  transition: var(--transition-surface);
 }
 
 .tag-pill span {
@@ -1113,7 +1160,7 @@ select:focus-visible,
   background: linear-gradient(160deg, var(--card), var(--card-soft));
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--transition-surface);
 }
 
 .tag-card:hover {
@@ -1162,7 +1209,7 @@ select:focus-visible,
   background: linear-gradient(160deg, var(--card), var(--card-soft));
   color: inherit;
   text-decoration: none;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--transition-surface);
 }
 
 .component-card:hover {
@@ -1196,10 +1243,16 @@ select:focus-visible,
   width: 76px;
   height: 58px;
   object-fit: contain;
-  padding: 0.3rem;
+  padding: 0.35rem;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(0, 167, 218, 0.22);
-  background: #f4f9fe;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+  transition: border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+}
+
+.component-card:hover .component-card-symbol {
+  border-color: rgba(0, 167, 218, 0.35);
+  background: rgba(0, 167, 218, 0.07);
 }
 
 .component-card-desc {
@@ -1314,19 +1367,17 @@ select:focus-visible,
 /* ----------------------------------------------------------------
    Component detail
    ---------------------------------------------------------------- */
+/* Component detail — closely mirrors the design reference:
+   oversized uppercase title, description directly beneath it, and the
+   circuit symbol floating on the page instead of inside a card. */
 .component-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
-  gap: clamp(1.5rem, 3vw, 2.75rem);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: clamp(1.5rem, 3.5vw, 3rem);
   align-items: start;
-  margin-top: 1.9rem;
-  padding: clamp(1.4rem, 3vw, 2.5rem);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(760px 320px at 92% 0%, rgba(0, 223, 193, 0.09), transparent 62%),
-    linear-gradient(155deg, #0d1117 0%, #080b12 74%);
-  box-shadow: var(--shadow-card);
+  margin-top: 2.25rem;
+  padding: clamp(1.25rem, 2.5vw, 2rem) 0 clamp(1.75rem, 3vw, 2.5rem);
+  border-bottom: 1px solid var(--border);
 }
 
 .component-hero-main {
@@ -1334,67 +1385,113 @@ select:focus-visible,
 }
 
 .component-title {
-  margin: 0.35rem 0 1rem;
+  margin: 0 0 1.1rem;
   font-family: var(--font-accent);
-  font-size: clamp(2.1rem, 4vw, 3.7rem);
+  font-size: clamp(2.7rem, 6.2vw, 5rem);
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.025em;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   color: var(--fg);
+  text-wrap: balance;
 }
 
 .component-hero-desc {
-  margin: 0;
-  max-width: 75ch;
+  margin: 0 0 1.5rem;
+  max-width: 70ch;
   color: var(--fg-light);
-  font-size: clamp(1rem, 1.15vw, 1.12rem);
-  line-height: 1.7;
+  font-size: clamp(1.02rem, 1.25vw, 1.18rem);
+  line-height: 1.75;
+}
+
+.component-hero .hero-tags {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .component-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 1.6rem;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
-.symbol-card {
+.component-art {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
-  padding: 1.25rem;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(0, 167, 218, 0.35);
-  background: radial-gradient(circle at 50% 25%, #ffffff, #e7f5ff 62%, #d5eaff 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65), 0 26px 55px -38px rgba(0, 167, 218, 0.9);
+  gap: 0.9rem;
+  margin: 0;
+  padding: 1rem;
+  min-height: 200px;
 }
 
-.symbol-card img {
+.component-art::before {
+  content: '';
+  position: absolute;
+  inset: 8% 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 167, 218, 0.16), transparent 68%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.component-art img {
+  position: relative;
   max-width: 100%;
-  max-height: 210px;
+  max-height: 260px;
   object-fit: contain;
 }
 
-.symbol-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1.5rem 0;
-  color: #1b5797;
-  font-size: 1.8rem;
+.component-art figcaption {
+  position: relative;
+  font-family: var(--font-nav);
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-.symbol-label {
+.component-art--empty {
+  color: var(--muted);
+  font-size: 2rem;
+}
+
+/* Back-to-category: a quiet inline link rather than a second button */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  color: var(--muted);
   font-family: var(--font-nav);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: #4b5563;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out);
+}
+
+.back-link-arrow {
+  display: inline-block;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.back-link:hover {
+  color: var(--accent-hover);
+  border-bottom-color: rgba(0, 167, 218, 0.45);
+}
+
+.back-link:hover .back-link-arrow {
+  transform: translateX(-3px);
 }
 
 .detail-section {
@@ -1457,7 +1554,7 @@ select:focus-visible,
 }
 
 .edu-table tbody tr {
-  transition: background-color 0.1s ease;
+  transition: background-color var(--dur-1) linear;
 }
 
 .edu-table tbody tr:hover {
@@ -1552,7 +1649,7 @@ select:focus-visible,
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--card);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--transition-surface);
 }
 
 .diagram-card:hover {
@@ -1567,9 +1664,15 @@ select:focus-visible,
   min-height: 170px;
   padding: 0.9rem;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
   overflow: hidden;
+  transition: border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+}
+
+.diagram-card:hover .diagram-frame {
+  border-color: rgba(0, 167, 218, 0.3);
+  background: rgba(0, 167, 218, 0.05);
 }
 
 .diagram-frame img {
@@ -1624,7 +1727,7 @@ select:focus-visible,
   font-size: 0.8rem;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-surface);
 }
 
 .page-btn:hover:not(:disabled) {
@@ -1736,7 +1839,7 @@ select:focus-visible,
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: var(--transition-surface);
   white-space: nowrap;
 }
 
@@ -1757,7 +1860,12 @@ select:focus-visible,
 
 .lab-panel.active {
   display: block;
-  animation: page-in 0.25s ease both;
+  animation: lab-panel-in var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes lab-panel-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 .lab-card {
@@ -1845,7 +1953,7 @@ select:focus-visible,
   background: #070b12;
   color: var(--fg);
   font-size: 0.88rem;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
 .form-control::placeholder {
@@ -2065,96 +2173,6 @@ select:focus-visible,
 }
 
 /* ----------------------------------------------------------------
-   Footer
-   ---------------------------------------------------------------- */
-.site-footer {
-  margin-top: auto;
-  padding: 2.5rem clamp(1rem, 4vw, 3rem) 1.4rem;
-  border-top: 1px solid var(--border);
-  background: linear-gradient(180deg, #080b12 0%, #05070e 100%);
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.footer-inner {
-  max-width: var(--content-width);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.footer-brand img {
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 0.5rem;
-}
-
-.footer-brand strong {
-  display: block;
-  font-family: var(--font-accent);
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-  color: var(--fg);
-}
-
-.footer-brand strong span {
-  color: var(--accent);
-}
-
-.footer-brand p {
-  margin: 0;
-  font-size: 0.76rem;
-  color: var(--muted);
-}
-
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.35rem;
-}
-
-.footer-links a {
-  color: var(--muted);
-  text-decoration: none;
-  font-family: var(--font-nav);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  transition: color 0.15s ease;
-}
-
-.footer-links a:hover {
-  color: var(--accent-hover);
-}
-
-.footer-bottom {
-  max-width: var(--content-width);
-  margin: 1.8rem auto 0;
-  padding-top: 1.2rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  font-size: 0.74rem;
-  color: #6c7076;
-}
-
-.footer-bottom p {
-  margin: 0;
-}
-
-/* ----------------------------------------------------------------
    Modal
    ---------------------------------------------------------------- */
 .modal-overlay {
@@ -2171,7 +2189,15 @@ select:focus-visible,
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    visibility 0s linear var(--dur-2);
+}
+
+.modal-overlay.open {
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    visibility 0s;
 }
 
 .modal-overlay.open {
@@ -2190,8 +2216,8 @@ select:focus-visible,
   border-radius: var(--radius-lg);
   background: var(--card);
   box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.9);
-  transform: translateY(12px) scale(0.985);
-  transition: transform 0.2s ease;
+  transform: translate3d(0, 14px, 0) scale(0.988);
+  transition: transform var(--dur-3) var(--ease-out);
 }
 
 .modal-overlay.open .modal-box {
@@ -2228,7 +2254,7 @@ select:focus-visible,
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--transition-surface);
 }
 
 .modal-close-btn:hover {
@@ -2267,11 +2293,11 @@ select:focus-visible,
   font-size: 0.88rem;
   line-height: 1.5;
   box-shadow: 0 20px 45px -24px rgba(0, 0, 0, 0.9);
-  animation: toast-in 0.25s ease both;
+  animation: toast-in var(--dur-3) var(--ease-out) both;
 }
 
 .toast.is-leaving {
-  animation: toast-out 0.2s ease both;
+  animation: toast-out var(--dur-2) var(--ease-in-out) both;
 }
 
 .toast-success {
@@ -2287,13 +2313,13 @@ select:focus-visible,
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes toast-out {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(10px); }
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, 8px, 0); }
 }
 
 /* ----------------------------------------------------------------
@@ -2355,24 +2381,12 @@ select:focus-visible,
     display: flex;
   }
 
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-art {
-    min-height: 0;
-  }
-
-  .hero-art-frame {
-    width: min(100%, 300px);
-  }
-
-  .diagram-spotlight {
-    grid-template-columns: 1fr;
-  }
-
   .component-hero {
-    grid-template-columns: minmax(0, 1fr) minmax(190px, 240px);
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 230px);
+  }
+
+  .component-art img {
+    max-height: 200px;
   }
 }
 
@@ -2387,14 +2401,17 @@ select:focus-visible,
 
   .component-hero {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 
-  .symbol-card {
-    max-width: 320px;
+  .component-art {
+    order: -1;
+    min-height: 0;
+    padding: 0.5rem 0 0.75rem;
   }
 
-  .symbol-card img {
-    max-height: 170px;
+  .component-art img {
+    max-height: 160px;
   }
 
   .filter-note {
@@ -2453,23 +2470,14 @@ select:focus-visible,
   .categories-grid,
   .components-grid,
   .tags-grid,
-  .diagram-grid {
+  .diagram-grid,
+  .category-tiles {
     grid-template-columns: 1fr;
   }
 
   .section-head {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .footer-inner,
-  .footer-bottom {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .footer-links {
-    gap: 1rem;
   }
 
   .lab-card {
@@ -2494,10 +2502,17 @@ select:focus-visible,
 
   .page-title,
   .component-title {
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
   }
 
-  .diagram-spotlight,
+  .component-title {
+    font-size: clamp(2.1rem, 11vw, 3rem);
+  }
+
+  .component-hero {
+    padding: 0.75rem 0 1.75rem;
+  }
+
   .hero {
     padding: 1rem;
   }

@@ -3,9 +3,6 @@
  * Hash-based SPA router + catalogue renderers + academic lab console.
  */
 
-const HOME_HERO_ART = '/assets/svg/showcase/jk-flip-flop.svg';
-const HOME_CIRCUIT_ART = '/assets/svg/showcase/jk-flip-flop-circuit.svg';
-
 const app = {
   contentEl: null,
   currentXml: '',
@@ -25,16 +22,41 @@ const app = {
     if (!glow || !window.matchMedia) return;
 
     const finePointer = window.matchMedia('(pointer: fine)').matches;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!finePointer || reducedMotion) return;
+    if (!finePointer || this.prefersReducedMotion()) return;
+
+    // Follow the pointer with a lerp on a composited transform instead of
+    // writing left/top on every mousemove, which keeps the glow smooth.
+    const position = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+    const target = { ...position };
+    let frame = null;
+    let visible = false;
+
+    const render = () => {
+      position.x += (target.x - position.x) * 0.16;
+      position.y += (target.y - position.y) * 0.16;
+      glow.style.transform = `translate3d(${position.x.toFixed(2)}px, ${position.y.toFixed(2)}px, 0) translate(-50%, -50%)`;
+
+      const settled = Math.abs(target.x - position.x) < 0.4 && Math.abs(target.y - position.y) < 0.4;
+      frame = settled && !visible ? null : window.requestAnimationFrame(render);
+    };
+
+    const start = () => {
+      visible = true;
+      glow.classList.add('is-active');
+      if (frame === null) frame = window.requestAnimationFrame(render);
+    };
 
     document.addEventListener('mousemove', e => {
-      glow.style.left = `${e.clientX}px`;
-      glow.style.top = `${e.clientY}px`;
-      glow.classList.add('is-active');
+      target.x = e.clientX;
+      target.y = e.clientY;
+      start();
     });
 
-    document.addEventListener('mouseleave', () => glow.classList.remove('is-active'));
+    document.addEventListener('mouseleave', () => {
+      visible = false;
+      glow.classList.remove('is-active');
+      if (frame === null) frame = window.requestAnimationFrame(render);
+    });
   },
 
   bindEvents() {
@@ -78,7 +100,8 @@ const app = {
     document.addEventListener('error', e => {
       const target = e.target;
       if (target && target.tagName === 'IMG' && target.hasAttribute('data-hide-on-error')) {
-        target.style.display = 'none';
+        target.classList.add('no-art');
+        target.removeAttribute('data-hide-on-error');
       }
     }, true);
 
@@ -254,42 +277,46 @@ const app = {
 
   async handleRouting() {
     const route = this.parseHash();
-    const { segments, params, section } = route;
+    const { section } = route;
 
     this.updateActiveNav(section);
     this.closeMobileNav();
-    this.renderLoading();
     this.scrollToTop();
 
-    try {
-      if (section === 'home') {
-        await this.renderHome();
-      } else if (section === 'catalog') {
-        await this.renderCatalog(Number(params.get('page')) || 1, params.get('category') || '');
-      } else if (section === 'categories' && segments.length === 1) {
-        await this.renderCategoriesIndex();
-      } else if (section === 'categories' && segments.length >= 2) {
-        await this.renderCategory(segments[1], Number(params.get('page')) || 1);
-      } else if (section === 'tags' && segments.length === 1) {
-        await this.renderTagsIndex();
-      } else if (section === 'tags' && segments.length >= 2) {
-        await this.renderTagDetail(segments[1], Number(params.get('page')) || 1);
-      } else if (section === 'components' && segments.length >= 2) {
-        await this.renderComponentDetail(segments[1]);
-      } else if (section === 'search') {
-        await this.renderSearch(params.get('q') || '', Number(params.get('page')) || 1);
-      } else if (section === 'lab') {
-        await this.renderLabConsole();
-      } else {
-        this.renderNotFound();
+    const render = async () => {
+      const { segments, params } = route;
+      try {
+        if (section === 'home') {
+          await this.renderHome();
+        } else if (section === 'catalog') {
+          await this.renderCatalog(Number(params.get('page')) || 1, params.get('category') || '');
+        } else if (section === 'categories' && segments.length === 1) {
+          await this.renderCategoriesIndex();
+        } else if (section === 'categories' && segments.length >= 2) {
+          await this.renderCategory(segments[1], Number(params.get('page')) || 1);
+        } else if (section === 'tags' && segments.length === 1) {
+          await this.renderTagsIndex();
+        } else if (section === 'tags' && segments.length >= 2) {
+          await this.renderTagDetail(segments[1], Number(params.get('page')) || 1);
+        } else if (section === 'components' && segments.length >= 2) {
+          await this.renderComponentDetail(segments[1]);
+        } else if (section === 'search') {
+          await this.renderSearch(params.get('q') || '', Number(params.get('page')) || 1);
+        } else if (section === 'lab') {
+          await this.renderLabConsole();
+        } else {
+          this.renderNotFound();
+        }
+      } catch (err) {
+        if (err && err.status === 404) {
+          this.renderNotFound(err.message);
+        } else {
+          this.renderError(err);
+        }
       }
-    } catch (err) {
-      if (err && err.status === 404) {
-        this.renderNotFound(err.message);
-      } else {
-        this.renderError(err);
-      }
-    }
+    };
+
+    await render();
   },
 
   updateActiveNav(section) {
@@ -317,6 +344,14 @@ const app = {
   // ----------------------------------------------------------------
   // Shared states
   // ----------------------------------------------------------------
+  prefersReducedMotion() {
+    try {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (err) {
+      return false;
+    }
+  },
+
   renderLoading() {
     this.contentEl.innerHTML = `
       <div class="loading-state" role="status" aria-live="polite">
@@ -430,13 +465,6 @@ const app = {
               </div>
             </div>
           </div>
-
-          <div class="hero-art">
-            <div class="hero-art-frame">
-              <img src="${HOME_HERO_ART}" alt="JK flip-flop logic symbol" loading="eager">
-            </div>
-            <span class="hero-art-caption">JK flip-flop · logic symbol</span>
-          </div>
         </section>
 
         <section class="section">
@@ -461,30 +489,6 @@ const app = {
         </section>
       `;
     }
-
-    html += `
-        <section class="section">
-          <div class="section-head">
-            <h2 class="section-title">Circuit Diagram Reference</h2>
-            <a href="#/search?q=flip-flop" class="section-link">Explore flip-flops →</a>
-          </div>
-          <div class="diagram-spotlight">
-            <div class="diagram-spotlight-art">
-              <img src="${HOME_CIRCUIT_ART}" alt="Gate-level circuit diagram of a JK flip-flop" loading="lazy">
-            </div>
-            <div class="diagram-spotlight-text">
-              <p class="page-eyebrow">Diagram library</p>
-              <h3>Gate-level schematics, state machines, and timing waveforms</h3>
-              <p>
-                Every component page can carry its own SVG assets. The catalogue currently ships
-                gate-level circuit diagrams, next-state machine rings, and clock timing waveforms
-                alongside the circuit symbol of every part.
-              </p>
-              <a href="#/catalog" class="btn btn-secondary btn-sm">Browse components with diagrams</a>
-            </div>
-          </div>
-        </section>
-      `;
 
     if (tags.length) {
       html += `
@@ -591,8 +595,8 @@ const app = {
             <h2 class="section-title">Subcategories</h2>
             <span class="section-meta">${children.length} subfamilies</span>
           </div>
-          <div class="categories-grid">
-            ${children.map(child => this.categoryCard(child, false)).join('')}
+          <div class="category-tiles">
+            ${children.map(child => this.subcategoryTile(child)).join('')}
           </div>
         </section>
       `;
@@ -614,7 +618,9 @@ const app = {
         </div>
       `;
     } else {
-      html += `<div class="components-grid">${components.map(comp => this.componentCard(comp)).join('')}</div>`;
+      html += `<div class="components-grid">${components
+        .map(comp => this.componentCard(comp, { meta: false }))
+        .join('')}</div>`;
       if (pagination && pagination.totalPages > 1) {
         html += this.renderPagination(pagination, `#/categories/${encodeURIComponent(idOrSlug)}`);
       }
@@ -867,8 +873,8 @@ const app = {
 
         <section class="component-hero">
           <div class="component-hero-main">
-            <p class="eyebrow">${this.escapeHtml(categoryName)}</p>
             <h1 class="component-title">${this.escapeHtml(comp.name)}</h1>
+            <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
 
             <div class="hero-tags">
               ${
@@ -876,11 +882,14 @@ const app = {
                   ? `<a class="tag" href="#/categories/${encodeURIComponent(categoryId)}">${this.escapeHtml(categoryName)}</a>`
                   : ''
               }
+              ${
+                tags
+                  .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
+                  .join('')
+              }
               ${comp.isIllustrative ? '<span class="badge-tag illustrative">Illustrative model</span>' : ''}
               ${comp.isPublished ? '<span class="badge-tag published">Published</span>' : ''}
             </div>
-
-            <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
 
             <div class="component-actions">
               ${
@@ -890,30 +899,23 @@ const app = {
               }
               ${
                 categoryId
-                  ? `<a class="btn btn-secondary" href="#/categories/${encodeURIComponent(categoryId)}">← Back to ${this.escapeHtml(categoryName)}</a>`
+                  ? `<a class="back-link" href="#/categories/${encodeURIComponent(categoryId)}">
+                       <span class="back-link-arrow" aria-hidden="true">←</span>
+                       Back to ${this.escapeHtml(categoryName)}
+                     </a>`
                   : ''
               }
             </div>
-
-            ${
-              tags.length
-                ? `<div class="hero-tags">
-                     ${tags
-                       .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
-                       .join('')}
-                   </div>`
-                : ''
-            }
           </div>
 
-          <aside class="symbol-card">
-            ${
-              comp.circuitSymbolPath
-                ? `<img src="${this.escapeHtml(comp.circuitSymbolPath)}" alt="${this.escapeHtml(comp.name)} circuit symbol" loading="lazy" data-hide-on-error>`
-                : `<div class="symbol-placeholder" aria-hidden="true">⚡</div>`
-            }
-            <span class="symbol-label">${comp.circuitSymbolPath ? 'Circuit symbol' : this.escapeHtml(comp.name)}</span>
-          </aside>
+          ${
+            comp.circuitSymbolPath
+              ? `<figure class="component-art">
+                   <img src="${this.escapeHtml(comp.circuitSymbolPath)}" alt="${this.escapeHtml(comp.name)} circuit symbol" loading="lazy" data-hide-on-error>
+                   <figcaption>Circuit symbol</figcaption>
+                 </figure>`
+              : `<div class="component-art component-art--empty" aria-hidden="true"><span>⚡</span></div>`
+          }
         </section>
     `;
 
@@ -2118,7 +2120,7 @@ const app = {
     `;
   },
 
-  componentCard(comp) {
+  componentCard(comp, { meta = true } = {}) {
     const slug = comp.slug || comp.component_id || comp.componentId;
     const name = comp.name || 'Untitled component';
     const description = comp.short_description || comp.shortDescription || '';
@@ -2127,9 +2129,10 @@ const app = {
       comp.category_name || comp.categoryName || (comp.category && comp.category.name) || '';
     const illustrative =
       comp.is_illustrative !== undefined ? comp.is_illustrative : comp.isIllustrative;
+    const showMeta = meta && Boolean(categoryName || illustrative);
 
     return `
-      <a class="component-card" href="#/components/${encodeURIComponent(slug)}">
+      <a class="component-card${meta ? '' : ' component-card--plain'}" href="#/components/${encodeURIComponent(slug)}">
         <div class="component-card-top">
           <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
           ${
@@ -2139,10 +2142,32 @@ const app = {
           }
         </div>
         ${description ? `<p class="component-card-desc">${this.escapeHtml(description)}</p>` : '<p class="component-card-desc"></p>'}
-        <div class="component-card-meta">
-          ${categoryName ? `<span class="badge-tag primary">${this.escapeHtml(categoryName)}</span>` : ''}
-          ${illustrative ? '<span class="badge-tag illustrative">Illustrative</span>' : ''}
-        </div>
+        ${
+          showMeta
+            ? `<div class="component-card-meta">
+                 ${categoryName ? `<span class="badge-tag primary">${this.escapeHtml(categoryName)}</span>` : ''}
+                 ${illustrative ? '<span class="badge-tag illustrative">Illustrative</span>' : ''}
+               </div>`
+            : ''
+        }
+      </a>
+    `;
+  },
+
+  subcategoryTile(category) {
+    const id = category.category_id !== undefined ? category.category_id : category.categoryId;
+    const count = Number(
+      category.component_count !== undefined ? category.component_count : category.componentCount || 0
+    );
+
+    return `
+      <a class="category-tile" href="#/categories/${encodeURIComponent(id)}">
+        <span class="category-tile-mark" aria-hidden="true"></span>
+        <span class="category-tile-body">
+          <span class="category-tile-name">${this.escapeHtml(category.name)}</span>
+          <span class="category-tile-meta">${count} component${count === 1 ? '' : 's'}</span>
+        </span>
+        <span class="category-tile-arrow" aria-hidden="true">→</span>
       </a>
     `;
   },

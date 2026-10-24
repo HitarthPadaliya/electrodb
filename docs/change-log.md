@@ -220,3 +220,30 @@ diagrams and specifications). It deliberately does **not** replace the applicati
 there is no connection pool, no stored-procedure execution, and no write support, and it is
 not wired into `server/src/` or the automated tests. Assignment 10/11 database behaviour is
 still demonstrated through `npm start` against a seeded database.
+
+## 17. Interface refinement pass
+
+**Change implemented: the detail, category, and home screens now follow the design
+reference much more closely, and motion across the app was reworked for consistency.**
+
+- Site footer removed, along with the home-page JK flip-flop logic symbol and the
+  "Circuit Diagram Reference" spotlight; the hero is now a single text column.
+- Component detail hero rebuilt: an oversized uppercase title (up to `5rem`), the description
+  directly beneath it, one combined tag/badge row, and the circuit symbol floating on the
+  page background instead of inside a white panel.
+- All catalogue artwork is now inverted (`filter: invert(1) hue-rotate(180deg)`) so the
+  line diagrams read as light-on-dark directly on the page; the light `.symbol-card`,
+  `.diagram-spotlight-art`, and white `.diagram-frame` fills were removed.
+- "Back to <category>" is an inline text link with a sliding arrow and underline, not a button.
+- Category pages list subcategories as a distinct row-style `.category-tile` (marker, name,
+  count, sliding arrow), clearly different from `.component-card`, and component cards on
+  those pages drop the category and "Illustrative" tags.
+- Motion system: shared `--ease-out` / `--ease-in-out` curves and `--dur-1..3` durations in
+  `:root`; every `transition: all` and ad-hoc timing replaced, gradients swapped for an
+  animatable `filter: brightness()` on primary buttons, the navbar underline now animates
+  `transform: scaleX()` instead of `width`, the cursor spotlight lerps on a composited
+  `translate3d` instead of writing `left`/`top` per mousemove, and page transitions are a
+  150–240 ms fade/rise rather than a long slide.
+- Header search, mobile navigation, modal, toasts, and lab tabs all honour
+  `prefers-reduced-motion`, and all icon imagery keeps an accessible fallback when a
+  symbol fails to load.
