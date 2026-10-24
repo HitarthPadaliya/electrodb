@@ -990,30 +990,33 @@ const app = {
       <div class="page">
         ${this.breadcrumbs(crumbs)}
 
+        ${
+          categoryId
+            ? `<div class="crumbs-back">
+                 <a class="back-link" href="#/categories/${encodeURIComponent(categoryId)}">
+                   <span class="back-link-arrow" aria-hidden="true">←</span>
+                   Back to ${this.escapeHtml(categoryName)}
+                 </a>
+               </div>`
+            : ''
+        }
+
         <section class="component-hero">
           <div class="component-hero-main">
             <h1 class="component-title">${this.escapeHtml(comp.name)}</h1>
-            <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
             ${tagPills ? `<div class="hero-tags">${tagPills}</div>` : ''}
+            <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
 
             <div class="component-actions">
               ${compId ? account.bookmarkButton(compId, { labelled: true }) : ''}
               ${
                 compId
-                  ? `<button class="btn btn-secondary" type="button" data-action="open-collection-picker" data-arg="${compId}">Add to collection</button>`
+                  ? `<button class="btn btn-secondary btn-compact" type="button" data-action="open-collection-picker" data-arg="${compId}">Add to collection</button>`
                   : ''
               }
               ${
                 comp.datasheetUrl
                   ? `<a class="btn btn-primary" href="${this.escapeHtml(comp.datasheetUrl)}" target="_blank" rel="noopener noreferrer">Manufacturer datasheet</a>`
-                  : ''
-              }
-              ${
-                categoryId
-                  ? `<a class="back-link" href="#/categories/${encodeURIComponent(categoryId)}">
-                       <span class="back-link-arrow" aria-hidden="true">←</span>
-                       Back to ${this.escapeHtml(categoryName)}
-                     </a>`
                   : ''
               }
             </div>

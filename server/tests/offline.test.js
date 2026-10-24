@@ -612,3 +612,97 @@ describe('Account security primitives', () => {
     assert.match(html, /app\.js\?v=\d+/);
   });
 });
+
+describe('Expired-session recovery', () => {
+  const apiSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/api.js'), 'utf8');
+  const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
+
+  it('announces a 401 on a personal endpoint so the header can correct itself', () => {
+    // The bug: the page kept showing "signed in" while Save answered with the
+    // guest prompt, because nothing reconciled a session that had died.
+    assert.match(apiSource, /res\.status === 401/);
+    assert.match(apiSource, /electrodb:unauthorized/);
+    assert.match(accountSource, /addEventListener\('electrodb:unauthorized'/);
+  });
+
+  it('does not mistake a failed sign-in for an expired session', () => {
+    // Wrong password and wrong current-password are 401s too; they belong to
+    // the form, not to session recovery.
+    assert.match(apiSource, /!\/\^\\\/auth\\\/\//, 'the auth endpoints must be excluded');
+  });
+
+  it('clears the stale identity before explaining what happened', () => {
+    const start = accountSource.indexOf('onSessionLost()');
+    assert.ok(start > -1);
+    const body = accountSource.slice(start, start + 1400);
+    assert.match(body, /this\.clearSession\(\)/);
+    assert.match(body, /Your session ended/);
+    assert.match(body, /this\.loginHref\(next\)/, 'the dialog offers a way back to this page');
+  });
+
+  it('hands guarded pages over to the sign-in route', () => {
+    assert.match(accountSource, /isProtectedRoute/);
+    assert.match(accountSource, /window\.location\.hash = this\.loginHref\(next\)/);
+  });
+
+  it('stops showing the guest prompt when the server rejected the page', () => {
+    const toggle = accountSource.slice(
+      accountSource.indexOf('async toggleBookmark'),
+      accountSource.indexOf('\n  syncBookmarkControls(')
+    );
+    const catchBlock = toggle.slice(toggle.indexOf('} catch (err) {'));
+    assert.match(catchBlock, /err\.status === 401/);
+    assert.ok(
+      !/promptSignIn/.test(catchBlock),
+      'a rejected request must not be reported as "you are not signed in"'
+    );
+  });
+
+  it('survives a preview restart instead of signing everyone out', () => {
+    const { createMemoryStore } = require('../src/db/personalMemoryStore');
+    const first = createMemoryStore();
+    return first.users
+      .create({ username: 'snap', email: 'snap@example.test', passwordHash: 'h', roleCode: 'NAIVE_USER' })
+      .then(async user => {
+        await first.bookmarks.add(user.userId, 11);
+        const second = createMemoryStore();
+        second.restore(JSON.parse(JSON.stringify(first.snapshot())));
+        assert.strictEqual((await second.users.findById(user.userId)).username, 'snap');
+        assert.deepStrictEqual(await second.bookmarks.ids(user.userId), [11]);
+      });
+  });
+});
+
+describe('Component page layout', () => {
+  const appSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/app.js'), 'utf8');
+  const cssSource = fs.readFileSync(path.join(repoRoot, 'public/assets/css/styles.css'), 'utf8');
+  const detail = appSource.slice(appSource.indexOf('async renderComponentDetail'));
+
+  it('puts the back link with the breadcrumb path, not with the buttons', () => {
+    const crumbs = detail.indexOf('${this.breadcrumbs(crumbs)}');
+    const back = detail.indexOf('crumbs-back');
+    const hero = detail.indexOf('<section class="component-hero">');
+    assert.ok(crumbs > -1 && back > -1 && hero > -1);
+    assert.ok(crumbs < back && back < hero, 'the back link follows the path and precedes the hero');
+    assert.ok(!/\.component-actions[\s\S]{0,900}back-link/.test(detail), 'no back link left in the actions');
+  });
+
+  it('puts the tags directly under the component name', () => {
+    const title = detail.indexOf('<h1 class="component-title">');
+    const tags = detail.indexOf('<div class="hero-tags">');
+    const description = detail.indexOf('component-hero-desc');
+    assert.ok(title > -1 && tags > -1 && description > -1);
+    assert.ok(title < tags && tags < description, 'name, then tags, then description');
+  });
+
+  it('keeps the back link a link and not a button', () => {
+    assert.match(detail, /<a class="back-link" href="#\/categories\/\$\{encodeURIComponent\(categoryId\)\}">/);
+    assert.match(cssSource, /\.crumbs-back\s*\{/);
+  });
+
+  it('renders the two personal actions a shade smaller than the primary one', () => {
+    assert.match(detail, /btn btn-secondary btn-compact/);
+    assert.match(cssSource, /\.btn-compact\s*\{[^}]*font-size:\s*0\.72rem/);
+    assert.match(cssSource, /\.component-actions \.bookmark-btn\s*\{[^}]*font-size:\s*0\.72rem/);
+  });
+});

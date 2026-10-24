@@ -23,3 +23,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Preview server's in-memory account state (dev fixture, never committed)
+.preview-state.json

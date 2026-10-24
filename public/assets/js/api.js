@@ -31,6 +31,16 @@ const api = {
         const err = new Error(errMsg);
         err.status = res.status;
         err.code = json.error ? json.error.code : 'API_ERROR';
+
+        // A 401 outside the auth endpoints means the server-side session is
+        // gone: it expired, was revoked, or the account was disabled elsewhere.
+        // The page may still be holding a signed-in header from a minute ago,
+        // so tell the app to reconcile rather than letting each caller decide.
+        // Credential failures on /auth/* are ordinary form errors, not this.
+        if (res.status === 401 && !/^\/auth\//.test(path) && typeof window !== 'undefined') {
+          window.dispatchEvent(new window.CustomEvent('electrodb:unauthorized', { detail: { path } }));
+        }
+
         throw err;
       }
       return json;

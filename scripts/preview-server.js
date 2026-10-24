@@ -668,6 +668,9 @@ const { getStore } = require('../server/src/db/personalStore');
 const passwords = require('../server/src/security/passwords');
 
 const PREVIEW_PASSWORD = 'Electrodb#2025';
+// Account state is kept between restarts so a dev edit does not sign every
+// reviewer out. It holds demo data only and is gitignored.
+const STATE_FILE = path.join(REPO, '.preview-state.json');
 const PREVIEW_ACCOUNTS = [
   { key: 'dba', username: 'preview_dba', email: 'dba@preview.local', roleCode: 'DBA' },
   { key: 'developer', username: 'preview_developer', email: 'developer@preview.local', roleCode: 'APP_DEVELOPER' },
@@ -677,6 +680,27 @@ const PREVIEW_ACCOUNTS = [
 const accountApi = express();
 accountApi.disable('x-powered-by');
 accountApi.use(express.json({ limit: '64kb' }));
+
+// Save the in-memory account state after anything that could change it, so a
+// restart does not sign reviewers out or lose their bookmarks.
+let stateSaveTimer = null;
+function persistAccountState() {
+  if (stateSaveTimer) return;
+  stateSaveTimer = setTimeout(() => {
+    stateSaveTimer = null;
+    try {
+      fs.writeFileSync(STATE_FILE, JSON.stringify(getStore().snapshot()));
+    } catch (err) {
+      console.warn('Could not persist preview account state:', err.message);
+    }
+  }, 250);
+}
+
+accountApi.use((req, res, next) => {
+  res.on('finish', persistAccountState);
+  next();
+});
+
 accountApi.use('/api', attachUser);
 accountApi.use('/api/auth', require('../server/src/routes/authRoutes'));
 accountApi.use('/api/users', require('../server/src/routes/userRoutes'));
@@ -686,33 +710,51 @@ accountApi.use('/api', (req, res) =>
 );
 accountApi.use(errorHandler);
 
-/** Mirror the seed catalogue into the store and create the demo accounts. */
+/**
+ * Mirror the seed catalogue into the store and make sure the demo accounts
+ * exist. A saved snapshot is restored first, so bookmarks, collections and
+ * live sessions survive a restart.
+ */
 async function seedAccounts() {
   const store = getStore();
   store.components.seed(components);
 
+  if (fs.existsSync(STATE_FILE)) {
+    try {
+      store.restore(JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')));
+    } catch (err) {
+      console.warn('Ignoring unreadable preview state:', err.message);
+    }
+  }
+
   const passwordHash = await passwords.hashPassword(PREVIEW_PASSWORD);
   const accounts = {};
+  let created = false;
+
   for (const account of PREVIEW_ACCOUNTS) {
-    accounts[account.key] = await store.users.create({
+    const existing = await store.users.findByEmail(account.email);
+    accounts[account.key] = existing || (await store.users.create({
       username: account.username,
       email: account.email,
       passwordHash,
       roleCode: account.roleCode
-    });
+    }));
+    if (!existing) created = true;
   }
 
-  // A little history, so the personal pages are not all empty on first load.
-  const demo = accounts.user;
-  const picks = components.slice(0, 3).map(component => component.component_id);
-  for (const componentId of picks) await store.bookmarks.add(demo.userId, componentId);
-  for (const componentId of picks.slice(0, 2)) await store.recent.record(demo.userId, componentId);
+  // A little history, so the personal pages are not all empty on first run.
+  if (created) {
+    const demo = accounts.user;
+    const picks = components.slice(0, 3).map(component => component.component_id);
+    for (const componentId of picks) await store.bookmarks.add(demo.userId, componentId);
+    for (const componentId of picks.slice(0, 2)) await store.recent.record(demo.userId, componentId);
 
-  const collection = await store.collections.create(demo.userId, {
-    name: 'Revision shortlist',
-    description: 'Gates and adders worth re-reading before the exam.'
-  });
-  await store.collections.addItem(demo.userId, collection.collectionId, picks[0]);
+    const collection = await store.collections.create(demo.userId, {
+      name: 'Revision shortlist',
+      description: 'Gates and adders worth re-reading before the exam.'
+    });
+    await store.collections.addItem(demo.userId, collection.collectionId, picks[0]);
+  }
 
   return accounts;
 }

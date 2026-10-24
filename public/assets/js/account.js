@@ -12,6 +12,7 @@ const account = {
 
   // ---------------------------------------------------------------- session
   async loadSession() {
+    this.watchSession();
     try {
       const res = await api.auth.me();
       this.applySession(res.data);
@@ -21,6 +22,58 @@ const account = {
       this.applySession({ user: null, bookmarkIds: [] });
     }
     return this.user;
+  },
+
+  /**
+   * Listen for a 401 from any personal endpoint. The API emits the event
+   * because a session can end *after* the page loaded - it expires, it is
+   * revoked by a password change or an administrator, or a dev server restarts
+   * and loses it. Without this the header keeps claiming the visitor is signed
+   * in while Save asks them to sign in, which reads like a bug in the save.
+   */
+  watchSession() {
+    if (this.watching) return;
+    this.watching = true;
+    window.addEventListener('electrodb:unauthorized', () => this.onSessionLost());
+  },
+
+  /** Routes that cannot render at all without a session. */
+  isProtectedRoute(hash = window.location.hash || '') {
+    return /^#\/(dashboard|bookmarks|collections|profile|admin)\b/.test(hash);
+  },
+
+  /** Forget the local session. Returns true if the visitor looked signed in. */
+  clearSession() {
+    const wasSignedIn = this.isSignedIn();
+    this.applySession({ user: null, bookmarkIds: [] });
+    return wasSignedIn;
+  },
+
+  onSessionLost() {
+    const wasSignedIn = this.clearSession();
+    if (!wasSignedIn) return;
+
+    // Several requests can fail together; react once.
+    const now = Date.now();
+    if (now - (this.sessionLostAt || 0) < 2000) return;
+    this.sessionLostAt = now;
+
+    const next = this.currentRoute();
+
+    // A guarded page cannot exist without a session, so hand over to the sign-in
+    // page with a way back rather than showing a dialog over an empty page.
+    if (this.isProtectedRoute()) {
+      window.location.hash = this.loginHref(next);
+      return;
+    }
+    app.openModal(
+      'Your session ended',
+      `<p class="modal-lead">The server no longer has this session, so the change was not saved. That happens when a session expires, when the password is changed somewhere else, or when an administrator disables the account.</p>
+       <p class="modal-lead">Signing in again brings you straight back to this page.</p>
+       <div class="modal-actions">
+         <a class="btn btn-primary" href="${this.loginHref(next)}">Sign in again</a>
+       </div>`
+    );
   },
 
   applySession(data = {}) {
@@ -172,10 +225,8 @@ const account = {
         await this.renderBookmarks();
       }
     } catch (err) {
-      if (err.status === 401) {
-        this.promptSignIn('bookmark');
-        return;
-      }
+      // onSessionLost() has already reset the header and explained the 401.
+      if (err.status === 401) return;
       app.toast(err.message || 'Could not update that bookmark.', 'error');
     }
 
@@ -526,6 +577,7 @@ const account = {
       app.toast(`Collection “${name}” created.`, 'success');
       await this.renderCollections();
     } catch (err) {
+      if (err.status === 401) return this.guard();
       this.showFormError(errorEl, err.message || 'Could not create that collection.');
     }
   },
@@ -538,6 +590,7 @@ const account = {
       app.toast('Collection deleted.', 'success');
       await this.renderCollections();
     } catch (err) {
+      if (err.status === 401) return;
       app.toast(err.message || 'Could not delete that collection.', 'error');
     }
   },
@@ -548,6 +601,7 @@ const account = {
       app.toast('Removed from the collection.', 'success');
       await this.renderCollection(collectionId);
     } catch (err) {
+      if (err.status === 401) return;
       app.toast(err.message || 'Could not update that collection.', 'error');
     }
   },
@@ -577,6 +631,10 @@ const account = {
         </div>
       `;
     } catch (err) {
+      if (err.status === 401) {
+        app.closeModal();
+        return;
+      }
       host.innerHTML = `<p class="form-error">${app.escapeHtml(err.message || 'Could not load your collections.')}</p>`;
     }
   },
@@ -586,8 +644,13 @@ const account = {
     if (!select) return;
     try {
       const res = await api.auth.addToCollection(select.value, componentId);
+      app.closeModal();
       app.toast(res.data.created ? 'Added to the collection.' : 'Already in that collection.', 'success');
     } catch (err) {
+      if (err.status === 401) {
+        app.closeModal();
+        return;
+      }
       app.toast(err.message || 'Could not add that component.', 'error');
     }
   },
@@ -671,6 +734,7 @@ const account = {
       app.toast('Recently viewed cleared.', 'success');
       await this.renderDashboard();
     } catch (err) {
+      if (err.status === 401) return;
       app.toast(err.message || 'Could not clear your history.', 'error');
     }
   },
@@ -738,6 +802,7 @@ const account = {
       await api.auth.updateUser(userId, { role });
       app.toast(`Role updated to ${role}.`, 'success');
     } catch (err) {
+      if (err.status === 401) return;
       app.toast(err.message || 'Could not change that role.', 'error');
     }
     await this.renderAdmin();
@@ -860,6 +925,7 @@ const account = {
       app.toast('Profile updated.', 'success');
       await this.renderProfile();
     } catch (err) {
+      if (err.status === 401) return this.guard();
       this.showFormError(errorEl, err.message || 'Could not save your details.');
     }
   },
@@ -881,6 +947,7 @@ const account = {
       form.reset();
       app.toast('Password changed. Other sessions were signed out.', 'success');
     } catch (err) {
+      if (err.status === 401) return this.guard();
       this.showFormError(errorEl, err.message || 'Could not change your password.');
     }
   }

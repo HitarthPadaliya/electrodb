@@ -1657,8 +1657,20 @@ a:hover > .link-arrow,
   line-height: 1.75;
 }
 
+/* The back link belongs to the path, not to the actions: it reads as the last
+   line of the breadcrumb. */
+.crumbs-back {
+  display: flex;
+  margin: 0.35rem 0 0;
+}
+
+.crumbs-back .back-link {
+  padding: 0.2rem 0;
+}
+
+/* Tags sit directly under the component name, above the description. */
 .component-hero .hero-tags {
-  margin-top: 0;
+  margin-top: 0.85rem;
   margin-bottom: 0;
 }
 
@@ -3355,11 +3367,18 @@ input[type='range']:focus-visible {
 
 /* The same control on a component page sits with the other buttons. */
 .component-actions .bookmark-btn {
-  padding: 0.62rem 1.05rem;
+  padding: 0.5rem 0.9rem;
   border-color: var(--border-strong);
   border-radius: 999px;
   color: var(--fg-light);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+}
+
+/* A touch smaller than the primary action next to it, so "Save" and "Add to
+   collection" read as secondary without becoming chip-sized. */
+.btn-compact {
+  padding: 0.55rem 1rem;
+  font-size: 0.72rem;
 }
 
 .component-actions .bookmark-btn:hover,

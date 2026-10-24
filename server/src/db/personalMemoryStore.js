@@ -372,6 +372,32 @@ function createMemoryStore() {
       async count(userId) {
         return state.recent.filter(r => r.userId === Number(userId)).length;
       }
+    },
+
+    /**
+     * Snapshot/restore exist for the preview server, so a dev restart does not
+     * silently sign everyone out. Nothing in the application calls them.
+     */
+    snapshot() {
+      return {
+        users: state.users,
+        sessions: state.sessions,
+        bookmarks: state.bookmarks,
+        collections: state.collections,
+        collectionItems: state.collectionItems,
+        recent: state.recent,
+        sequences: state.sequences
+      };
+    },
+
+    restore(snapshot = {}) {
+      for (const key of ['users', 'sessions', 'bookmarks', 'collections', 'collectionItems', 'recent']) {
+        if (Array.isArray(snapshot[key])) state[key] = snapshot[key];
+      }
+      if (snapshot.sequences && typeof snapshot.sequences === 'object') {
+        Object.assign(state.sequences, snapshot.sequences);
+      }
+      return true;
     }
   };
 }

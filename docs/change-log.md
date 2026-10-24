@@ -524,3 +524,26 @@ with a keyboard. State is reported through `aria-pressed`, form errors through `
 signed-out and signed-in flows, and a CSS parse check. What could not be run here — the migrations,
 the triggers and the MySQL store, because this environment has no MySQL binary — is listed as
 unverified in `docs/accounts.md` §9 rather than claimed as working.
+
+## 25. A dead session no longer looks like a bug
+
+Saving a component while signed in could answer with the *guest* sign-in dialog: the header still
+said "signed in", the save said otherwise. The page was holding an identity the server no longer
+had — the session had expired, been revoked, or the preview server had restarted and lost it — and
+nothing reconciled the two. Only the failing request knew, and it reported the failure as "you are
+not signed in".
+
+`api.request` now announces a `401` from any personal endpoint (`/auth/*` excluded, because a wrong
+password is a form error, not an expired session), and the account layer reacts once: it forgets the
+identity, redraws the header, and then either hands a guarded page over to the sign-in route with a
+way back, or — on a public page such as a component — says plainly that the session ended and the
+change was not saved, offering a link that returns to the same component. The bookmark toggle no
+longer shows the guest prompt for a rejected request.
+
+The preview server also stops being the cause: its in-memory account state is written to
+`.preview-state.json` (gitignored) and restored at boot, so a dev restart keeps accounts, bookmarks,
+collections and live sessions instead of signing everyone out mid-review.
+
+On the component page, three small placement corrections: the back link now sits with the breadcrumb
+path rather than among the buttons, the tag pills sit directly under the component name, and "Save"
+and "Add to collection" are a shade smaller than the primary action beside them.

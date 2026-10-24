@@ -63,6 +63,11 @@ Rollback statements are at the top of each migration file.
   deleted when an expired token is presented. Logout deletes the row. Changing the password deletes
   every other session for that account. Changing a role or disabling an account deletes all of its
   sessions immediately, so a disabled account cannot keep using a valid cookie.
+- **Session expiry is visible, not silent** — a session can end while a tab is open: the TTL
+  passes, the password is changed elsewhere, an administrator disables the account, or the store is
+  wiped. Any `401` from a personal endpoint makes the client drop its cached identity, correct the
+  header, and either continue to the sign-in page (inside a guarded page) or say plainly that the
+  session ended and the change was not saved, with a link back to the page the visitor was reading.
 - **CSRF** — state-changing requests must be same-origin: `Sec-Fetch-Site` must not be
   `cross-site`, and an `Origin` header, when present, must match the request host. The session
   cookie is `SameSite=Lax` as well.
@@ -205,8 +210,10 @@ in-memory store, so the pages work without MySQL. It seeds three accounts (passw
 | `developer@preview.local` | `Developer` |
 | `user@preview.local` | `User` |
 
-These exist only in the preview process, are lost on restart, and prove nothing about the MySQL
-bootstrap. Data is re-seeded each time the preview starts. The `/api/lab/*` routes in the preview
+These exist only in the preview process and prove nothing about the MySQL bootstrap. The preview
+keeps its in-memory state in `.preview-state.json` (gitignored), so a restart keeps accounts,
+bookmarks, collections **and live sessions** instead of silently signing every reviewer out.
+Delete that file to get a clean slate. The `/api/lab/*` routes in the preview
 are still the original read-only mocks from before this feature and are not part of the
 authorization story.
 
@@ -225,13 +232,19 @@ Honest summary of what was and was not verified in this environment.
   `404`s, recently-viewed de-duplication and ordering, dashboard counts, password change revoking
   other sessions, role enforcement for every route group, self-role-change and self-deactivation
   refusals, last-DBA protection, and the stored hash format.
-- `npm run test:offline` — **42/42**: the 34 existing checks (shell assets, cache headers, content constraints) plus 8 new account-security checks (cookie flags, token digests, role mapping, hash format, no client-side token storage, script order).
+- `npm run test:offline` — **52/52**: the 34 original checks (shell assets, cache headers, content constraints), 8 account-security checks (cookie flags, token digests, role mapping, hash format, no client-side token storage, script order) and 10 regression checks for expired-session recovery and the component-page layout.
 - `css-tree` parse of `styles.css`: **0 errors**, brace depth 0.
 - End-to-end UI drive with jsdom against the preview server: guest nav, guest bookmark → sign-in
   dialog, protected-route redirect with `next`, login, dashboard counts, bookmark toggle (and the
   card leaving the bookmarks list), save state on a component page, collection creation, add to
   collection through the dialog, profile update, `#/admin` refused to a `User`, DBA seeing three
   accounts, and sign-out returning to the guest nav.
+
+- Session recovery after the server-side session dies: the header corrects itself, the guest prompt
+  is not shown, and the dialog offers a link back to the same component
+  (`#/login?next=%23%2Fcomponents%2Fand-gate`).
+- Layout order on a component page: breadcrumb → back link → hero, and name → tags → description →
+  actions, with the two personal actions at the smaller size (`btn-compact`, 0.72rem).
 
 **Not verified here — and why**
 
