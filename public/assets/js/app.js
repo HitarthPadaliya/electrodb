@@ -1720,17 +1720,16 @@ const app = {
             <tbody>
               ${res.data
                 .map(log => {
-                  const badgeClass =
-                    log.operation_type === 'DELETE'
-                      ? 'illustrative'
-                      : log.operation_type === 'INSERT'
-                        ? 'published'
-                        : 'primary';
+                  // Audit operations get their own badge classes; reusing the
+                  // component badge classes here was confusing and made the
+                  // removed "Illustrative"/"Published" styling look alive.
+                  const op = String(log.operation_type || '').toLowerCase();
+                  const badgeClass = `badge-op badge-op--${['insert', 'update', 'delete'].includes(op) ? op : 'other'}`;
                   return `
                     <tr>
                       <td>${this.escapeHtml(log.audit_id)}</td>
                       <td><code>${this.escapeHtml(log.table_name)}</code></td>
-                      <td><span class="badge-tag ${badgeClass}">${this.escapeHtml(log.operation_type)}</span></td>
+                      <td><span class="${badgeClass}">${this.escapeHtml(log.operation_type)}</span></td>
                       <td>${this.escapeHtml(log.row_key)}</td>
                       <td>${this.escapeHtml(log.db_user)}</td>
                       <td>${this.escapeHtml(log.changed_at)}</td>
