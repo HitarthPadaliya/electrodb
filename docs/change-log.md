@@ -384,3 +384,18 @@ Category / subcategory arrows
   along the same line of travel. No filled circle, no clipping box, no duplicated glyph.
 - The section-link arrows share the same spring easing so every right-pointing arrow in the UI
   moves the same way.
+
+## 21. A tail-free tile arrow
+
+The trail behind the category/subcategory arrow read as a defect rather than a gesture: any
+sub-pixel jump in the card during the lift left the line visibly detached from the glyph, and
+because it was a size animation it could never be perfectly tied to the arrow's travel.
+
+The pseudo-element is gone entirely. The tile arrow is now a single glyph that **lifts and
+tilts** — `translate(4px, -2px) rotate(-28deg)` on a spring easing — so the motion points at
+the place the tile opens to instead of sliding along a rail. Press carries the same gesture
+one step further (6px / −3px) and `:focus-visible` gives keyboard users the same hint; only
+`transform` and `color` change, so nothing can be left behind mid-animation.
+
+The inline section-link arrows (`.link-arrow`) and the back link keep their horizontal nudge:
+they sit inside running text, where a diagonal lift would read as a jitter.
