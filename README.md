@@ -14,7 +14,7 @@ The application also features a dedicated **Academic Lab Console** that fulfills
 - **Database Driver:** `mysql2/promise` with connection pooling
 - **Backend Framework:** Node.js LTS + Express
 - **Security & Headers:** `helmet`, `cors`, parameterized SQL, allowlisted query templates
-- **Frontend:** Semantic HTML5, CSS3 responsive design tokens, vanilla JavaScript (Single Page Architecture)
+- **Frontend:** Semantic HTML5, CSS3 responsive design tokens, vanilla JavaScript (hash-based Single Page Architecture) themed after the `electrodb-frontend/` design reference (dark cyan/teal palette, Space Grotesk/Poppins/Lexend/Inter typography, spotlight hover effects)
 - **LaTeX Math Rendering:** KaTeX
 - **Vector Graphics:** Custom SVG assets (192 vector diagrams: logic gates, flip-flop state machines, decade/mod-8 counter rings, timing waveforms, circuit symbols)
 - **Automated Testing:** Node.js native test runner (`node:test`)
@@ -66,14 +66,19 @@ electrodb/
 │   │   ├── serializers/xml.js               # Dedicated XML serializer (Query 1, 3, 4)
 │   │   └── middleware/errorHandler.js       # Centralized error handler
 │   └── tests/
-│       └── api.test.js                      # 22 automated unit and integration tests
+│       └── api.test.js                      # 29 automated unit and integration tests
+├── electrodb-frontend/                      # Static design reference used for the refit
+│   ├── index.html                           # Reference layout: navbar, hero, breadcrumbs, tables
+│   ├── styles.css                           # Reference palette, typography, and spacing tokens
+│   └── img/                                 # Reference SVG artwork
 ├── public/
-│   ├── index.html                           # Single Page Application container
+│   ├── index.html                           # Single Page Application shell
+│   ├── favicon.svg                          # Site icon carried over from the design reference
 │   ├── assets/
-│   │   ├── css/styles.css                   # Responsive design system
+│   │   ├── css/styles.css                   # Refitted design system (dark cyan/teal theme)
 │   │   ├── js/
-│   │   │   ├── api.js                       # API client
-│   │   │   └── app.js                       # Router, renderers, KaTeX loader, Lab Console
+│   │   │   ├── api.js                       # API client (catalogue, tags, catalog, lab)
+│   │   │   └── app.js                       # SPA router, renderers, KaTeX, lab console
 │   │   └── svg/                             # 192 SVG vector assets
 └── scripts/
     ├── check-db-connection.js               # Database ping & diagnostic verification
@@ -120,7 +125,7 @@ npm install
 # Verify database connection and schema
 npm run check-db
 
-# Run automated tests (22/22 passing)
+# Run automated tests (29 tests, requires the seeded database)
 npm test
 
 # Run complete system verification audit
@@ -137,6 +142,22 @@ Open your browser and navigate to:
 ```text
 http://localhost:3000/
 ```
+
+### Frontend Routes
+
+| Route | View |
+|---|---|
+| `#/` | Home — hero, category families, featured components, tag cloud |
+| `#/catalog` | Paginated catalogue of all published components (optional `?category=<id>`) |
+| `#/categories` | Full category hierarchy |
+| `#/categories/<id-or-slug>` | Category page with breadcrumbs, subcategories, and components |
+| `#/tags` | All reusable tags with component counts |
+| `#/tags/<id-or-slug>` | Components carrying a tag |
+| `#/components/<id-or-slug>` | Component detail: overview, tables, equations, diagrams, specifications |
+| `#/search?q=...` | Search results |
+| `#/lab` | Academic lab console (Assignment 10 & 11 demonstrations) |
+
+The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
 
 ---
 
@@ -175,7 +196,7 @@ http://localhost:3000/
 | Command | Purpose |
 |---|---|
 | `npm start` | Launches the server at `http://localhost:3000` |
-| `npm test` | Runs the 22 automated integration tests via Node test runner |
+| `npm test` | Runs the 29 automated integration tests via Node test runner |
 | `npm run check-db` | Tests MariaDB/MySQL connection and prints table row counts |
 | `npm run benchmark` | Executes high-resolution query benchmarking before and after secondary indexes |
 | `npm run verify` | Performs a 6-point system verification audit |

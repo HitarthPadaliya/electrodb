@@ -193,6 +193,110 @@ async function countSearchComponents(searchTerm) {
   return rows[0].total;
 }
 
+async function getPublishedComponents({ limit, offset, categoryId = null }) {
+  const params = [];
+  let where = 'c.is_published = 1';
+
+  if (categoryId !== null && categoryId !== undefined) {
+    where += ' AND c.category_id = ?';
+    params.push(categoryId);
+  }
+
+  params.push(limit, offset);
+
+  const [rows] = await pool.query(
+    `SELECT c.component_id, c.category_id, c.name, c.slug, c.short_description,
+            c.main_image_path, c.circuit_symbol_path, c.is_illustrative, c.is_published,
+            cat.name AS category_name, cat.slug AS category_slug
+     FROM components c
+     JOIN categories cat ON cat.category_id = c.category_id
+     WHERE ${where}
+     ORDER BY c.name ASC, c.component_id ASC
+     LIMIT ? OFFSET ?`,
+    params
+  );
+  return rows;
+}
+
+async function countPublishedComponents({ categoryId = null } = {}) {
+  const params = [];
+  let where = 'is_published = 1';
+
+  if (categoryId !== null && categoryId !== undefined) {
+    where += ' AND category_id = ?';
+    params.push(categoryId);
+  }
+
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total
+     FROM components
+     WHERE ${where}`,
+    params
+  );
+  return rows[0].total;
+}
+
+async function getTagsWithCounts() {
+  const [rows] = await pool.query(
+    `SELECT t.tag_id, t.name, t.slug, COUNT(c.component_id) AS component_count
+     FROM tags t
+     LEFT JOIN component_tags ct ON ct.tag_id = t.tag_id
+     LEFT JOIN components c ON c.component_id = ct.component_id AND c.is_published = 1
+     GROUP BY t.tag_id, t.name, t.slug
+     ORDER BY t.name ASC`
+  );
+  return rows;
+}
+
+async function getTagByIdOrSlug(idOrSlug) {
+  const isNumeric = /^\d+$/.test(String(idOrSlug));
+  const sql = isNumeric
+    ? `SELECT tag_id, name, slug FROM tags WHERE tag_id = ?`
+    : `SELECT tag_id, name, slug FROM tags WHERE slug = ?`;
+
+  const [rows] = await pool.query(sql, [idOrSlug]);
+  return rows[0] || null;
+}
+
+async function getComponentsByTag(tagId, { limit, offset }) {
+  const [rows] = await pool.query(
+    `SELECT c.component_id, c.category_id, c.name, c.slug, c.short_description,
+            c.main_image_path, c.circuit_symbol_path, c.is_illustrative, c.is_published,
+            cat.name AS category_name, cat.slug AS category_slug
+     FROM component_tags ct
+     JOIN components c ON c.component_id = ct.component_id AND c.is_published = 1
+     JOIN categories cat ON cat.category_id = c.category_id
+     WHERE ct.tag_id = ?
+     ORDER BY c.name ASC, c.component_id ASC
+     LIMIT ? OFFSET ?`,
+    [tagId, limit, offset]
+  );
+  return rows;
+}
+
+async function countComponentsByTag(tagId) {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total
+     FROM component_tags ct
+     JOIN components c ON c.component_id = ct.component_id AND c.is_published = 1
+     WHERE ct.tag_id = ?`,
+    [tagId]
+  );
+  return rows[0].total;
+}
+
+async function getComponentTags(componentId) {
+  const [rows] = await pool.query(
+    `SELECT t.tag_id, t.name, t.slug
+     FROM component_tags ct
+     JOIN tags t ON t.tag_id = ct.tag_id
+     WHERE ct.component_id = ?
+     ORDER BY t.name ASC`,
+    [componentId]
+  );
+  return rows;
+}
+
 // ================================================================
 // Assignment 10 Stored Programs Repository
 // ================================================================
@@ -488,6 +592,13 @@ module.exports = {
   getComponentSpecifications,
   searchComponents,
   countSearchComponents,
+  getPublishedComponents,
+  countPublishedComponents,
+  getTagsWithCounts,
+  getTagByIdOrSlug,
+  getComponentsByTag,
+  countComponentsByTag,
+  getComponentTags,
   insertComponentSP,
   updateComponentSP,
   deleteComponentSP,

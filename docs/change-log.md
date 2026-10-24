@@ -184,3 +184,24 @@ Use category ID and backend-provided content to choose what to render. If a cate
 - [ ] Whether diagrams are stored only as static SVG files or whether vetted inline SVG is permitted.
 - [ ] Exact route naming and JSON response envelopes are agreed before parallel frontend/backend implementation.
 - [ ] Assignment timing measurements are captured from the real database rather than estimated.
+
+## 15. Frontend refit to the `electrodb-frontend` design reference
+
+**Change implemented: the main public frontend now uses the layout, styling, and colours of the static `electrodb-frontend/` prototype.**
+
+What was carried over:
+
+- Dark palette (`#05070E` page, `#0D1117` surfaces, `#00a7da` accent, `#00dfc1` secondary) and the existing table tokens (`#1b5797a1` header, `#21262dbb` even rows, `#0c2744` row hover).
+- Sticky translucent navbar with logo, wordmark, uppercase spaced navigation links, and the moving cursor spotlight.
+- Space Grotesk / Poppins / Lexend / Inter typography, the oversized uppercase hero heading, pill tags with the teal border, and the underlined uppercase section headings.
+- Breadcrumb separators, centred data tables, and the light artwork panel used for component symbols.
+
+What was added so the styling covers the whole application:
+
+- Hash routes for a full component catalog and for tags (`#/catalog`, `#/tags`, `#/tags/<slug>`), backed by new read endpoints `GET /api/components`, `GET /api/tags`, and `GET /api/tags/:tagId`.
+- Tags on component detail responses, rendered as tag pills that link into the tag browser.
+- Home hero search, header search, footer, 404 page, loading/empty/error states, pagination, modal image viewer, toast notifications, and a responsive mobile navigation drawer.
+- CSP-safe event handling: all previously inline `onclick`/`onsubmit`/`onchange`/`onerror` handlers were replaced with delegated `data-action`, `data-form`, and `data-change` listeners. This matters because Helmet sends `script-src-attr 'none'`, which silently blocked every lab-console button before the refit.
+- Helmet CSP now permits Google Fonts stylesheets and font files while keeping inline script execution disabled.
+
+Catalogue data is still loaded exclusively from the API; the refit adds no hard-coded component records to the frontend.

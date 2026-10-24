@@ -51,6 +51,20 @@ const api = {
     return this.request(`/categories/${encodeURIComponent(idOrSlug)}?page=${page}&pageSize=${pageSize}`);
   },
 
+  getCatalog(page = 1, pageSize = 24, categoryId = null) {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (categoryId) params.set('categoryId', String(categoryId));
+    return this.request(`/components?${params.toString()}`);
+  },
+
+  getTags() {
+    return this.request('/tags');
+  },
+
+  getTag(idOrSlug, page = 1, pageSize = 24) {
+    return this.request(`/tags/${encodeURIComponent(idOrSlug)}?page=${page}&pageSize=${pageSize}`);
+  },
+
   getComponent(idOrSlug) {
     return this.request(`/components/${encodeURIComponent(idOrSlug)}`);
   },
