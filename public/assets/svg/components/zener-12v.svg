@@ -2,7 +2,7 @@
   <title>12 V ZENER symbol</title>
   <g transform="translate(120,90)"><path d="M0,-14 v28 l24,-14 z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/><path d="M24,-14 v28 M24,-14 l-6,-6 M24,14 l6,6" stroke="#00a7da" stroke-width="2.2"/></g>
   <line x1="60" y1="90" x2="104" y2="90" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="50" y="95.5" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">A</text>
+  <text x="50" y="95.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
   <line x1="136" y1="90" x2="180" y2="90" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="190" y="95.5" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="start">K</text>
+  <text x="190" y="95.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">K</text>
 </svg>

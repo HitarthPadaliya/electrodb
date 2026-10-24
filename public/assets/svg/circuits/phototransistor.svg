@@ -6,7 +6,7 @@
   <path d="M90,220 L480,220" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M532,90 L820,90" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M532,350 L820,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="40" y="228" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">VIN</text>
-  <text x="832" y="98" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">COLLECTOR</text>
-  <text x="832" y="358" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">EMITTER</text>
+  <text x="40" y="228" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">VIN</text>
+  <text x="832" y="98" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">COLLECTOR</text>
+  <text x="832" y="358" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">EMITTER</text>
 </svg>

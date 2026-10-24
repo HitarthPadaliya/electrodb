@@ -8,15 +8,15 @@
   <circle cx="608" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
   <path d="M60,110 L520,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M60,350 L520,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="118" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D2</text>
-  <text x="34" y="358" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D3</text>
+  <text x="34" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D2</text>
+  <text x="34" y="358" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D3</text>
   <path d="M60,158 L120,158 L520,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="120" cy="158" r="4.5" fill="#c5c7c9"/>
   <path d="M120,158 L120,304 L220,304" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M290,304 L460,304 L460,398 L520,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="166" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D1</text>
+  <text x="34" y="166" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D1</text>
   <path d="M614,134 L940,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M614,374 L940,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="142" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">A0</text>
-  <text x="952" y="382" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">A1</text>
+  <text x="952" y="142" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A0</text>
+  <text x="952" y="382" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
 </svg>

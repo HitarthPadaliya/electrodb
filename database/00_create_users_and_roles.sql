@@ -1,6 +1,6 @@
 -- ================================================================
 -- ElectroDB - 00_create_users_and_roles.sql
--- Database roles and least-privilege accounts for Assignment 10
+-- Database roles and least-privilege accounts for the stored-program layer
 -- Target: MySQL 8.0+ / MariaDB 10.4+
 -- ================================================================
 

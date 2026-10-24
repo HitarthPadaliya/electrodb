@@ -14,12 +14,12 @@
   <circle cx="140" cy="110" r="4.5" fill="#c5c7c9"/>
   <path d="M140,110 L140,394 L250,394" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M320,394 L410,394 L410,350 L450,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="118" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D</text>
+  <text x="34" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D</text>
   <path d="M60,240 L190,240" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M190,240 L190,158 L450,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="190" cy="240" r="4.5" fill="#c5c7c9"/>
   <path d="M190,240 L190,398 L450,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="248" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">CLK</text>
+  <text x="34" y="248" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
   <path d="M544,134 L760,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M544,374 L760,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M854,398 L900,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -30,6 +30,6 @@
   <path d="M940,158 L940,464 L700,464 L700,422 L760,422" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M940,158 L1000,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M900,398 L1000,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="1012" y="166" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q</text>
-  <text x="1012" y="406" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+  <text x="1012" y="166" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="406" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
 </svg>

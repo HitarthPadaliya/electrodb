@@ -173,6 +173,37 @@ describe('Diagram generator contract', () => {
     });
   });
 
+  it('writes every drawing in Consolas and nothing else', () => {
+    const drawings = [
+      kit.boxDiagram({ name: 'D FLIP-FLOP', inputs: [{ label: 'D' }], outputs: [{ label: 'Q' }] }).svg,
+      kit.pinoutDiagram(SPECS['and-gate'].pinout).svg,
+      machines.buildState('jk', 'JK state'),
+      circuits.build('nand-d', 'D circuit')
+    ];
+
+    drawings.forEach(svg => {
+      const families = [...svg.matchAll(/font-family="([^"]*)"/g)].map(m => m[1]);
+      assert.ok(families.length > 0, 'the drawing declares a font');
+      families.forEach(f => assert.strictEqual(f, 'Consolas'));
+      assert.ok(!/Courier|monospace|sans-serif|Arial/i.test(svg), 'no fallback family is declared');
+    });
+  });
+
+  it('leaves the state machines unboxed and names them underneath', () => {
+    const svg = machines.buildState('jk', 'JK state');
+    const rects = [...svg.matchAll(/<rect [^>]*>/g)].map(m => m[0]);
+
+    assert.deepStrictEqual(rects, [], 'no panel border is drawn around either machine');
+
+    const height = Number(svg.match(/viewBox="0 0 [\d.]+ ([\d.]+)/)[1]);
+    const moore = svg.match(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>Moore</);
+    const mealy = svg.match(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>Mealy</);
+
+    assert.ok(moore && mealy, 'both captions are drawn');
+    assert.ok(Number(moore[1]) < Number(mealy[1]), 'Moore is the left half, Mealy the right');
+    assert.ok(Number(moore[2]) > height - 40, 'the captions sit near the bottom of the drawing');
+  });
+
   it('draws the IC pinout with numbers outside and names inside', () => {
     const { svg } = kit.pinoutDiagram(SPECS['nand-gate'].pinout);
     assert.ok(svg.includes('74LS00'), 'part number is in the body');
@@ -182,8 +213,8 @@ describe('Diagram generator contract', () => {
 
   it('puts the Moore and Mealy machines in one side-by-side svg', () => {
     const svg = machines.buildState('jk', 'JK state');
-    assert.ok(svg.includes('MOORE'), 'Moore panel present');
-    assert.ok(svg.includes('MEALY'), 'Mealy panel present');
+    assert.ok(svg.includes('>Moore<'), 'Moore caption present');
+    assert.ok(svg.includes('>Mealy<'), 'Mealy caption present');
     const width = Number(svg.match(/viewBox="0 0 ([\d.]+)/)[1]);
     const height = Number(svg.match(/viewBox="0 0 [\d.]+ ([\d.]+)/)[1]);
     assert.ok(width > height * 2, 'the two panels sit side by side');

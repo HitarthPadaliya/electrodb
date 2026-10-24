@@ -38,7 +38,10 @@ const PALETTE = {
   outputText: '#00dfdf'
 };
 
-const FONT = "Consolas, 'Courier New', monospace";
+// The reference artwork sets `font-family: Consolas, Consolas`, so every
+// generated drawing uses Consolas and nothing else. Monospace advance for
+// Consolas is 0.55em, which makes the width maths below exact.
+const FONT = 'Consolas';
 const ADVANCE = 0.55; // em per character, exact for Consolas
 
 const num = n => (Math.round(n * 100) / 100).toString();
@@ -64,13 +67,16 @@ function escapeXml(value) {
 function fitLabel(text, maxWidth, { maxSize = 18, minSize = 10, lineHeightRatio = 1.2 } = {}) {
   const words = String(text).trim().split(/\s+/).filter(Boolean);
   let size = maxSize;
+  // Wrap at 96% of the available width: Consolas is measured exactly, and the
+  // margin keeps the line clear of the border if a fallback face is ever used.
+  const limit = maxWidth * 0.96;
 
   const wrapAt = s => {
     const lines = [];
     let line = '';
     words.forEach(word => {
       const candidate = line ? `${line} ${word}` : word;
-      if (textWidth(candidate, s) <= maxWidth || !line) {
+      if (textWidth(candidate, s) <= limit || !line) {
         line = candidate;
       } else {
         lines.push(line);
@@ -82,12 +88,12 @@ function fitLabel(text, maxWidth, { maxSize = 18, minSize = 10, lineHeightRatio 
   };
 
   let lines = wrapAt(size);
-  while (size > minSize && lines.some(l => textWidth(l, size) > maxWidth)) {
+  while (size > minSize && lines.some(l => textWidth(l, size) > limit)) {
     size -= 1;
     lines = wrapAt(size);
   }
   // A single very long token still cannot fit: allow a tighter step.
-  while (size > minSize && lines.some(l => textWidth(l, size) > maxWidth)) size -= 0.5;
+  while (size > minSize && lines.some(l => textWidth(l, size) > limit)) size -= 0.5;
 
   return { lines, size, lineHeight: size * lineHeightRatio };
 }
@@ -243,6 +249,12 @@ function boxDiagram(spec) {
     nameLines.push(...fitted.lines);
     nameSize = Math.min(nameSize, fitted.size);
   });
+  // A wrapped name can also overflow vertically in a short body, so shrink
+  // until the whole block fits with clear space above and below.
+  const maxBlockH = boxH - 30;
+  while (nameSize > 10 && nameLines.length * nameSize * 1.2 > maxBlockH) {
+    nameSize -= 1;
+  }
   const name = { lines: nameLines, size: nameSize, lineHeight: nameSize * 1.2 };
   const blockH = name.lines.length * name.lineHeight;
   const firstBaseline = cyMid - blockH / 2 + name.lineHeight * 0.78;
@@ -466,19 +478,24 @@ function circuit({ width = 1080, height = 480, title, body }) {
  * right). The canvas is wider than the artwork and the states are small, so the
  * diagram renders small in the page. Borders are hairline (1) by design.
  */
-function machinePanel(states, edges, { ox, oy, title, width, height, radius = 24 }) {
+const CAPTION_GAP = 44;
+
+/** Baseline for a panel caption: just below the lowest drawn state. */
+function captionBaseline(states, radius) {
+  const bottom = states.reduce(
+    (max, s) => Math.max(max, s.y + radius + (s.output ? (radius < 20 ? 11 : 14) : 0)),
+    0
+  );
+  return bottom + CAPTION_GAP;
+}
+
+function machinePanel(states, edges, { ox, oy, caption, width, height, radius = 24, showOutputs = true, inlineOutput = false }) {
   const byId = new Map(states.map(s => [s.id, s]));
   const parts = [];
   const STROKE = 1;
 
-  parts.push(
-    `<rect x="${ox}" y="${oy}" width="${width}" height="${height}" rx="8" fill="none" stroke="${PALETTE.bodyStroke}" stroke-width="1"/>`
-  );
-  parts.push(
-    `<text x="${ox + 14}" y="${oy + 22}" fill="${PALETTE.control}" font-family="${FONT}" font-size="13" letter-spacing="1.5">${escapeXml(
-      title
-    )}</text>`
-  );
+  // The machines are drawn free-standing: no panel border. The name of the
+  // model is written underneath its own drawing.
 
   edges.forEach(edge => {
     const a = byId.get(edge.from);
@@ -535,10 +552,20 @@ function machinePanel(states, edges, { ox, oy, title, width, height, radius = 24
     if (edge.label) {
       const lx = (sx + 2 * mx + ex) / 4;
       const ly = (sy + 2 * my + ey) / 4;
-      // Offset perpendicular to the curve so the label never sits on the line.
-      const off = bend === 0 ? 14 : bend > 0 ? -9 : 13;
+      // Offset perpendicular to the curve so the label never sits on the line,
+      // choosing the side that faces away from the panel centre.
+      const perpX = -ny;
+      const perpY = nx;
+      const cx0 = ox + width / 2;
+      const cy0 = oy + height / 2;
+      const away = perpX * (lx - cx0) + perpY * (ly - cy0) >= 0 ? 1 : -1;
+      const off = 15 * away;
       parts.push(
-        text(lx, ly + off, edge.label, { size: 11, fill: PALETTE.accent, anchor: 'middle' })
+        text(lx + perpX * off, ly + perpY * off, edge.label, {
+          size: 11,
+          fill: PALETTE.accent,
+          anchor: 'middle'
+        })
       );
     }
   });
@@ -551,17 +578,39 @@ function machinePanel(states, edges, { ox, oy, title, width, height, radius = 24
         PALETTE.bodyStroke
       }" stroke-width="${STROKE}"/>`
     );
-    parts.push(text(x, y + (radius < 20 ? 3.5 : 4), state.label, { size: radius < 20 ? 11 : 13, fill: PALETTE.label, anchor: 'middle' }));
-    if (state.output) {
+    const labelY = y + (radius < 20 ? 3.5 : 4);
+    parts.push(
+      text(inlineOutput ? x : x, inlineOutput ? labelY - 6 : labelY, state.label, {
+        size: radius < 20 ? 11 : 13,
+        fill: PALETTE.label,
+        anchor: 'middle'
+      })
+    );
+    if (state.output && showOutputs) {
+      // On a tight ring the output is written inside the state so it cannot
+      // collide with the transition labels running past it.
+      const outputY = inlineOutput ? labelY + 10 : y + radius + (radius < 20 ? 16 : 14);
       parts.push(
-        text(x, y + radius + (radius < 20 ? 11 : 14), state.output, {
-          size: radius < 20 ? 9 : 11,
+        text(x, outputY, state.output, {
+          size: inlineOutput ? 10 : radius < 20 ? 9 : 11,
           fill: PALETTE.output,
           anchor: 'middle'
         })
       );
     }
   });
+
+  if (caption) {
+    // Sit the caption just under the artwork rather than under the nominal
+    // panel height, so a small machine does not leave a gap above its name.
+    parts.push(
+      text(ox + width / 2, oy + captionBaseline(states, radius), caption, {
+        size: 16,
+        fill: PALETTE.labelMuted,
+        anchor: 'middle'
+      })
+    );
+  }
 
   return parts.join('\n  ');
 }
@@ -613,9 +662,9 @@ function stateMachine(spec) {
   const PANEL_H = n <= 2 ? 210 : n <= 4 ? 270 : n <= 8 ? 300 : 330;
   const GAP = 16;
   const width = PANEL_W * 2 + GAP + 24;
-  const height = PANEL_H + 44;
-
+  const OY = 32;
   const dense = n > 8;
+  const radius = dense ? 15 : 24;
   const layout = dense
     ? snakeStates(spec.states, PANEL_W, PANEL_H, Math.ceil(n / 2))
     : ringStates(
@@ -626,21 +675,28 @@ function stateMachine(spec) {
         spec.ry || (n <= 2 ? 60 : 100)
       );
 
+  // The canvases are sized from the artwork so the caption sits tight beneath
+  // each machine.
+  const height = OY + captionBaseline(layout, radius) + 16;
+
   const left = machinePanel(layout, spec.moore.edges, {
     ox: 10,
-    oy: 32,
-    title: 'MOORE',
+    oy: OY,
+    caption: 'Moore',
     width: PANEL_W,
     height: PANEL_H,
-    radius: dense ? 15 : 24
+    radius,
+    showOutputs: true,
+    inlineOutput: !dense && n > 4
   });
   const right = machinePanel(layout, spec.mealy.edges, {
     ox: 10 + PANEL_W + GAP,
-    oy: 32,
-    title: 'MEALY',
+    oy: OY,
+    caption: 'Mealy',
     width: PANEL_W,
     height: PANEL_H,
-    radius: dense ? 15 : 24
+    radius,
+    showOutputs: false
   });
 
   return `${svgOpen([width, height], { title: spec.title })}\n  ${left}\n  ${right}${svgClose()}`;

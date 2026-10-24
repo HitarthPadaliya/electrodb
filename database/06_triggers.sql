@@ -30,7 +30,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 2. BEFORE triggers checking at least two integrity conditions (Assignment 10)
+-- 2. BEFORE triggers checking at least two integrity conditions
 -- Integrity rule 1: Component name must not be blank after trimming.
 -- Integrity rule 2: Short description must not exceed 1000 characters.
 -- ----------------------------------------------------------------
@@ -59,7 +59,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 3. Uppercase trigger (Assignment 10)
+-- 3. Uppercase trigger
 -- Note: MySQL supports row-level triggers, which execute per changed row.
 -- This normalizes component names to UPPER case on insert/update.
 -- ----------------------------------------------------------------
@@ -78,7 +78,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 4. AFTER DML audit trigger logging to application_audit_log (Assignment 10)
+-- 4. AFTER DML audit trigger logging to application_audit_log
 -- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_audit_ai$$
 CREATE TRIGGER trg_components_audit_ai
@@ -115,7 +115,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 5. Restricted-hours trigger (Assignment 10)
+-- 5. Restricted-hours trigger
 -- Blocks modifications on Monday (DAYOFWEEK = 2) from 14:00 to 16:00
 -- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_restricted_bi$$

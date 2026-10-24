@@ -12,7 +12,7 @@
 --   * Components, educational content, and component diagrams
 --   * Separate truth/characteristic/excitation tables and equations
 --   * Specifications and component specifications
---   * Application user records for DBMS assignment demonstration
+--   * Application user records for the access-control demonstration
 --   * Audit log
 --   * Views, indexes, stored procedures, functions, cursors, and triggers
 --   * Consolidates the standalone Assignment 10 stored-program examples;

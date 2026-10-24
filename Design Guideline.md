@@ -11,7 +11,7 @@
 
 ElectroDB is an educational reference catalogue for electronic components and circuit concepts. Visitors browse a hierarchical category tree, search the catalogue, open component detail pages, and read structured educational material: descriptions, truth/state/characteristic/excitation tables, equations, diagrams, graphs, specifications, and datasheets.
 
-This guideline consolidates the project decisions discussed so far and the uploaded SVNIT CS203 practical assignments.
+This guideline consolidates the project decisions discussed so far.
 
 ### 1.1 Assignment requirements that must be demonstrated
 
@@ -308,7 +308,7 @@ Use foreign keys and unique constraints in the database rather than relying only
 
 Choose two meaningful constraints for the required trigger and also create ordinary declarative constraints where possible. Triggers complement constraints; they should not replace a simple `NOT NULL`, `CHECK`, `UNIQUE`, or FK constraint.
 
-## 7. stored-program objects required by Assignment 10
+## 7. stored-program objects
 
 Keep objects named consistently and document their parameters and transaction behavior.
 
@@ -764,7 +764,7 @@ These are examples; verify equations against the intended component/logic conven
 - [ ] State-machine diagrams are included for relevant sequential components.
 - [ ] Missing data and bad IDs do not crash the application.
 
-### Database and Assignment 10
+### Database and stored programs
 - [ ] CRUD procedures exist separately.
 - [ ] Database accounts/roles are documented and least-privilege.
 - [ ] Login-data CRUD is demonstrated separately from public catalogue behavior.

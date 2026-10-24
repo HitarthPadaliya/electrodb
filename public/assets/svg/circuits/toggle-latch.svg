@@ -15,8 +15,8 @@
   <path d="M180,210 L180,110 L330,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M180,210 L180,350 L330,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="180" cy="210" r="4.5" fill="#c5c7c9"/>
-  <text x="34" y="94" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">T</text>
-  <text x="34" y="218" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">CLK</text>
+  <text x="34" y="94" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">T</text>
+  <text x="34" y="218" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
   <path d="M424,110 L700,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M424,350 L700,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M794,374 L840,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -31,6 +31,6 @@
   <path d="M660,464 L660,398 L700,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M880,134 L1000,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M840,374 L1000,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="1012" y="142" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q</text>
-  <text x="1012" y="382" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+  <text x="1012" y="142" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="382" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
 </svg>

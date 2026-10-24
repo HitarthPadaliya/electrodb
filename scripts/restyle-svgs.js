@@ -91,8 +91,8 @@ const TEXT_COLOURS = {
 
 // Reference artwork uses a monospace engineering label face.
 const FONT_RULES = [
-  [/font-family\s*:\s*[^;'"]*monospace[^;'"]*/gi, 'font-family: Consolas, Consolas'],
-  [/font-family\s*:\s*[^;}]*(system-ui|sans-serif|Arial)[^;'"]*/gi, 'font-family: Consolas, Consolas']
+  [/font-family\s*:\s*[^;'"]*monospace[^;'"]*/gi, 'font-family: Consolas'],
+  [/font-family\s*:\s*[^;}]*(system-ui|sans-serif|Arial)[^;'"]*/gi, 'font-family: Consolas']
 ];
 
 function normaliseHex(value) {

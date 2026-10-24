@@ -26,7 +26,7 @@ const AND_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <!-- Inputs -->
@@ -48,7 +48,7 @@ const OR_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="35" x2="65" y2="35" class="wire" />
@@ -67,7 +67,7 @@ const NOT_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="50" x2="65" y2="50" class="wire" />
@@ -85,7 +85,7 @@ const NAND_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="35" x2="60" y2="35" class="wire" />
@@ -105,7 +105,7 @@ const NOR_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="35" x2="65" y2="35" class="wire" />
@@ -125,7 +125,7 @@ const XOR_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="35" x2="65" y2="35" class="wire" />
@@ -145,7 +145,7 @@ const XNOR_GATE = `
     <style>
       .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
+      .label { font-family: Consolas; font-size: 13px; fill: #1e293b; font-weight: 600; }
     </style>
   </defs>
   <line x1="20" y1="35" x2="65" y2="35" class="wire" />
@@ -170,8 +170,8 @@ function createFlipFlopSymbol(name, inputs, outputs = ['Q', "Q'"]) {
     <style>
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; stroke-linecap: round; }
       .body { stroke: #1e293b; stroke-width: 2.5; fill: #f8fafc; }
-      .text-title { font-family: system-ui, sans-serif; font-size: 14px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
-      .text-pin { font-family: monospace; font-size: 12px; font-weight: bold; fill: #1e293b; }
+      .text-title { font-family: Consolas; font-size: 14px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .text-pin { font-family: Consolas; font-size: 12px; font-weight: bold; fill: #1e293b; }
       .clk-tri { stroke: #1e293b; stroke-width: 2; fill: none; }
     </style>
   </defs>
@@ -213,9 +213,9 @@ function createFlipFlopStateDiagram(name, label00, label01, label10, label11) {
     </marker>
     <style>
       .state { fill: #eff6ff; stroke: #2563eb; stroke-width: 3; }
-      .state-txt { font-family: system-ui, sans-serif; font-size: 16px; font-weight: bold; fill: #1e293b; text-anchor: middle; dominant-baseline: middle; }
+      .state-txt { font-family: Consolas; font-size: 16px; font-weight: bold; fill: #1e293b; text-anchor: middle; dominant-baseline: middle; }
       .trans { stroke: #2563eb; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .trans-label { font-family: system-ui, sans-serif; font-size: 12px; font-weight: 600; fill: #0f172a; text-anchor: middle; background: white; }
+      .trans-label { font-family: Consolas; font-size: 12px; font-weight: 600; fill: #0f172a; text-anchor: middle; background: white; }
     </style>
   </defs>
 
@@ -273,10 +273,10 @@ function createDecadeCounterStateDiagram() {
     </marker>
     <style>
       .state { fill: #f0fdf4; stroke: #16a34a; stroke-width: 2.5; }
-      .state-txt { font-family: monospace; font-size: 11px; font-weight: bold; fill: #166534; text-anchor: middle; dominant-baseline: middle; }
-      .state-dec { font-family: system-ui, sans-serif; font-size: 10px; fill: #475569; text-anchor: middle; }
+      .state-txt { font-family: Consolas; font-size: 11px; font-weight: bold; fill: #166534; text-anchor: middle; dominant-baseline: middle; }
+      .state-dec { font-family: Consolas; font-size: 10px; fill: #475569; text-anchor: middle; }
       .trans { stroke: #2563eb; stroke-width: 2; fill: none; marker-end: url(#arrow); }
-      .center-lbl { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .center-lbl { font-family: Consolas; font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
     </style>
   </defs>
 
@@ -331,9 +331,9 @@ function createMod8CounterStateDiagram(direction = 'up') {
     </marker>
     <style>
       .state { fill: #eff6ff; stroke: #2563eb; stroke-width: 2.5; }
-      .state-txt { font-family: monospace; font-size: 12px; font-weight: bold; fill: #1e3a8a; text-anchor: middle; dominant-baseline: middle; }
+      .state-txt { font-family: Consolas; font-size: 12px; font-weight: bold; fill: #1e3a8a; text-anchor: middle; dominant-baseline: middle; }
       .trans { stroke: #2563eb; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .center-lbl { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .center-lbl { font-family: Consolas; font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
     </style>
   </defs>
 
@@ -370,8 +370,8 @@ function createCounterTimingDiagram(name = 'Counter') {
       .q1-wave { stroke: #d97706; stroke-width: 2.5; fill: none; }
       .q2-wave { stroke: #dc2626; stroke-width: 2.5; fill: none; }
       .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 4; }
-      .lbl { font-family: monospace; font-size: 12px; font-weight: bold; fill: #334155; }
-      .state-lbl { font-family: system-ui, sans-serif; font-size: 11px; fill: #64748b; text-anchor: middle; }
+      .lbl { font-family: Consolas; font-size: 12px; font-weight: bold; fill: #334155; }
+      .state-lbl { font-family: Consolas; font-size: 11px; fill: #64748b; text-anchor: middle; }
     </style>
   </defs>
 
@@ -412,8 +412,8 @@ function createMuxSymbol(name = '2:1 MUX', inputs = ['D0', 'D1'], selects = ['S'
     <style>
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
       .body { stroke: #1e293b; stroke-width: 2.5; fill: #eff6ff; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #1e293b; }
-      .title { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .lbl { font-family: Consolas; font-size: 11px; font-weight: bold; fill: #1e293b; }
+      .title { font-family: Consolas; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
     </style>
   </defs>
   <!-- Trapezoid Body -->
@@ -456,7 +456,7 @@ function createDiodeSymbol(name = 'Diode', type = 'rectifier') {
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
       .body { stroke: #1e293b; stroke-width: 2.5; fill: #3b82f6; }
       .bar { stroke: #1e293b; stroke-width: 3; stroke-linecap: round; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .lbl { font-family: Consolas; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
     </style>
   </defs>
   <!-- Leads -->
@@ -491,7 +491,7 @@ function createTransistorSymbol(name = 'NPN BJT', type = 'npn') {
     <style>
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
       .body { stroke: #1e293b; stroke-width: 2.5; stroke-linecap: round; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; }
+      .lbl { font-family: Consolas; font-size: 12px; font-weight: bold; fill: #1e293b; }
       .circle { stroke: #cbd5e1; stroke-width: 2; fill: #f8fafc; }
     </style>
   </defs>
@@ -527,8 +527,8 @@ function createOpAmpSymbol(name = 'Op-Amp') {
     <style>
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
       .body { stroke: #1e293b; stroke-width: 2.5; fill: #f0fdf4; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #1e293b; }
-      .sign { font-family: monospace; font-size: 16px; font-weight: bold; fill: #1e293b; }
+      .lbl { font-family: Consolas; font-size: 13px; font-weight: bold; fill: #1e293b; }
+      .sign { font-family: Consolas; font-size: 16px; font-weight: bold; fill: #1e293b; }
     </style>
   </defs>
   <!-- Inputs -->
@@ -557,8 +557,8 @@ function createGenericBlockSymbol(name, category = 'Component') {
     <style>
       .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
       .body { stroke: #1e293b; stroke-width: 2.5; fill: #f8fafc; }
-      .lbl-title { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
-      .lbl-sub { font-family: system-ui, sans-serif; font-size: 11px; fill: #64748b; text-anchor: middle; }
+      .lbl-title { font-family: Consolas; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .lbl-sub { font-family: Consolas; font-size: 11px; fill: #64748b; text-anchor: middle; }
       .pin { stroke: #3b82f6; stroke-width: 2; fill: none; }
     </style>
   </defs>

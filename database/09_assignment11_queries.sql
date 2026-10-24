@@ -1,6 +1,6 @@
 -- ================================================================
 -- ElectroDB - 09_assignment11_queries.sql
--- Demonstration queries for SVNIT CS203 Practical Assignment 11
+-- Demonstration queries for the ElectroDB query layer
 -- Target: MySQL 8.0+ / MariaDB 10.4+
 -- ================================================================
 
@@ -131,7 +131,7 @@ WHERE slug = 'decade-counter';
 ROLLBACK;
 
 -- ----------------------------------------------------------------
--- Demonstration of Views (Assignment 11 requirement)
+-- Demonstration of views
 -- ----------------------------------------------------------------
 SELECT '=== View 1: v_component_catalogue ===' AS query_title;
 SELECT * FROM v_component_catalogue LIMIT 10;

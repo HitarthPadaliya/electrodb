@@ -10,7 +10,7 @@ USE electrodb;
 -- Check if index exists before creating, or use ALTER TABLE ... ADD INDEX IF NOT EXISTS (MariaDB/MySQL 8)
 
 -- 1. Index on components(category_id) for joining with categories
--- Useful for Assignment 11 Query 5 (join) and Query 4 (conditional category query)
+-- Useful for the join (Query 5) and conditional category (Query 4) demonstrations
 ALTER TABLE components ADD INDEX IF NOT EXISTS idx_components_category (category_id);
 
 -- 2. Composite index on components(is_published, category_id)

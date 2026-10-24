@@ -10,12 +10,12 @@
   <circle cx="100" cy="220" r="6" fill="none" stroke="#e8eaed" stroke-width="2"/>
   <line x1="280" y1="140" x2="310" y2="140" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
   <rect x="100" y="40" width="180" height="200" rx="12" ry="12" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
-  <text x="190" y="135.25" fill="#c5c7c9" font-family="Consolas, 'Courier New', monospace" font-size="18" font-weight="400" text-anchor="middle">NAND</text>
-  <text x="190" y="156.85" fill="#c5c7c9" font-family="Consolas, 'Courier New', monospace" font-size="18" font-weight="400" text-anchor="middle">FLASH</text>
-  <text x="57" y="65.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">CLE</text>
-  <text x="57" y="105.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">ALE</text>
-  <text x="57" y="145.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">CE</text>
-  <text x="57" y="185.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">RE</text>
-  <text x="57" y="225.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="end">WE</text>
-  <text x="325" y="145.5" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="16" font-weight="400" text-anchor="start">I/O0-7</text>
+  <text x="190" y="135.25" fill="#c5c7c9" font-family="Consolas" font-size="18" font-weight="400" text-anchor="middle">NAND</text>
+  <text x="190" y="156.85" fill="#c5c7c9" font-family="Consolas" font-size="18" font-weight="400" text-anchor="middle">FLASH</text>
+  <text x="57" y="65.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">CLE</text>
+  <text x="57" y="105.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">ALE</text>
+  <text x="57" y="145.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">CE</text>
+  <text x="57" y="185.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">RE</text>
+  <text x="57" y="225.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">WE</text>
+  <text x="325" y="145.5" fill="#e8eaed" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">I/O0-7</text>
 </svg>

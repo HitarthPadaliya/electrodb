@@ -1,6 +1,6 @@
 -- ================================================================
 -- ElectroDB - 03_views.sql
--- Views joining tables for Assignment 11 and catalogue summary
+-- Views joining tables for the query demonstrations and catalogue summary
 -- Target: MySQL 8.0+ / MariaDB 10.4+
 -- ================================================================
 

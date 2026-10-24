@@ -1,10 +1,10 @@
-# ElectroDB — Electronic Components Reference Catalogue & DBMS Lab
+# ElectroDB — Electronic Components Reference Catalogue
 
-ElectroDB is a full-stack educational reference catalogue for electronic components and sequential logic devices, developed for the **SVNIT CS203 - Database Management Systems (DBMS)** practical assignments.
+ElectroDB is a full-stack educational reference catalogue for electronic components and sequential logic devices.
 
 Visitors browse a hierarchical category tree, search components, open detail pages, and view structured educational content: descriptions, truth/characteristic/excitation tables, LaTeX characteristic equations, SVG circuit symbols, timing waveforms, state machine diagrams, and normalized technical specifications.
 
-The application also features a dedicated **Academic Lab Console** that fulfills all demonstration requirements for **Practical Assignment 10** (Stored Procedures, Cursors, Triggers, Roles) and **Practical Assignment 11** (Full-Table Display, XML Serialization, Joins, Subqueries, Aggregate & Filter Controls, Index Timing Benchmarks, and Dashboard).
+The application also features a dedicated **Lab Console** that exercises the database layer directly: stored procedures, cursors, triggers and roles, plus full-table display, XML serialization, joins, subqueries, aggregate and filter controls, index timing benchmarks, and a statistics dashboard.
 
 ---
 
@@ -44,8 +44,8 @@ electrodb/
 │   ├── 05_plsql_functions.sql               # Stored functions (fn_sum_component_ids)
 │   ├── 06_triggers.sql                      # Integrity, normalization, audit, restricted-hours triggers
 │   ├── 07_seed_data.sql                     # Seed data for 147 components and visual assets
-│   ├── 08_assignment10_demo.sql             # Executable verification script for Assignment 10
-│   ├── 09_assignment11_queries.sql          # Executable verification script for Assignment 11
+│   ├── 08_assignment10_demo.sql             # Executable verification script for the stored programs
+│   ├── 09_assignment11_queries.sql          # Executable verification script for the SQL demonstrations
 │   └── 10_query_timing_results.md           # Real measured before/after index timing report
 ├── server/
 │   ├── package.json
@@ -59,7 +59,7 @@ electrodb/
 │   │   │   └── repository.js                # Data access layer
 │   │   ├── routes/
 │   │   │   ├── catalogueRoutes.js           # Public catalogue endpoints
-│   │   │   └── labRoutes.js                 # Assignment 10 & 11 lab endpoints
+│   │   │   └── labRoutes.js                 # lab console endpoints
 │   │   ├── controllers/
 │   │   ├── services/
 │   │   ├── validators/                      # Allowlisted tables, operators, functions
@@ -157,7 +157,7 @@ http://localhost:3000/
 | `#/tags/<id-or-slug>` | Components carrying a tag |
 | `#/components/<id-or-slug>` | Component detail: hero (title + description + symbol), circuit diagram, tables, equations, supporting diagrams, specifications |
 | `#/search?q=...` | Search results |
-| `#/lab` | Academic lab console (Assignment 10 & 11 demonstrations) |
+| `#/lab` | Lab console (stored programs, SQL demonstrations, views, benchmarks, dashboard) |
 
 The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
 
@@ -194,14 +194,14 @@ PORT=4000 npm run preview  # custom port
 ```
 
 It is a frontend-only stub: it has no connection pool, no stored programs, and no write
-support, so Assignment 10/11 database behaviour must still be demonstrated with `npm start`
-against a seeded MySQL/MariaDB database.
+support, so the database behaviour must still be demonstrated with `npm start` against a
+seeded MySQL/MariaDB database.
 
 ---
 
-## 4. Academic Demonstration Features
+## 4. Database Demonstration Features
 
-### Practical Assignment 10 Checklist
+### Stored Programs Checklist
 - [x] **Separate CRUD Stored Procedures:** `sp_insert_component`, `sp_update_component`, `sp_delete_component`.
 - [x] **Database Accounts & Roles:** NAIVE_USER (read-only), APP_DEVELOPER (CRUD/procedures), DBA.
 - [x] **Login-Data CRUD:** `sp_insert_app_user`, `sp_update_app_user`, `sp_delete_app_user` with hashed password enforcement.
@@ -214,7 +214,7 @@ against a seeded MySQL/MariaDB database.
 - [x] **AFTER DML Audit Trigger:** `trg_components_audit_ai/au/ad` automatically logging inserts, updates, and deletes to `application_audit_log`.
 - [x] **Restricted-Hours Trigger:** `trg_components_restricted_bi/bu/bd` blocking modifications on Mondays between 14:00 and 16:00 with `SIGNAL SQLSTATE '45000'`.
 
-### Practical Assignment 11 Checklist
+### SQL Demonstration Checklist
 - [x] **Query 1 (Full-Table Display):** Paginated table display + **XML output at `/api/lab/components.xml`**.
 - [x] **Query 2 (Integrity-Preserving Inserts):** Multi-table insert into `components`, `component_specifications`, and `component_diagrams` respecting foreign key constraints.
 - [x] **Query 3 (Aggregate Functions):** Selectable dropdown (COUNT, SUM, AVG, MIN, MAX) on numeric fields + **XML output at `/api/lab/aggregate.xml`**.
@@ -247,5 +247,4 @@ against a seeded MySQL/MariaDB database.
 
 ## 6. License & Credits
 
-Developed for academic coursework in SVNIT CS203 - Database Management Systems.
 All component specifications and equations are curated for educational reference.

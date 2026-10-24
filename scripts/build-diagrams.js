@@ -216,7 +216,7 @@ components.forEach(component => {
       inputs: toPins(spec.in),
       outputs: toPins(spec.out),
       top: toPins(spec.top),
-      bottom: toPins(spec.bottom)
+      bottom: toPins(spec.bottom || spec.bot)
     }).svg;
 
   write(rel, svg);

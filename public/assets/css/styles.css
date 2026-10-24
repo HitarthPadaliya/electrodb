@@ -2015,7 +2015,7 @@ input[type='range']:focus-visible {
   white-space: nowrap;
 }
 
-/* One segmented control for every tab, so Assignment 10, Assignment 11, Views,
+/* One segmented control for every tab, so Stored Programs, SQL Demos, Views,
    Benchmarks and the Dashboard read as peers rather than mixed button styles. */
 .lab-tabs {
   display: flex;

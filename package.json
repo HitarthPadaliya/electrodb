@@ -1,7 +1,7 @@
 {
   "name": "electrodb",
   "version": "1.0.0",
-  "description": "ElectroDB - Electronic Components Reference Website & SVNIT CS203 DBMS Project",
+  "description": "ElectroDB - Electronic Components Reference Website",
   "main": "server/src/server.js",
   "scripts": {
     "start": "node server/src/server.js",

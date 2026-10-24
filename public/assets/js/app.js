@@ -1,6 +1,6 @@
 /**
  * ElectroDB Frontend Application
- * Hash-based SPA router + catalog renderers + academic lab console.
+ * Hash-based SPA router + catalog renderers + database lab console.
  */
 
 const app = {
@@ -452,7 +452,6 @@ const app = {
       <div class="page">
         <section class="hero">
           <div class="hero-text">
-            <p class="eyebrow">SVNIT CS203 · Database Systems Project</p>
             <h1>Electronic<br><span>Components</span></h1>
             <p class="hero-lead">
               A data-driven reference for digital logic, semiconductors, analog circuits, sensors,
@@ -1244,8 +1243,7 @@ const app = {
     this.contentEl.innerHTML = `
       <div class="page">
         <header class="lab-header">
-          <p class="eyebrow">SVNIT CS203 - Assignment 10 &amp; 11</p>
-          <h1 class="lab-title">Academic Lab Console</h1>
+          <h1 class="lab-title">Lab Console</h1>
           <p class="lab-lead">
             Stored procedures, cursors, triggers, indexed query timing, views, XML serialization, and
             live table statistics for the ElectroDB schema.
@@ -1256,14 +1254,14 @@ const app = {
         </header>
 
         <div class="lab-tabs" role="tablist" aria-label="Lab console sections">
-          <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">10 &middot; Stored Programs</button>
-          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-a11">11 &middot; SQL Demos</button>
+          <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">Stored Programs</button>
+          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-a11">SQL Demos</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-views">Views</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-benchmarks">Index Benchmarks</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-dashboard">Dashboard</button>
         </div>
 
-        <!-- Tab 1: Assignment 10 stored programs -->
+        <!-- Tab 1: stored programs -->
         <div id="tab-a10" class="lab-panel active" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -1346,7 +1344,7 @@ const app = {
           </div>
         </div>
 
-        <!-- Tab 2: Assignment 11 SQL demonstrations -->
+        <!-- Tab 2: SQL demonstrations -->
         <div id="tab-a11" class="lab-panel" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -1777,7 +1775,7 @@ const app = {
         <button type="submit" class="btn btn-primary btn-block">Create app user</button>
       </form>
     `;
-    this.openModal('Add Application User (Assignment 10)', body);
+    this.openModal('Add Application User', body);
   },
 
   async handleCreateUser(event) {
