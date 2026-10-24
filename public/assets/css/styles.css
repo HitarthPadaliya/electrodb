@@ -1263,24 +1263,6 @@ select:focus-visible,
   line-height: 1.55;
 }
 
-.component-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.35rem;
-}
-
-.component-card-link {
-  margin-left: auto;
-  font-family: var(--font-nav);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
 .badge-tag {
   display: inline-flex;
   align-items: center;

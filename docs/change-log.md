@@ -236,8 +236,10 @@ reference much more closely, and motion across the app was reworked for consiste
   `.diagram-spotlight-art`, and white `.diagram-frame` fills were removed.
 - "Back to <category>" is an inline text link with a sliding arrow and underline, not a button.
 - Category pages list subcategories as a distinct row-style `.category-tile` (marker, name,
-  count, sliding arrow), clearly different from `.component-card`, and component cards on
-  those pages drop the category and "Illustrative" tags.
+  count, sliding arrow), clearly different from `.component-card`.
+- Component cards everywhere (catalog, search, tag, category, and home listings) now show only
+  the name, symbol, and summary — the category tag and the "Illustrative" badge were removed
+  from the card face and appear only on the component's own page.
 - Motion system: shared `--ease-out` / `--ease-in-out` curves and `--dur-1..3` durations in
   `:root`; every `transition: all` and ad-hoc timing replaced, gradients swapped for an
   animatable `filter: brightness()` on primary buttons, the navbar underline now animates

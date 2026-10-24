@@ -619,7 +619,7 @@ const app = {
       `;
     } else {
       html += `<div class="components-grid">${components
-        .map(comp => this.componentCard(comp, { meta: false }))
+        .map(comp => this.componentCard(comp))
         .join('')}</div>`;
       if (pagination && pagination.totalPages > 1) {
         html += this.renderPagination(pagination, `#/categories/${encodeURIComponent(idOrSlug)}`);
@@ -2120,19 +2120,16 @@ const app = {
     `;
   },
 
-  componentCard(comp, { meta = true } = {}) {
+  componentCard(comp) {
     const slug = comp.slug || comp.component_id || comp.componentId;
     const name = comp.name || 'Untitled component';
     const description = comp.short_description || comp.shortDescription || '';
     const symbol = comp.circuit_symbol_path || comp.circuitSymbolPath;
-    const categoryName =
-      comp.category_name || comp.categoryName || (comp.category && comp.category.name) || '';
-    const illustrative =
-      comp.is_illustrative !== undefined ? comp.is_illustrative : comp.isIllustrative;
-    const showMeta = meta && Boolean(categoryName || illustrative);
 
+    // Cards stay deliberately minimal: name, symbol, summary. Category and
+    // "illustrative" badges only appear on the component's own page.
     return `
-      <a class="component-card${meta ? '' : ' component-card--plain'}" href="#/components/${encodeURIComponent(slug)}">
+      <a class="component-card component-card--plain" href="#/components/${encodeURIComponent(slug)}">
         <div class="component-card-top">
           <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
           ${
@@ -2142,14 +2139,6 @@ const app = {
           }
         </div>
         ${description ? `<p class="component-card-desc">${this.escapeHtml(description)}</p>` : '<p class="component-card-desc"></p>'}
-        ${
-          showMeta
-            ? `<div class="component-card-meta">
-                 ${categoryName ? `<span class="badge-tag primary">${this.escapeHtml(categoryName)}</span>` : ''}
-                 ${illustrative ? '<span class="badge-tag illustrative">Illustrative</span>' : ''}
-               </div>`
-            : ''
-        }
       </a>
     `;
   },
