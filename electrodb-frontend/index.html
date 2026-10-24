@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>ElectroDB</title>
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="styles.css">
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"/>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+</head>
+
+<body>
+	<div class="cursor-glow" id="glow"></div>
+
+	<nav class="navbar">
+		<img src="favicon.svg" alt="ElectroDB Logo">
+		<h1 id="navhead">Electro<span>DB</span></h1>
+		<div class="links">
+			<a href="">Home</a>
+			<a href="">Catalog</a>
+			<a href="">Categories</a>
+			<a href="">Tags</a>
+		</div>
+	</nav>
+
+	<main>
+		<!-- <p id="link">Home > Digital Electronics > Sequential Logic > Flip-Flops > JK Flip-Flop</p> -->
+		<div class="path">
+			<a href="">Home</a>
+			<p id="sep">&gt;</p>
+			<a href="">Digital Electronics</a>
+			<p id="sep">&gt;</p>
+			<a href="">Sequential Logic</a>
+			<p id="sep">&gt;</p>
+			<a href="">Flip-Flops</a>
+			<p id="sep">&gt;</p>
+			<p>JK Flip-Flop</p>
+		</div>
+		<div class="hero">
+			<div class="text">
+				<h1>JK Flip-Flop</h1>
+				<div class="tags">
+					<a href="">Flip-Flops</a>
+					<a href="">Edge-Triggered</a>
+					<a href="">Sequential</a>
+					<a href="">Digital</a>
+				</div>
+				<p>
+					The JK flip-flop is a clocked sequential element. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.
+				</p>
+			</div>
+			<img src="img/jk-flip-flop.svg">
+		</div>
+		<h2>Circuit Diagram</h2>
+		<img class="diagram" src="img/jk-flip-flop_circuit.svg">
+		<h2>Truth Table</h2>
+		<div class="truth-table-container">
+			<table>
+			    <thead>
+			        <tr>
+			            <th>\( J \)</th>
+			            <th>\( K \)</th>
+			            <th>\( Q_n \)</th>
+			            <th>\( Q_{n+1} \)</th>
+			            <th>Operation</th>
+			        </tr>
+			    </thead>
+			    <tbody>
+			        <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>Hold</td></tr>
+			        <tr><td>0</td><td>0</td><td>1</td><td>1</td><td>Hold</td></tr>
+			        <tr><td>0</td><td>1</td><td>0</td><td>0</td><td>Reset</td></tr>
+			        <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>Reset</td></tr>
+			        <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>Set</td></tr>
+			        <tr><td>1</td><td>0</td><td>1</td><td>1</td><td>Set</td></tr>
+			        <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>Toggle</td></tr>
+			        <tr><td>1</td><td>1</td><td>1</td><td>0</td><td>Toggle</td></tr>
+			    </tbody>
+			</table>
+		</div>
+		<h2>Characteristic Table</h2>
+	</main>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", () =>
+        {
+    		const glow = document.getElementById('glow');
+    		document.addEventListener('mousemove', (e) => {
+      			glow.style.left = e.clientX + 'px';
+      			glow.style.top = e.clientY + 'px';
+    		});
+
+			document.querySelectorAll("thead th").forEach((th) => {
+			    const text = th.textContent.trim();
+    			const match = text.match(/^\\\(([\s\S]*?)\\\)$/);
+    			if (match) {
+        			katex.render(`\\boldsymbol{${match[1]}}`, th, {
+            			displayMode: false,
+            			throwOnError: false
+        			});
+    			}
+			});
+
+			document.querySelectorAll("tbody td").forEach((th) => {
+			    const text = th.textContent.trim();
+    			const match = text.match(/^\\\(([\s\S]*?)\\\)$/);
+    			if (match) {
+        			katex.render(`\\boldsymbol{${match[1]}}`, th, {
+            			displayMode: false,
+            			throwOnError: false
+        			});
+    			}
+			});
+		});
+  	</script>
+</body>
+
+</html>
