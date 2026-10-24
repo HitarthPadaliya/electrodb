@@ -1,22 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Demultiplexer 1-to-4 circuit diagram">
-  <title>Demultiplexer 1-to-4 — circuit diagram</title>
-  <g>
-    <path d="M190,74 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="94" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D0</text>
-    <path d="M60,100 L190,100" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M190,136 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="156" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D1</text>
-    <path d="M60,162 L190,162" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M360,120 Q406.2,124.56 444,158 Q402,191.44 360,196 Q385.2,158 360,120 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="396.96" y="162" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">OR</text>
-    <path d="M262,100 L320,100 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M262,162 L320,162 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="60" y="300" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">S</text>
-    <path d="M60,292 L160,292" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
-    <path d="M160,110.4 L190,110.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M160,172.4 L190,172.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M444,158 L560,158" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="564" y="162" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">Y</text>
-    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">2:1 selection — one AND term per channel, combined by an OR gate</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Demultiplexer 1-to-4 circuit diagram">
+  <title>Demultiplexer 1-to-4 circuit diagram</title>
+  <path d="M220,150 H245.76 A28,28 0 0 1 245.76,206 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="284" cy="178" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M220,300 H245.76 A28,28 0 0 1 245.76,356 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="284" cy="328" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,40 H636.8 A40,40 0 0 1 636.8,120 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="80" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,145 H636.8 A40,40 0 0 1 636.8,225 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="185" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,250 H636.8 A40,40 0 0 1 636.8,330 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="290" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,355 H636.8 A40,40 0 0 1 636.8,435 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="395" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,460 L100,460" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="468" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D</text>
+  <circle cx="100" cy="460" r="4.5" fill="#c5c7c9"/>
+  <path d="M100,460 L100,56 L600,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100,460 L100,161 L600,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100,460 L100,266 L600,266" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100,460 L100,371 L600,371" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,178 L140,178 L220,178" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,328 L180,328 L220,328" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="186" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">S0</text>
+  <text x="34" y="336" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">S1</text>
+  <circle cx="140" cy="178" r="4.5" fill="#c5c7c9"/>
+  <circle cx="180" cy="328" r="4.5" fill="#c5c7c9"/>
+  <path d="M140,178 L140,440 L300,440 L300,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M290,178 L340,178 L340,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M180,328 L180,20 L460,20 L460,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M290,328 L500,328 L500,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M340,80 L600,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M500,104 L600,104" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,80 L940,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="88" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Y0</text>
+  <path d="M300,185 L600,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M500,209 L600,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,185 L940,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="193" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Y1</text>
+  <path d="M340,290 L600,290" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M460,314 L600,314" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,290 L940,290" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="298" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Y2</text>
+  <path d="M300,395 L600,395" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M460,419 L600,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,395 L940,395" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="403" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Y3</text>
 </svg>

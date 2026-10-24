@@ -1,20 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Master-Slave JK Flip-Flop circuit diagram">
-  <title>Master-Slave JK Flip-Flop — circuit diagram</title>
-  <g>
-    <rect x="150" y="120" width="130" height="100" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
-    <text x="215" y="168" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">MASTER</text>
-    <text x="215" y="185" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">latch</text>
-    <rect x="360" y="120" width="130" height="100" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
-    <text x="425" y="168" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">SLAVE</text>
-    <text x="425" y="185" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">latch</text>
-    <path d="M70,170 L150,170" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="52" y="176" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">D</text>
-    <path d="M280,170 L360,170" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M490,170 L560,170" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="566" y="176" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">Q</text>
-    <path d="M60,268 L580,268" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M200,220 L200,268" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M420,220 L420,268" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Two level-sensitive latches clocked in anti-phase to block race-through</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Master-Slave JK Flip-Flop circuit diagram">
+  <title>Master-Slave JK Flip-Flop circuit diagram</title>
+  <path d="M330,70 H366.8 A40,40 0 0 1 366.8,150 H330 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="418" cy="110" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M330,310 H366.8 A40,40 0 0 1 366.8,390 H330 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="418" cy="350" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M700,94 H736.8 A40,40 0 0 1 736.8,174 H700 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="788" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M700,334 H736.8 A40,40 0 0 1 736.8,414 H700 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="788" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,86 L330,86" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,326 L330,326" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,210 L180,210" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M180,210 L180,110 L330,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M180,210 L180,350 L330,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="180" cy="210" r="4.5" fill="#c5c7c9"/>
+  <text x="34" y="94" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">J</text>
+  <text x="34" y="334" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">K</text>
+  <text x="34" y="218" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">CLK</text>
+  <path d="M424,110 L700,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M424,350 L700,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M794,374 L840,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="840" cy="374" r="4.5" fill="#c5c7c9"/>
+  <path d="M840,374 L840,40 L280,40 L280,134 L330,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="660" cy="40" r="4.5" fill="#c5c7c9"/>
+  <path d="M660,40 L660,158 L700,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M794,134 L880,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="880" cy="134" r="4.5" fill="#c5c7c9"/>
+  <path d="M880,134 L880,464 L280,464 L280,374 L330,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="660" cy="464" r="4.5" fill="#c5c7c9"/>
+  <path d="M660,464 L660,398 L700,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M880,134 L1000,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M840,374 L1000,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="142" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="382" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
 </svg>

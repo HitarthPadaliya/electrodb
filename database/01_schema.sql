@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS component_diagrams (
   title VARCHAR(180) NOT NULL,
   -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
   -- diagram, and from state/timing artwork, so the UI can place each one.
-  diagram_kind ENUM('SYMBOL','CIRCUIT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
+  diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
   caption VARCHAR(500) NULL,

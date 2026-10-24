@@ -13,6 +13,10 @@ const assert = require('node:assert');
 const repo = require('../src/db/repository');
 const service = require('../src/services/catalogueService');
 const { restyle } = require('../../scripts/restyle-svgs');
+const kit = require('../../scripts/lib/svg-kit');
+const circuits = require('../../scripts/lib/circuit-templates');
+const machines = require('../../scripts/lib/machines');
+const { SPECS } = require('../../scripts/lib/component-specs');
 
 function stubComponent(overrides = {}) {
   return {
@@ -57,6 +61,19 @@ describe('Component detail mapping', () => {
     assert.strictEqual(detail.diagrams[1].imagePath, '/assets/svg/circuits/jk-flip-flop-circuit.svg');
   });
 
+  it('keeps the pinout kind so it can sit with the specifications', async () => {
+    installStubs([
+      { diagram_id: 1, title: 'Symbol Diagram', diagram_kind: 'SYMBOL', image_path: '/a.svg', alt_text: null, caption: null, display_order: 10 },
+      { diagram_id: 2, title: 'Pinout Diagram', diagram_kind: 'PINOUT', image_path: '/assets/svg/pinouts/jk-flip-flop.svg', alt_text: null, caption: null, display_order: 25 }
+    ]);
+
+    const detail = await service.getComponentDetail('jk-flip-flop');
+    const pinout = detail.diagrams.find(d => d.kind === 'PINOUT');
+
+    assert.ok(pinout, 'PINOUT survives the mapping');
+    assert.match(pinout.imagePath, /^\/assets\/svg\/pinouts\//);
+  });
+
   it('falls back to OTHER when a legacy row has no diagram kind', async () => {
     installStubs([
       { diagram_id: 1, title: 'Legacy', diagram_kind: null, image_path: '/assets/svg/x.svg', alt_text: null, caption: null, display_order: 1 }
@@ -89,5 +106,94 @@ describe('SVG restyle pipeline', () => {
     const width = Number(out.match(/viewBox="0 0 ([\d.]+) /)[1]);
 
     assert.ok(width > 200, `expected a wider canvas, got ${width}`);
+  });
+});
+
+describe('Diagram generator contract', () => {
+  it('draws every NAND as accent outline with a hollow output bubble and no text', () => {
+    const svg = circuits.build('nand-jk', 'JK circuit');
+
+    assert.ok(svg.includes('#00a7da'), 'gates use the accent outline');
+    assert.ok(svg.includes('#101f38'), 'gates are filled with the accent tint');
+    assert.ok(svg.includes('#c5c7c9'), 'wires use the light grey');
+    assert.ok(svg.includes('fill="none"'), 'the output bubble is hollow');
+    assert.ok(!/>NAND</.test(svg), 'the gate name is never written inside the symbol');
+    assert.ok(svg.includes('1080') && svg.includes('480'), 'canvas matches the reference drawing');
+  });
+
+  it('labels circuit inputs light blue and outputs cyan', () => {
+    const svg = circuits.build('nand-d', 'D circuit');
+    assert.ok(svg.includes(kit.PALETTE.inputText), 'input labels use the accent blue');
+    assert.ok(svg.includes(kit.PALETTE.outputText), 'output labels use the secondary cyan');
+  });
+
+  it('never draws a diagonal wire', () => {
+    Object.keys(circuits.TEMPLATES).forEach(key => {
+      const warnings = [];
+      const original = console.warn;
+      console.warn = msg => warnings.push(msg);
+      circuits.build(key, 'check');
+      console.warn = original;
+      assert.ok(
+        !warnings.some(w => /diagonal|dangling|unconnected/.test(w)),
+        `${key} produced ${warnings.join(' | ')}`
+      );
+    });
+  });
+
+  it('draws the box diagram at the reference geometry with an unclipped name', () => {
+    const { svg, width, height } = kit.boxDiagram({
+      name: ['JK', 'FLIP-FLOP'],
+      inputs: [{ label: 'J' }, { label: 'K' }, { label: 'CLK', clock: true }],
+      outputs: [{ label: 'Q' }, { label: "Q'", bubble: true }],
+      top: [{ label: 'PRE', bubble: true, dashed: true }],
+      bottom: [{ label: 'CLR', bubble: true, dashed: true }]
+    });
+
+    assert.strictEqual(width, 360, 'matches the reference width');
+    assert.strictEqual(height, 320, 'matches the reference height');
+    assert.ok(svg.includes('stroke="#21262d"'), 'body border is the dark grey from the reference');
+    assert.ok(svg.includes('#00a7da'), 'inputs are light blue');
+    assert.ok(svg.includes('#00dfc1'), 'outputs are cyan');
+    assert.ok(svg.includes('stroke-dasharray="8 4"'), 'preset/clear use the dashed grey stub');
+    assert.ok(!svg.includes('Symbol'), 'no caption text is written into the drawing');
+  });
+
+  it('wraps a long box name and shrinks an unbreakable one', () => {
+    const wrapped = kit.fitLabel('ASYNCHRONOUS BINARY COUNTER', 130, { maxSize: 18 });
+    assert.ok(wrapped.lines.length > 1, 'the name wraps onto several lines');
+    wrapped.lines.forEach(line => {
+      assert.ok(kit.textWidth(line, wrapped.size) <= 130, `"${line}" still overflows`);
+    });
+
+    const unbreakable = kit.fitLabel('SUPERCALIFRAGILISTIC', 130, { maxSize: 18 });
+    assert.ok(unbreakable.size < 18, 'a single long token is reduced in size');
+    unbreakable.lines.forEach(line => {
+      assert.ok(kit.textWidth(line, unbreakable.size) <= 130, `"${line}" still overflows`);
+    });
+  });
+
+  it('draws the IC pinout with numbers outside and names inside', () => {
+    const { svg } = kit.pinoutDiagram(SPECS['nand-gate'].pinout);
+    assert.ok(svg.includes('74LS00'), 'part number is in the body');
+    assert.ok(svg.includes('#8a8d93'), 'pin numbers use the muted grey');
+    assert.ok(svg.includes('#21262d'), 'the body border matches the reference');
+  });
+
+  it('puts the Moore and Mealy machines in one side-by-side svg', () => {
+    const svg = machines.buildState('jk', 'JK state');
+    assert.ok(svg.includes('MOORE'), 'Moore panel present');
+    assert.ok(svg.includes('MEALY'), 'Mealy panel present');
+    const width = Number(svg.match(/viewBox="0 0 ([\d.]+)/)[1]);
+    const height = Number(svg.match(/viewBox="0 0 [\d.]+ ([\d.]+)/)[1]);
+    assert.ok(width > height * 2, 'the two panels sit side by side');
+    assert.ok(!/stroke-width="(?!1[".])/.test(svg.replace(/stroke-width="1"/g, '')), 'borders are hairlines');
+  });
+
+  it('covers every component that declares a circuit with a template', () => {
+    Object.entries(SPECS).forEach(([slug, spec]) => {
+      if (!spec.circuit) return;
+      assert.ok(circuits.TEMPLATES[spec.circuit], `${slug} references a missing template: ${spec.circuit}`);
+    });
   });
 });

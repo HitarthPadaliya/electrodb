@@ -38,7 +38,7 @@ const api = {
     }
   },
 
-  // Catalogue
+  // Catalog
   getHealth() {
     return this.request('/health');
   },

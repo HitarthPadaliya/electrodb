@@ -1,24 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Active-Low SR Latch circuit diagram">
-  <title>Active-Low SR Latch — circuit diagram</title>
-  <g>
-    <path d="M250,96 h39.6 a32,32 0 0 1 0,64 h-39.6 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="344" cy="128" r="6" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
-    <text x="288.72" y="132" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">NAND</text>
-    <path d="M250,216 h39.6 a32,32 0 0 1 0,64 h-39.6 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="344" cy="248" r="6" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
-    <text x="288.72" y="252" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">NAND</text>
-    <text x="60" y="109.2" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">S</text>
-    <path d="M60,115.2 L250,115.2" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="60" y="229.2" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">R</text>
-    <path d="M60,235.2 L250,235.2" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M350,248 L420,248 L420,70 L196,70 L196,140.8 L250,140.8" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M350,128 L450,128 L450,300 L176,300 L176,260.8 L250,260.8" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M350,128 L560,128" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="564" y="132" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">Q</text>
-    <path d="M362,128 L362,56" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <path d="M350,248 L520,248" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="524" y="252" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">Q'</text>
-    <circle cx="362" cy="128" r="3.2" fill="#00dfc1"/>
-    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Cross-coupled NAND storage loop with clocked input steering</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Active-Low SR Latch circuit diagram">
+  <title>Active-Low SR Latch circuit diagram</title>
+  <path d="M360,110 H396.8 A40,40 0 0 1 396.8,190 H360 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="448" cy="150" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M360,290 H396.8 A40,40 0 0 1 396.8,370 H360 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="448" cy="330" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,126 L360,126" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,306 L360,306" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="134" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">S</text>
+  <text x="34" y="314" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">R</text>
+  <path d="M454,330 L600,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="600" cy="330" r="4.5" fill="#c5c7c9"/>
+  <path d="M600,330 L600,60 L300,60 L300,174 L360,174" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M454,150 L660,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="660" cy="150" r="4.5" fill="#c5c7c9"/>
+  <path d="M660,150 L660,440 L300,440 L300,354 L360,354" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M600,330 L1000,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M660,150 L1000,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="158" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="338" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
 </svg>

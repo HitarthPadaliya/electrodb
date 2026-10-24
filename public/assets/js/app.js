@@ -1,6 +1,6 @@
 /**
  * ElectroDB Frontend Application
- * Hash-based SPA router + catalogue renderers + academic lab console.
+ * Hash-based SPA router + catalog renderers + academic lab console.
  */
 
 const app = {
@@ -95,6 +95,32 @@ const app = {
         this.onCatalogFilterChange(control.value);
       }
     });
+
+    // Delegated range sliders: paint the filled part of the track and react.
+    const syncRange = input => {
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const value = Number(input.value);
+      const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+      input.style.setProperty('--range-progress', `${pct}%`);
+    };
+
+    document.addEventListener('input', e => {
+      const input = e.target;
+      if (!input || input.type !== 'range') return;
+      syncRange(input);
+      const key = input.getAttribute('data-input');
+      const output = input.parentElement && input.parentElement.querySelector('.range-row-value');
+      if (output) output.textContent = input.value;
+      if (key === 'report-lines') {
+        this.reportLineLimit = Number(input.value);
+        this.loadTimingReport();
+      }
+    });
+
+    // Paint any sliders that rendered with the markup.
+    const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(syncRange);
+    this.paintRanges = paintRanges;
 
     // Hide images that fail to load (delegated error handler; CSP-safe)
     document.addEventListener('error', e => {
@@ -205,8 +231,8 @@ const app = {
       case 'run-sum-routines':
         this.runSumRoutines();
         break;
-      case 'load-view-catalogue':
-        this.loadViewCatalogue();
+      case 'load-view-catalog':
+        this.loadViewCatalog();
         break;
       case 'load-view-counts':
         this.loadViewCounts();
@@ -338,7 +364,7 @@ const app = {
   },
 
   setTitle(title) {
-    document.title = title ? `${title} — ElectroDB` : 'ElectroDB — Electronic Components Reference Catalogue';
+    document.title = title ? `${title} - ElectroDB` : 'ElectroDB - Electronic Components Reference Catalog';
   },
 
   // ----------------------------------------------------------------
@@ -356,7 +382,7 @@ const app = {
     this.contentEl.innerHTML = `
       <div class="loading-state" role="status" aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
-        <p>Loading catalogue data from the database…</p>
+        <p>Loading catalog data from the database…</p>
       </div>
     `;
   },
@@ -383,7 +409,7 @@ const app = {
           <p class="page-eyebrow" style="color: var(--accent);">Error 404</p>
           <h3 style="font-size: 2.4rem; letter-spacing: -0.02em;">Page not found</h3>
           <p>${this.escapeHtml(message || 'The requested category, tag, or component could not be found.')}</p>
-          <a href="#/catalog" class="btn btn-primary">Browse the catalogue</a>
+          <a href="#/catalog" class="btn btn-primary">Browse the catalog</a>
           <a href="#/" class="btn btn-secondary">Return home</a>
         </div>
       </div>
@@ -430,7 +456,7 @@ const app = {
             <h1>Electronic<br><span>Components</span></h1>
             <p class="hero-lead">
               A data-driven reference for digital logic, semiconductors, analog circuits, sensors,
-              and electromechanical parts — complete with truth tables, state diagrams, timing
+              and electromechanical parts - complete with truth tables, state diagrams, timing
               waveforms, LaTeX equations, and normalized specifications.
             </p>
 
@@ -442,7 +468,7 @@ const app = {
             <div class="hero-tags">${categoryTags}</div>
 
             <div class="hero-actions">
-              <a href="#/catalog" class="btn btn-primary">Browse the catalogue</a>
+              <a href="#/catalog" class="btn btn-primary">Browse the catalog</a>
               <a href="#/lab" class="btn btn-secondary">Open lab console</a>
             </div>
 
@@ -480,7 +506,7 @@ const app = {
       html += `
         <section class="section">
           <div class="section-head">
-            <h2 class="section-title">From the Catalogue</h2>
+            <h2 class="section-title">From the Catalog</h2>
             <a href="#/catalog" class="section-link">View all components →</a>
           </div>
           <div class="components-grid">
@@ -541,7 +567,7 @@ const app = {
         ${this.breadcrumbs([{ label: 'Home', href: '#/' }, { label: 'Categories' }])}
 
         <header class="page-header">
-          <p class="page-eyebrow">Catalogue hierarchy</p>
+          <p class="page-eyebrow">Catalog hierarchy</p>
           <h1 class="page-title">Component Categories</h1>
           <p class="page-lead">
             ${categories.length} primary families, ${subcategoryCount} subfamilies, and
@@ -584,7 +610,7 @@ const app = {
         <header class="page-header">
           <p class="page-eyebrow">Category</p>
           <h1 class="page-title">${this.escapeHtml(category.name)}</h1>
-          <p class="page-lead">${this.escapeHtml(category.description || 'Reference catalogue collection.')}</p>
+          <p class="page-lead">${this.escapeHtml(category.description || 'Reference catalog collection.')}</p>
         </header>
     `;
 
@@ -849,7 +875,7 @@ const app = {
     this.setTitle(comp.name);
 
     const categoryId = comp.category ? comp.category.categoryId || comp.category.id : null;
-    const categoryName = comp.category ? comp.category.name : 'Catalogue';
+    const categoryName = comp.category ? comp.category.name : 'Catalog';
     const tags = comp.tags || [];
 
     const crumbs = [
@@ -876,7 +902,9 @@ const app = {
     const byKind = kind => diagrams.filter(diagram => (diagram.kind || 'OTHER') === kind);
     const symbolDiagram = byKind('SYMBOL')[0];
     const circuitDiagrams = byKind('CIRCUIT');
-    const extraDiagrams = diagrams.filter(diagram => !['SYMBOL', 'CIRCUIT'].includes(diagram.kind || 'OTHER'));
+    const extraDiagrams = diagrams.filter(
+      diagram => !['SYMBOL', 'CIRCUIT', 'PINOUT'].includes(diagram.kind || 'OTHER')
+    );
     const symbolPath = (symbolDiagram && symbolDiagram.imagePath) || comp.circuitSymbolPath;
 
     let html = `
@@ -910,35 +938,31 @@ const app = {
             symbolPath
               ? `<figure class="component-art">
                    <img src="${this.escapeHtml(symbolPath)}" alt="${this.escapeHtml(comp.name)} symbol" loading="lazy" data-hide-on-error>
-                   <figcaption>Symbol</figcaption>
                  </figure>`
               : `<div class="component-art component-art--empty" aria-hidden="true"><span>⚡</span></div>`
           }
         </section>
     `;
 
-    // Circuit diagram, immediately after the hero — this is the gate- and
-    // device-level schematic, not the pin-level block symbol above.
+    // Circuit diagram, immediately after the hero. Logic gates are excluded:
+    // their implementation is the IC pinout shown with the specifications.
     circuitDiagrams.forEach(diagram => {
       html += `
-        <section class="detail-section circuit-section">
-          <div class="section-head">
-            <h2 class="section-title">Circuit Diagram</h2>
-          </div>
-          <figure class="circuit-figure">
+        <section class="detail-section">
+          <h2 class="section-title">Circuit Diagram</h2>
+          <figure class="diagram-body">
             <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
               diagram.altText || `Circuit diagram for ${comp.name}`
             )}" loading="lazy">
-            ${diagram.caption ? `<figcaption>${this.escapeHtml(diagram.caption)}</figcaption>` : ''}
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(diagram.imagePath)}"
+                data-open-title="${this.escapeHtml(diagram.title || 'Circuit diagram')}"
+              >View fullscreen</button>
+            </div>
           </figure>
-          <div class="circuit-actions">
-            <button
-              class="btn btn-secondary btn-sm"
-              type="button"
-              data-open-image="${this.escapeHtml(diagram.imagePath)}"
-              data-open-title="${this.escapeHtml(diagram.title || 'Circuit diagram')}"
-            >View fullscreen</button>
-          </div>
         </section>
       `;
     });
@@ -951,75 +975,89 @@ const app = {
         <section class="detail-section">
           <h2 class="section-title">${this.escapeHtml(section.title || 'Details')}</h2>
           ${this.renderSectionBody(section)}
-          ${section.caption ? `<p class="table-caption">${this.escapeHtml(section.caption)}</p>` : ''}
         </section>
       `;
     });
 
-    // Supporting artwork (state, timing, …). The symbol and the circuit
-    // diagram are already displayed above, so they are not repeated here.
-    if (extraDiagrams.length) {
+    // Supporting artwork. Each drawing becomes its own titled section, exactly
+    // like Truth Table or Equation - no grid of cards, no asset counter, no
+    // footnotes.
+    extraDiagrams.forEach(diagram => {
+      const kind = diagram.kind || 'OTHER';
+      const isState = kind === 'STATE';
+      const heading =
+        kind === 'STATE' ? 'State Machine' : kind === 'TIMING' ? 'Timing Diagram' : diagram.title || 'Diagram';
       html += `
         <section class="detail-section">
-          <div class="section-head">
-            <h2 class="section-title">Diagrams &amp; Visual Assets</h2>
-            <span class="section-meta">${extraDiagrams.length} assets</span>
-          </div>
-          <div class="diagram-grid">
-            ${extraDiagrams
-              .map(
-                diagram => `
-                  <article class="diagram-card">
-                    <div class="diagram-frame">
-                      <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(diagram.altText || diagram.title)}" loading="lazy">
-                    </div>
-                    <h3 class="diagram-title">${this.escapeHtml(diagram.title)}</h3>
-                    ${diagram.caption ? `<p class="diagram-caption">${this.escapeHtml(diagram.caption)}</p>` : ''}
-                    <div class="diagram-actions">
-                      <button
-                        class="btn btn-secondary btn-sm"
-                        type="button"
-                        data-open-image="${this.escapeHtml(diagram.imagePath)}"
-                        data-open-title="${this.escapeHtml(diagram.title)}"
-                      >View fullscreen</button>
-                    </div>
-                  </article>
-                `
-              )
-              .join('')}
-          </div>
+          <h2 class="section-title">${this.escapeHtml(heading)}</h2>
+          <figure class="diagram-body${isState ? ' diagram-body--compact' : ''}">
+            <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
+              diagram.altText || diagram.title
+            )}" loading="lazy">
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(diagram.imagePath)}"
+                data-open-title="${this.escapeHtml(diagram.title)}"
+              >View fullscreen</button>
+            </div>
+          </figure>
         </section>
       `;
-    }
+    });
 
-    // Specifications
-    if (comp.specifications && comp.specifications.length) {
+    // Specifications. When the part is an IC, its pinout is shown here so the
+    // diagram and the electrical figures are read together.
+    const pinout = byKind('PINOUT')[0];
+    if ((comp.specifications && comp.specifications.length) || pinout) {
       html += `
         <section class="detail-section">
           <h2 class="section-title">Technical Specifications</h2>
-          <div class="table-responsive" style="margin-top: 1.25rem;">
-            <table class="edu-table spec-table">
-              <thead>
-                <tr>
-                  <th>Specification</th>
-                  <th>Value</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${comp.specifications
-                  .map(
-                    spec => `
-                      <tr>
-                        <td><strong>${this.escapeHtml(spec.name)}</strong></td>
-                        <td>${this.escapeHtml(spec.value || '—')}${spec.unit && !String(spec.value || '').includes(spec.unit) ? ` ${this.escapeHtml(spec.unit)}` : ''}</td>
-                        <td>${spec.sourceNote ? `<span class="spec-source-note">${this.escapeHtml(spec.sourceNote)}</span>` : '—'}</td>
-                      </tr>
-                    `
-                  )
-                  .join('')}
-              </tbody>
-            </table>
+          <div class="spec-layout${pinout ? ' spec-layout--with-figure' : ''}">
+            ${
+              comp.specifications && comp.specifications.length
+                ? `<div class="table-responsive spec-layout-table">
+                     <table class="edu-table spec-table">
+                       <thead>
+                         <tr>
+                           <th>Specification</th>
+                           <th>Value</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         ${comp.specifications
+                           .map(
+                             spec => `
+                               <tr>
+                                 <td>${this.formatCell(spec.name)}</td>
+                                 <td>${this.escapeHtml(spec.value || '-')}${spec.unit && !String(spec.value || '').includes(spec.unit) ? ` ${this.escapeHtml(spec.unit)}` : ''}</td>
+                               </tr>
+                             `
+                           )
+                           .join('')}
+                       </tbody>
+                     </table>
+                   </div>`
+                : ''
+            }
+            ${
+              pinout
+                ? `<figure class="diagram-body diagram-body--pinout">
+                     <img src="${this.escapeHtml(pinout.imagePath)}" alt="${this.escapeHtml(
+                       pinout.altText || `Pinout for ${comp.name}`
+                     )}" loading="lazy">
+                     <div class="diagram-actions">
+                       <button
+                         class="btn btn-secondary btn-sm"
+                         type="button"
+                         data-open-image="${this.escapeHtml(pinout.imagePath)}"
+                         data-open-title="${this.escapeHtml(pinout.title || 'Pinout diagram')}"
+                       >View fullscreen</button>
+                     </div>
+                   </figure>`
+                : ''
+            }
           </div>
         </section>
       `;
@@ -1027,8 +1065,14 @@ const app = {
 
     html += '</div>';
     this.contentEl.innerHTML = html;
+
+    // Typeset the table signals and equations once the markup exists.
     this.renderMath();
   },
+
+  // ----------------------------------------------------------------
+  // Educational content renderers
+  // ----------------------------------------------------------------
 
   renderSectionBody(section) {
     const content = section.content;
@@ -1049,9 +1093,9 @@ const app = {
         const src = typeof content === 'string' ? content : content && (content.path || content.url);
         if (!src) return `<p class="result-text">No visual asset attached to this section.</p>`;
         return `
-          <div class="diagram-frame" style="margin-top: 1.25rem;">
+          <figure class="diagram-body">
             <img src="${this.escapeHtml(src)}" alt="${this.escapeHtml(section.altText || section.title || 'Diagram')}" loading="lazy">
-          </div>
+          </figure>
         `;
       }
 
@@ -1081,7 +1125,7 @@ const app = {
       <div class="table-responsive" style="margin-top: 1.25rem;">
         <table class="edu-table">
           <thead>
-            <tr>${tableJson.columns.map(col => `<th>${this.formatCell(col)}</th>`).join('')}</tr>
+            <tr>${tableJson.columns.map(col => `<th>${this.formatCell(col, { header: true })}</th>`).join('')}</tr>
           </thead>
           <tbody>
             ${tableJson.rows
@@ -1093,14 +1137,60 @@ const app = {
     `;
   },
 
-  formatCell(value) {
-    if (value === null || value === undefined) return '—';
+  /**
+   * Signal symbols (J, K, Q, Q(next), S0, Q3Q2Q1Q0 ...) are typeset as maths so
+   * subscripts and overbars read correctly. Words, numbers and binary strings
+   * stay as plain text.
+   */
+  symbolToLatex(raw) {
+    let tex = String(raw).trim();
+
+    // Q' / Q' with overbar -> \overline{Q}
+    const primed = tex.match(/^([A-Z][A-Za-z0-9]*)\s*['\u2032\u0305]$/);
+    if (primed) return `\\overline{${primed[1]}}`;
+
+    // Q(next) -> Q_{next}
+    tex = tex.replace(/\(next\)/gi, '_{next}');
+
+    // letter followed by one or more digits -> subscript
+    tex = tex.replace(/([A-Za-z])(\d+)/g, '$1_{$2}');
+
+    // unicode subscripts used by the seed data
+    tex = tex.replace(/[\u2080-\u2089]/g, ch => `_{${ch.charCodeAt(0) - 0x2080}}`);
+
+    return tex;
+  },
+
+  looksLikeSymbol(raw) {
+    const trimmed = String(raw).trim();
+    if (!trimmed || trimmed.length > 14) return false;
+    if (!/[A-Za-z]/.test(trimmed)) return false;
+    // Signal names only: a capitalised token, optionally carrying digits,
+    // primes, "(next)" or unicode subscripts. Plain English words such as
+    // "Decimal" or "Modulus" are left as text.
+    if (/^[A-Z]\(next\)$/i.test(trimmed)) return true;
+    if (!/^[A-Z][A-Z0-9()'\u2032\u0305\u2080-\u2089 ]*$/.test(trimmed)) return false;
+    const hasDecoration = /[0-9()'\u2032\u0305\u2080-\u2089]/.test(trimmed);
+    if (!hasDecoration && trimmed.length > 3) return false;
+    return true;
+  },
+
+  formatCell(value, { header = false } = {}) {
+    if (value === null || value === undefined) return '-';
 
     const raw = String(value);
     const latexMatch = raw.match(/^\\\(([\s\S]+?)\\\)$/);
+    let tex = null;
 
     if (latexMatch) {
-      return `<span data-katex-inline="${this.escapeHtml(latexMatch[1])}">${this.escapeHtml(raw)}</span>`;
+      tex = latexMatch[1];
+    } else if (this.looksLikeSymbol(raw) && !/^(Hold|Toggle|Set|Reset|Operation)$/i.test(raw)) {
+      tex = this.symbolToLatex(raw);
+    }
+
+    if (tex) {
+      const body = header ? `\\mathbf{${tex}}` : tex;
+      return `<span data-katex-inline="${this.escapeHtml(body)}">${this.escapeHtml(raw)}</span>`;
     }
 
     const highlight = ['X', 'Toggle', 'Reset', 'Set', 'Hold'].includes(raw);
@@ -1110,12 +1200,13 @@ const app = {
   },
 
   renderEquationContent(latex) {
+    // Rendered maths only - the source LaTeX used to be printed underneath as a
+    // footnote and is now dropped.
     return `
-      <div class="equation-card">
+      <div class="equation-block">
         <div class="equation-rendered" data-latex="${this.escapeHtml(latex)}">
           <code>${this.escapeHtml(latex)}</code>
         </div>
-        <div class="equation-raw">LaTeX: ${this.escapeHtml(latex)}</div>
       </div>
     `;
   },
@@ -1152,18 +1243,21 @@ const app = {
 
     this.contentEl.innerHTML = `
       <div class="page">
-        <section class="lab-banner">
-          <div class="lab-banner-text">
-            <p class="eyebrow">SVNIT CS203 · Assignment 10 &amp; 11</p>
-            <h1 class="lab-title">Academic Lab Console</h1>
-            <p>Stored procedures, cursors, triggers, indexed query timing, views, XML serialization, and live table statistics for the ElectroDB schema.</p>
+        <header class="lab-header">
+          <p class="eyebrow">SVNIT CS203 - Assignment 10 &amp; 11</p>
+          <h1 class="lab-title">Academic Lab Console</h1>
+          <p class="lab-lead">
+            Stored procedures, cursors, triggers, indexed query timing, views, XML serialization, and
+            live table statistics for the ElectroDB schema.
+          </p>
+          <div class="lab-meta-row">
+            <span class="lab-badge"><span aria-hidden="true">&#9679;</span> Demo mode</span>
           </div>
-          <span class="lab-badge"><span aria-hidden="true">●</span> Demo mode</span>
-        </section>
+        </header>
 
         <div class="lab-tabs" role="tablist" aria-label="Lab console sections">
-          <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">Assignment 10 · Stored Programs</button>
-          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-a11">Assignment 11 · SQL Demos</button>
+          <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">10 &middot; Stored Programs</button>
+          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-a11">11 &middot; SQL Demos</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-views">Views</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-benchmarks">Index Benchmarks</button>
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-dashboard">Dashboard</button>
@@ -1398,14 +1492,14 @@ const app = {
           <div class="lab-card">
             <div class="lab-card-head">
               <div>
-                <h2 class="lab-card-title">View: v_component_catalogue</h2>
+                <h2 class="lab-card-title">View: v_component_catalog</h2>
                 <p class="lab-card-desc">Joins <code>components</code>, <code>categories</code>, and parent categories into one display-ready view.</p>
               </div>
               <div class="lab-actions">
-                <button class="btn btn-secondary btn-sm" type="button" data-action="load-view-catalogue">Load catalogue view</button>
+                <button class="btn btn-secondary btn-sm" type="button" data-action="load-view-catalog">Load catalog view</button>
               </div>
             </div>
-            <div id="view-catalogue-container"></div>
+            <div id="view-catalog-container"></div>
           </div>
 
           <div class="lab-card">
@@ -1434,6 +1528,20 @@ const app = {
                 <button class="btn btn-primary btn-sm" type="button" data-action="load-timing-report">Refresh report</button>
               </div>
             </div>
+            <div class="range-row">
+              <label class="range-row-label" for="report-lines">Report lines shown</label>
+              <output class="range-row-value" id="report-lines-value">24</output>
+              <input
+                type="range"
+                id="report-lines"
+                min="8"
+                max="80"
+                step="4"
+                value="24"
+                data-input="report-lines"
+                aria-label="Number of benchmark report lines to display"
+              />
+            </div>
             <div id="timing-report-container" class="result-text">Loading report…</div>
           </div>
         </div>
@@ -1444,7 +1552,7 @@ const app = {
             <div class="lab-card-head">
               <div>
                 <h2 class="lab-card-title">Live Database Table Statistics</h2>
-                <p class="lab-card-desc">Row counts for every catalogue and assignment table, plus component publication metrics.</p>
+                <p class="lab-card-desc">Row counts for every catalog and assignment table, plus component publication metrics.</p>
               </div>
               <div class="lab-actions">
                 <button class="btn btn-primary btn-sm" type="button" data-action="load-dashboard">Refresh statistics</button>
@@ -1460,6 +1568,7 @@ const app = {
     this.loadAuditLog();
     this.loadTimingReport();
     this.loadDashboard();
+    if (this.paintRanges) this.paintRanges();
   },
 
   switchLabTab(tabId, button) {
@@ -1655,9 +1764,9 @@ const app = {
         <div class="form-group" style="margin-bottom: 1rem;">
           <label class="form-label" for="new-user-role">Role</label>
           <select id="new-user-role" class="form-control">
-            <option value="NAIVE_USER">NAIVE_USER — read-only end user</option>
-            <option value="APP_DEVELOPER" selected>APP_DEVELOPER — application developer</option>
-            <option value="DBA">DBA — database administrator</option>
+            <option value="NAIVE_USER">NAIVE_USER - read-only end user</option>
+            <option value="APP_DEVELOPER" selected>APP_DEVELOPER - application developer</option>
+            <option value="DBA">DBA - database administrator</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -1982,12 +2091,12 @@ const app = {
     }
   },
 
-  async loadViewCatalogue() {
-    const container = document.getElementById('view-catalogue-container');
-    container.innerHTML = '<p class="result-text">Loading v_component_catalogue…</p>';
+  async loadViewCatalog() {
+    const container = document.getElementById('view-catalog-container');
+    container.innerHTML = '<p class="result-text">Loading v_component_catalog…</p>';
 
     try {
-      const res = await api.lab.getViewCatalogue(1, 10);
+      const res = await api.lab.getViewCatalog(1, 10);
       container.innerHTML = `
         <div class="table-responsive">
           <table class="edu-table">
@@ -2000,7 +2109,7 @@ const app = {
                       <td>${this.escapeHtml(row.component_id)}</td>
                       <td><strong>${this.escapeHtml(row.component_name)}</strong></td>
                       <td>${this.escapeHtml(row.category_name)}</td>
-                      <td>${this.escapeHtml(row.parent_category_name || '—')}</td>
+                      <td>${this.escapeHtml(row.parent_category_name || '-')}</td>
                     </tr>
                   `
                 )
@@ -2052,8 +2161,10 @@ const app = {
 
     try {
       const res = await api.lab.getTimingReport();
+      const limit = Number(this.reportLineLimit || 24);
+      const lines = String(res.data.report || 'No report available.').split('\n');
       container.innerHTML = '<div class="report-viewer"></div>';
-      container.firstElementChild.textContent = res.data.report || 'No report available.';
+      container.firstElementChild.textContent = lines.slice(0, limit).join('\n');
     } catch (err) {
       container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
     }
@@ -2085,8 +2196,8 @@ const app = {
           metrics
             ? `
               <div class="metrics-note">
-                <span><strong>Published:</strong> ${this.escapeHtml(metrics.published_components)}</span>
-                <span><strong>Illustrative educational models:</strong> ${this.escapeHtml(metrics.illustrative_components)}</span>
+                <span><strong>Components:</strong> ${this.escapeHtml(metrics.published_components)}</span>
+                <span><strong>With reference artwork:</strong> ${this.escapeHtml(metrics.illustrative_components)}</span>
               </div>
             `
             : ''
@@ -2100,38 +2211,25 @@ const app = {
   // ----------------------------------------------------------------
   // Shared markup helpers
   // ----------------------------------------------------------------
-  categoryCard(category, showChildren = true) {
-    const id = category.category_id !== undefined ? category.category_id : category.categoryId;
+  categoryCard(category) {
+    // Parent categories use exactly the same tile as subcategories: name,
+    // summary, then "<n> components ->". The count includes nested children so
+    // a top-level category reports everything underneath it.
     const children = category.children || [];
     const directCount = Number(
       category.componentCount !== undefined ? category.componentCount : category.component_count || 0
     );
     const childCount = children.reduce(
-      (sum, child) => sum + Number(child.component_count !== undefined ? child.component_count : child.componentCount || 0),
+      (sum, child) =>
+        sum + Number(child.component_count !== undefined ? child.component_count : child.componentCount || 0),
       0
     );
-    const total = directCount + childCount;
 
-    const childPills = children
-      .slice(0, 6)
-      .map(child => {
-        const count = child.component_count !== undefined ? child.component_count : child.componentCount || 0;
-        return `<span class="subcat-pill">${this.escapeHtml(child.name)} (${Number(count)})</span>`;
-      })
-      .join('');
-    const morePill =
-      children.length > 6 ? `<span class="subcat-pill">+${children.length - 6} more</span>` : '';
-
-    return `
-      <a class="category-card" href="#/categories/${encodeURIComponent(id)}">
-        <div class="category-card-head">
-          <h3 class="category-title">${this.escapeHtml(category.name)}</h3>
-          <span class="count-pill">${total} items</span>
-        </div>
-        <p class="category-desc">${this.escapeHtml(category.description || 'Reference catalogue collection.')}</p>
-        ${showChildren && children.length ? `<div class="pill-row">${childPills}${morePill}</div>` : ''}
-      </a>
-    `;
+    return this.subcategoryCard({
+      ...category,
+      description: category.description || '',
+      component_count: directCount + childCount
+    });
   },
 
   componentCard(comp) {
@@ -2161,21 +2259,22 @@ const app = {
    * Subcategory button: card-like (as before) but compact and distinct from
    * both the parent category cards and the component cards.
    */
-  subcategoryCard(category, index = 0) {
+  subcategoryCard(category) {
     const id = category.category_id !== undefined ? category.category_id : category.categoryId;
     const count = Number(
       category.component_count !== undefined ? category.component_count : category.componentCount || 0
     );
-    const ordinal = String(index + 1).padStart(2, '0');
+    const description = category.description || '';
 
+    // The count lives in the footer next to the arrow so both read as one
+    // sentence: "5 components ->". No ordinal, no floating chip.
     return `
       <a class="subcategory-card" href="#/categories/${encodeURIComponent(id)}">
-        <span class="subcategory-index" aria-hidden="true">${ordinal}</span>
-        <span class="subcategory-count">${count}</span>
         <span class="subcategory-name">${this.escapeHtml(category.name)}</span>
+        ${description ? `<p class="subcategory-desc">${this.escapeHtml(description)}</p>` : ''}
         <span class="subcategory-foot">
-          <span class="subcategory-meta">component${count === 1 ? '' : 's'}</span>
-          <span class="subcategory-arrow" aria-hidden="true">→</span>
+          <span class="subcategory-foot-count"><b>${count}</b> component${count === 1 ? '' : 's'}</span>
+          <span class="subcategory-arrow" aria-hidden="true">&#8594;</span>
         </span>
       </a>
     `;

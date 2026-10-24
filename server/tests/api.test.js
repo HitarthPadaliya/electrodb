@@ -148,6 +148,25 @@ describe('ElectroDB Catalogue API Tests', () => {
 
     // The design reference drawing is shipped verbatim for the JK flip-flop.
     assert.strictEqual(circuit.imagePath, '/assets/svg/circuits/jk-flip-flop-circuit.svg');
+
+    // The IC pinout is served alongside the specifications.
+    assert.ok(kinds.includes('PINOUT'), 'An IC pinout diagram must be present');
+    const pinout = comp.diagrams.find(d => d.kind === 'PINOUT');
+    assert.ok(
+      pinout.imagePath.startsWith('/assets/svg/pinouts/'),
+      'Pinouts live under /assets/svg/pinouts/'
+    );
+  });
+
+  it('GET /api/components/:id should pair every logic gate with its IC pinout instead of a circuit', async () => {
+    for (const slug of ['and-gate', 'nand-gate', 'xor-gate']) {
+      const res = await request(`/api/components/${slug}`);
+      assert.strictEqual(res.status, 200, `${slug} should resolve`);
+      const kinds = res.json.data.diagrams.map(d => d.kind);
+
+      assert.ok(!kinds.includes('CIRCUIT'), `${slug} must not ship a circuit diagram`);
+      assert.ok(kinds.includes('PINOUT'), `${slug} must show its IC pinout`);
+    }
   });
 
   it('GET /api/components/:id should not classify components with an educational tag', async () => {

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 389.4 332" role="img" aria-label="74LS266 pinout">
+  <title>74LS266 pinout</title>
+  <line x1="71.1" y1="66" x2="105.1" y2="66" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="70" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">1</text>
+  <line x1="71.1" y1="100" x2="105.1" y2="100" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="104" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">2</text>
+  <line x1="71.1" y1="134" x2="105.1" y2="134" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="138" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">3</text>
+  <line x1="71.1" y1="168" x2="105.1" y2="168" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="172" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">4</text>
+  <line x1="71.1" y1="202" x2="105.1" y2="202" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="206" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">5</text>
+  <line x1="71.1" y1="236" x2="105.1" y2="236" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="240" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">6</text>
+  <line x1="71.1" y1="270" x2="105.1" y2="270" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="65.1" y="274" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="end">7</text>
+  <line x1="284.3" y1="66" x2="318.3" y2="66" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="70" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">14</text>
+  <line x1="284.3" y1="100" x2="318.3" y2="100" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="104" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">13</text>
+  <line x1="284.3" y1="134" x2="318.3" y2="134" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="138" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">12</text>
+  <line x1="284.3" y1="168" x2="318.3" y2="168" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="172" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">11</text>
+  <line x1="284.3" y1="202" x2="318.3" y2="202" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="206" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">10</text>
+  <line x1="284.3" y1="236" x2="318.3" y2="236" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="240" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">9</text>
+  <line x1="284.3" y1="270" x2="318.3" y2="270" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="324.3" y="274" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="12" font-weight="400" text-anchor="start">8</text>
+  <rect x="105.1" y="44" width="179.2" height="248" rx="10" ry="10" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <path d="M180.7,44 A14,14 0 0 0 208.7,44" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <circle cx="49.1" cy="50" r="3.5" fill="none" stroke="#8a8d93" stroke-width="2"/>
+  <text x="117.1" y="71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">1A</text>
+  <text x="117.1" y="105" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">1B</text>
+  <text x="117.1" y="139" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">1Y</text>
+  <text x="117.1" y="173" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">2A</text>
+  <text x="117.1" y="207" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">2B</text>
+  <text x="117.1" y="241" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">2Y</text>
+  <text x="117.1" y="275" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="start">GND</text>
+  <text x="272.3" y="71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">VCC</text>
+  <text x="272.3" y="105" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">4B</text>
+  <text x="272.3" y="139" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">4A</text>
+  <text x="272.3" y="173" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">4Y</text>
+  <text x="272.3" y="207" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">3B</text>
+  <text x="272.3" y="241" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">3A</text>
+  <text x="272.3" y="275" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="14" font-weight="400" text-anchor="end">3Y</text>
+  <text x="194.7" y="174.72" fill="#c5c7c9" font-family="Consolas, 'Courier New', monospace" font-size="20" font-weight="400" text-anchor="middle">74LS266</text>
+</svg>

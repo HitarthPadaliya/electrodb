@@ -1,59 +1,103 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" width="100%" height="100%">
-  <title>Mod-8 Down Counter State Diagram</title>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#00a7da" />
-    </marker>
-    <style>
-      .state { fill: #0d1117; stroke: #00a7da; stroke-width: 2.5; }
-      .state-txt { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #101f38; text-anchor: middle; dominant-baseline: middle; }
-      .trans { stroke: #00a7da; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .center-lbl { font-family: Consolas, Consolas; font-size: 13px; font-weight: bold; fill: #c5c7c9; text-anchor: middle; }
-    </style>
-  </defs>
-
-  <text x="180" y="145" class="center-lbl">Mod-8 (DOWN)</text>
-  <text x="180" y="162" class="center-lbl" style="font-size: 11px; font-weight: normal; fill: #64748b;">3-Bit State Ring</text>
-
-  <line x1="200.3" y1="68.4" x2="220.5" y2="76.8" class="trans" />
-  <line x1="252.1" y1="106.7" x2="260.4" y2="126.9" class="trans" />
-  <line x1="261.6" y1="170.3" x2="253.2" y2="190.5" class="trans" />
-  <line x1="223.3" y1="222.1" x2="203.1" y2="230.4" class="trans" />
-  <line x1="159.7" y1="231.6" x2="139.5" y2="223.2" class="trans" />
-  <line x1="107.9" y1="193.3" x2="99.6" y2="173.1" class="trans" />
-  <line x1="98.4" y1="129.7" x2="106.8" y2="109.5" class="trans" />
-  <line x1="136.7" y1="77.9" x2="156.9" y2="69.6" class="trans" />
-
-  
-    <circle cx="180.0" cy="60.0" r="22" class="state" />
-    <text x="180.0" y="60.0" class="state-txt">111</text>
-  
-  
-    <circle cx="243.6" cy="86.4" r="22" class="state" />
-    <text x="243.6" y="86.4" class="state-txt">110</text>
-  
-  
-    <circle cx="270.0" cy="150.0" r="22" class="state" />
-    <text x="270.0" y="150.0" class="state-txt">101</text>
-  
-  
-    <circle cx="243.6" cy="213.6" r="22" class="state" />
-    <text x="243.6" y="213.6" class="state-txt">100</text>
-  
-  
-    <circle cx="180.0" cy="240.0" r="22" class="state" />
-    <text x="180.0" y="240.0" class="state-txt">011</text>
-  
-  
-    <circle cx="116.4" cy="213.6" r="22" class="state" />
-    <text x="116.4" y="213.6" class="state-txt">010</text>
-  
-  
-    <circle cx="90.0" cy="150.0" r="22" class="state" />
-    <text x="90.0" y="150.0" class="state-txt">001</text>
-  
-  
-    <circle cx="116.4" cy="86.4" r="22" class="state" />
-    <text x="116.4" y="86.4" class="state-txt">000</text>
-  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 344" role="img" aria-label="Mod-8 Down Counter state machine">
+  <title>Mod-8 Down Counter state machine</title>
+  <rect x="10" y="32" width="400" height="300" rx="8" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="24" y="54" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="13" letter-spacing="1.5">MOORE</text>
+  <path d="M232.65,99.95 Q251.72,106.64 270.79,113.34" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M270.79,113.34 L263.19,113.85 L265.18,108.19 Z" fill="#8a8d93"/>
+  <text x="251.72" y="120.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M303.98,142.85 Q310.72,156.64 317.46,170.44" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M317.46,170.44 L311.69,165.47 L317.08,162.83 Z" fill="#8a8d93"/>
+  <text x="310.72" y="170.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M317.46,213.56 Q310.72,227.36 303.98,241.15" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M303.98,241.15 L304.36,233.54 L309.75,236.18 Z" fill="#8a8d93"/>
+  <text x="310.72" y="241.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M270.79,270.66 Q251.72,277.36 232.65,284.05" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M232.65,284.05 L238.26,278.9 L240.24,284.56 Z" fill="#8a8d93"/>
+  <text x="251.72" y="291.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M187.35,284.05 Q168.28,277.36 149.21,270.66" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M149.21,270.66 L156.81,270.15 L154.82,275.81 Z" fill="#8a8d93"/>
+  <text x="168.28" y="291.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M116.02,241.15 Q109.28,227.36 102.54,213.56" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M102.54,213.56 L108.31,218.53 L102.92,221.17 Z" fill="#8a8d93"/>
+  <text x="109.28" y="241.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M102.54,170.44 Q109.28,156.64 116.02,142.85" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M116.02,142.85 L115.64,150.46 L110.25,147.82 Z" fill="#8a8d93"/>
+  <text x="109.28" y="170.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M149.21,113.34 Q168.28,106.64 187.35,99.95" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M187.35,99.95 L181.74,105.1 L179.76,99.44 Z" fill="#8a8d93"/>
+  <text x="168.28" y="120.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <circle cx="210" cy="92" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="210" y="96" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">0</text>
+  <text x="210" y="130" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">000</text>
+  <circle cx="293.44" cy="121.29" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="293.44" y="125.29" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">1</text>
+  <text x="293.44" y="159.29" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">001</text>
+  <circle cx="328" cy="192" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="328" y="196" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">2</text>
+  <text x="328" y="230" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">010</text>
+  <circle cx="293.44" cy="262.71" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="293.44" y="266.71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">3</text>
+  <text x="293.44" y="300.71" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">011</text>
+  <circle cx="210" cy="292" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="210" y="296" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">4</text>
+  <text x="210" y="330" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">100</text>
+  <circle cx="126.56" cy="262.71" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="126.56" y="266.71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">5</text>
+  <text x="126.56" y="300.71" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">101</text>
+  <circle cx="92" cy="192" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="92" y="196" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">6</text>
+  <text x="92" y="230" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">110</text>
+  <circle cx="126.56" cy="121.29" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="126.56" y="125.29" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">7</text>
+  <text x="126.56" y="159.29" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">111</text>
+  <rect x="426" y="32" width="400" height="300" rx="8" fill="none" stroke="#21262d" stroke-width="1"/>
+  <text x="440" y="54" fill="#8a8d93" font-family="Consolas, 'Courier New', monospace" font-size="13" letter-spacing="1.5">MEALY</text>
+  <path d="M648.65,99.95 Q667.72,106.64 686.79,113.34" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M686.79,113.34 L679.19,113.85 L681.18,108.19 Z" fill="#8a8d93"/>
+  <text x="667.72" y="120.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/1</text>
+  <path d="M719.98,142.85 Q726.72,156.64 733.46,170.44" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M733.46,170.44 L727.69,165.47 L733.08,162.83 Z" fill="#8a8d93"/>
+  <text x="726.72" y="170.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/2</text>
+  <path d="M733.46,213.56 Q726.72,227.36 719.98,241.15" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M719.98,241.15 L720.36,233.54 L725.75,236.18 Z" fill="#8a8d93"/>
+  <text x="726.72" y="241.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/3</text>
+  <path d="M686.79,270.66 Q667.72,277.36 648.65,284.05" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M648.65,284.05 L654.26,278.9 L656.24,284.56 Z" fill="#8a8d93"/>
+  <text x="667.72" y="291.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/4</text>
+  <path d="M603.35,284.05 Q584.28,277.36 565.21,270.66" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M565.21,270.66 L572.81,270.15 L570.82,275.81 Z" fill="#8a8d93"/>
+  <text x="584.28" y="291.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/5</text>
+  <path d="M532.02,241.15 Q525.28,227.36 518.54,213.56" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M518.54,213.56 L524.31,218.53 L518.92,221.17 Z" fill="#8a8d93"/>
+  <text x="525.28" y="241.36" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/6</text>
+  <path d="M518.54,170.44 Q525.28,156.64 532.02,142.85" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M532.02,142.85 L531.64,150.46 L526.25,147.82 Z" fill="#8a8d93"/>
+  <text x="525.28" y="170.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/7</text>
+  <path d="M565.21,113.34 Q584.28,106.64 603.35,99.95" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M603.35,99.95 L597.74,105.1 L595.76,99.44 Z" fill="#8a8d93"/>
+  <text x="584.28" y="120.64" fill="#00a7da" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">1/0</text>
+  <circle cx="626" cy="92" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="626" y="96" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">0</text>
+  <text x="626" y="130" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">000</text>
+  <circle cx="709.44" cy="121.29" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="709.44" y="125.29" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">1</text>
+  <text x="709.44" y="159.29" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">001</text>
+  <circle cx="744" cy="192" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="744" y="196" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">2</text>
+  <text x="744" y="230" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">010</text>
+  <circle cx="709.44" cy="262.71" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="709.44" y="266.71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">3</text>
+  <text x="709.44" y="300.71" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">011</text>
+  <circle cx="626" cy="292" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="626" y="296" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">4</text>
+  <text x="626" y="330" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">100</text>
+  <circle cx="542.56" cy="262.71" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="542.56" y="266.71" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">5</text>
+  <text x="542.56" y="300.71" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">101</text>
+  <circle cx="508" cy="192" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="508" y="196" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">6</text>
+  <text x="508" y="230" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">110</text>
+  <circle cx="542.56" cy="121.29" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="542.56" y="125.29" fill="#e8eaed" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="400" text-anchor="middle">7</text>
+  <text x="542.56" y="159.29" fill="#00dfc1" font-family="Consolas, 'Courier New', monospace" font-size="11" font-weight="400" text-anchor="middle">111</text>
 </svg>

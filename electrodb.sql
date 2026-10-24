@@ -187,7 +187,7 @@ CREATE TABLE component_diagrams (
   title VARCHAR(180) NOT NULL,
   -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
   -- diagram, and from state/timing artwork, so the UI can place each one.
-  diagram_kind ENUM('SYMBOL','CIRCUIT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
+  diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
   caption VARCHAR(500) NULL,
@@ -656,7 +656,8 @@ WHERE c.category_id=7;
 
 -- Visual assets share one model; diagram_kind records which drawing it is.
 -- SYMBOL is the pin-level block (what the hero shows); CIRCUIT is the
--- gate/transistor-level schematic shown immediately below the hero.
+-- all-NAND implementation shown immediately below the hero; PINOUT is the DIP
+-- package drawing shown beside the technical specifications.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
@@ -664,6 +665,7 @@ SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
 FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
+-- Logic gates have no circuit diagram: their implementation is the IC pinout.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
@@ -671,8 +673,18 @@ SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
          WHEN 'jk-flip-flop' THEN '/assets/svg/circuits/jk-flip-flop-circuit.svg'
          ELSE CONCAT('/assets/svg/circuits/',c.slug,'.svg')
        END,
-       CONCAT('Circuit diagram for ',c.name), 'Gate- and device-level circuit.', 20
-FROM components c;
+       CONCAT('Circuit diagram for ',c.name), 'All-NAND implementation.', 20
+FROM components c
+WHERE c.category_id <> 8;
+
+-- IC pinout, shown with the technical specifications.
+INSERT INTO component_diagrams
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Pinout Diagram', 'PINOUT',
+       CONCAT('/assets/svg/pinouts/',c.slug,'.svg'),
+       CONCAT('IC pinout for ',c.name), 'DIP package pin numbering.', 25
+FROM components c
+WHERE c.category_id IN (6,7,8,9,10,17,18,19,20,21);
 
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
@@ -681,21 +693,33 @@ SELECT c.component_id, 'State Diagram', 'STATE',
          WHEN 'decade-counter' THEN '/assets/svg/counters/decade-counter-state.svg'
          WHEN 'mod8-up-counter' THEN '/assets/svg/counters/mod8-up-counter-state.svg'
          WHEN 'mod8-down-counter' THEN '/assets/svg/counters/mod8-down-counter-state.svg'
-         WHEN 'jk-flip-flop' THEN '/assets/svg/flipflops/jk-flip-flop-state.svg'
-         WHEN 'd-flip-flop' THEN '/assets/svg/flipflops/d-flip-flop-state.svg'
-         WHEN 't-flip-flop' THEN '/assets/svg/flipflops/t-flip-flop-state.svg'
+         WHEN 'bcd-counter' THEN '/assets/svg/counters/bcd-counter-state.svg'
+         WHEN 'mod5-counter' THEN '/assets/svg/counters/mod5-counter-state.svg'
+         WHEN 'mod6-counter' THEN '/assets/svg/counters/mod6-counter-state.svg'
+         WHEN 'binary-ripple-counter' THEN '/assets/svg/counters/binary-ripple-counter-state.svg'
+         WHEN 'binary-up-counter' THEN '/assets/svg/counters/binary-up-counter-state.svg'
+         WHEN 'asynchronous-binary-counter' THEN '/assets/svg/counters/asynchronous-binary-counter-state.svg'
+         WHEN 'synchronous-binary-counter' THEN '/assets/svg/counters/synchronous-binary-counter-state.svg'
+         WHEN 'up-down-counter' THEN '/assets/svg/counters/up-down-counter-state.svg'
+         WHEN 'programmable-modulo-counter' THEN '/assets/svg/counters/programmable-modulo-counter-state.svg'
+         WHEN 'ring-counter' THEN '/assets/svg/counters/ring-counter-state.svg'
+         WHEN 'johnson-counter' THEN '/assets/svg/counters/johnson-counter-state.svg'
+         WHEN 'mod10-synchronous-counter' THEN '/assets/svg/counters/mod10-synchronous-counter-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END, CONCAT('State transitions for ',c.name), 'State transitions between stored values.', 30
+       END, CONCAT('State machine for ',c.name), 'Moore and Mealy machines, side by side.', 30
 FROM components c
 WHERE c.category_id IN (6,7);
 
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Timing Diagram', 'TIMING',
-       CONCAT('/assets/svg/counters/',c.slug,'-timing.svg'),
+       CASE WHEN c.category_id=6
+            THEN CONCAT('/assets/svg/counters/',c.slug,'-timing.svg')
+            ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-timing.svg')
+       END,
        CONCAT('Timing diagram for ',c.name), 'Signal levels over successive clock cycles.', 40
 FROM components c
-WHERE c.category_id=6;
+WHERE c.category_id IN (6,7);
 
 -- Representative Boolean equations for gates and multiplexers.
 INSERT INTO component_content

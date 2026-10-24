@@ -1,22 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="PNP BJT circuit diagram">
-  <title>PNP BJT — circuit diagram</title>
-  <g>
-    <path d="M300,148 v56" stroke="#168fe5" stroke-width="2.6"/><path d="M300,172 L346,144 V94" stroke="#00a7da" stroke-width="2" fill="none"/><path d="M300,208 L346,236 V286" stroke="#00a7da" stroke-width="2" fill="none"/><path d="M300,190 h-52" stroke="#00a7da" stroke-width="2"/><path d="M330,224 l-12,-2 l6,12 z" fill="#00a7da"/>
-    <text x="354" y="196" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="start">Q1</text>
-    <path d="M346,94 L346,56 L520,56" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="470" y="48" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="start">V_CC</text>
-    <path d="M346,56 v5.52 l9,3.8639999999999994 l-18,3.8639999999999994 l18,3.8639999999999994 l-18,3.8639999999999994 l18,3.8639999999999994 l-9,3.8639999999999994 v5.52" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-    <text x="366" y="83" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="start">R_C</text>
-    <circle cx="346" cy="96" r="3.2" fill="#00dfc1"/>
-    <path d="M346,96 L346,94" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M346,96 L540,96" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="546" y="100" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_OUT</text>
-    <path d="M140,190 h10.08 l7.055999999999999,-9 l7.055999999999999,18 l7.055999999999999,-18 l7.055999999999999,18 l7.055999999999999,-18 l7.055999999999999,9 h10.08" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-    <text x="182" y="178" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">R_B</text>
-    <path d="M60,190 L140,190" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="60" y="182" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_IN</text>
-    <path d="M346,286 L346,308" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M333,308 h26 M338,314 h16 M342,320 h8" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
-    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Common-emitter stage: base current controls the collector current</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="PNP BJT circuit diagram">
+  <title>PNP BJT circuit diagram</title>
+  <path d="M480,160 v120" stroke="#00a7da" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M480,192 L532,154 M480,248 L532,286" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <path d="M532,154 v-64 M532,286 v64" stroke="#c5c7c9" stroke-width="2"/>
+  <path d="M90,220 L480,220" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M532,90 L820,90" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M532,350 L820,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="40" y="228" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">VIN</text>
+  <text x="832" y="98" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">COLLECTOR</text>
+  <text x="832" y="358" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">EMITTER</text>
 </svg>

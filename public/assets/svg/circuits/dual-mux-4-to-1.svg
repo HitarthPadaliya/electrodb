@@ -1,32 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Dual 4-to-1 Multiplexer circuit diagram">
-  <title>Dual 4-to-1 Multiplexer — circuit diagram</title>
-  <g>
-    <path d="M190,74 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="94" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D0</text>
-    <path d="M60,100 L190,100" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M190,136 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="156" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D1</text>
-    <path d="M60,162 L190,162" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M190,198 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="218" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D2</text>
-    <path d="M60,224 L190,224" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M190,260 h32.4 a26,26 0 0 1 0,52 h-32.4 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="60" y="280" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">D3</text>
-    <path d="M60,286 L190,286" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M360,120 Q406.2,124.56 444,158 Q402,191.44 360,196 Q385.2,158 360,120 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
-    <text x="396.96" y="162" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">OR</text>
-    <path d="M262,100 L320,100 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M262,162 L320,162 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M262,224 L320,224 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <path d="M262,286 L320,286 L320,158" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-    <text x="60" y="300" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="600" text-anchor="start">S</text>
-    <path d="M60,292 L160,292" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
-    <path d="M160,110.4 L190,110.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M160,172.4 L190,172.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M160,234.4 L190,234.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M160,296.4 L190,296.4" fill="none" stroke="#8a8d93" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5"/>
-    <path d="M444,158 L560,158" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
-    <text x="564" y="162" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="12" font-weight="600" text-anchor="start">Y</text>
-    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">4:1 selection — one AND term per channel, combined by an OR gate</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Dual 4-to-1 Multiplexer circuit diagram">
+  <title>Dual 4-to-1 Multiplexer circuit diagram</title>
+  <path d="M150,372 H175.76 A28,28 0 0 1 175.76,428 H150 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="214" cy="400" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M400,94 H436.8 A40,40 0 0 1 436.8,174 H400 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="488" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M400,334 H436.8 A40,40 0 0 1 436.8,414 H400 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="488" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M720,214 H756.8 A40,40 0 0 1 756.8,294 H720 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="808" cy="254" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,110 L400,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,350 L400,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="118" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D0</text>
+  <text x="34" y="358" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">D1</text>
+  <path d="M60,400 L150,400" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="110" cy="400" r="4.5" fill="#c5c7c9"/>
+  <path d="M110,400 L110,398 L400,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="408" fill="#168fe5" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">S</text>
+  <path d="M220,400 L320,400 L320,158 L400,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M494,134 L620,134 L620,230 L720,230" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M494,374 L660,374 L660,278 L720,278" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M814,254 L1000,254" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="262" fill="#00dfdf" font-family="Consolas, 'Courier New', monospace" font-size="24" font-weight="400" text-anchor="start">Y</text>
 </svg>

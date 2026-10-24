@@ -325,6 +325,11 @@ function specificationsFor(component) {
   return defs.map(([name, value, unit]) => ({ name, value, unit, sourceNote: 'Illustrative educational value' }));
 }
 
+// Pinout drawings are generated for the IC categories and the IC-like gate
+// packages; a component only advertises one when the file actually exists.
+const PINOUT_CATEGORIES = new Set([6, 7, 8, 9, 10, 17, 18, 19, 20, 21]);
+const PINOUT_EXCLUDE = new Set();
+
 function diagramsFor(component) {
   const diagrams = [];
   const add = (title, kind, imagePath, altText, caption) => {
@@ -334,28 +339,33 @@ function diagramsFor(component) {
     diagrams.push({ diagramId: diagrams.length + 1, title, kind, imagePath, altText, caption });
   };
 
-  // Hero artwork: the pin-level block symbol.
+  // Hero artwork: the pin-level block / gate / device symbol.
   add('Symbol Diagram', 'SYMBOL', component.circuit_symbol_path,
-    `Pin-level symbol for ${component.name}`, 'Pin-level block symbol.');
+    `Pin-level symbol for ${component.name}`, null);
 
-  // Gate/transistor-level schematic, shown directly beneath the hero.
-  // The JK flip-flop uses the hand-drawn reference drawing verbatim.
-  const circuitPath =
-    component.slug === 'jk-flip-flop'
-      ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
-      : `/assets/svg/circuits/${component.slug}.svg`;
-  add('Circuit Diagram', 'CIRCUIT', circuitPath,
-    `Circuit diagram for ${component.name}`, 'Gate- and device-level circuit.');
+  // All-NAND implementation, shown directly beneath the hero. Logic gates are
+  // excluded: their implementation is the IC pinout below.
+  if (component.category_id !== 8) {
+    const circuitPath =
+      component.slug === 'jk-flip-flop'
+        ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
+        : `/assets/svg/circuits/${component.slug}.svg`;
+    add('Circuit Diagram', 'CIRCUIT', circuitPath,
+      `Circuit diagram for ${component.name}`, null);
+  }
 
-  // Supporting artwork.
-  add('State Diagram', 'STATE', `/assets/svg/flipflops/${component.slug}-state.svg`,
-    `State diagram for ${component.name}`, 'State transitions between stored values.');
-  add('State Diagram', 'STATE', `/assets/svg/counters/${component.slug}-state.svg`,
-    `State diagram for ${component.name}`, 'State transitions between stored values.');
-  add('Timing Diagram', 'TIMING', `/assets/svg/counters/${component.slug}-timing.svg`,
-    `Timing diagram for ${component.name}`, 'Signal levels over successive clock cycles.');
-  add('Timing Diagram', 'TIMING', `/assets/svg/flipflops/${component.slug}-timing.svg`,
-    `Timing diagram for ${component.name}`, 'Signal levels over successive clock cycles.');
+  // IC pinout, displayed with the technical specifications.
+  if (PINOUT_CATEGORIES.has(component.category_id) && !PINOUT_EXCLUDE.has(component.slug)) {
+    add('Pinout Diagram', 'PINOUT', `/assets/svg/pinouts/${component.slug}.svg`,
+      `IC pinout for ${component.name}`, null);
+  }
+
+  // Supporting artwork lives in the directory that matches the category.
+  const supportDir = component.category_id === 6 ? 'counters' : 'flipflops';
+  add('State Machine', 'STATE', `/assets/svg/${supportDir}/${component.slug}-state.svg`,
+    `State machine for ${component.name}`, null);
+  add('Timing Diagram', 'TIMING', `/assets/svg/${supportDir}/${component.slug}-timing.svg`,
+    `Timing diagram for ${component.name}`, null);
 
   return diagrams;
 }
