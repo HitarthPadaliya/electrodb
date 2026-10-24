@@ -16,7 +16,10 @@ function noStore(res) {
 async function register(req, res, next) {
   try {
     const result = await authService.register(req.body || {});
-    res.setHeader('Set-Cookie', tokens.serializeSessionCookie(result.token, COOKIE_MAX_AGE));
+    res.setHeader(
+      'Set-Cookie',
+      tokens.serializeSessionCookie(result.token, COOKIE_MAX_AGE, tokens.cookieAttributesFor(req))
+    );
     noStore(res);
     res.status(201).json({
       data: {
@@ -33,7 +36,10 @@ async function register(req, res, next) {
 async function login(req, res, next) {
   try {
     const result = await authService.login(req.body || {});
-    res.setHeader('Set-Cookie', tokens.serializeSessionCookie(result.token, COOKIE_MAX_AGE));
+    res.setHeader(
+      'Set-Cookie',
+      tokens.serializeSessionCookie(result.token, COOKIE_MAX_AGE, tokens.cookieAttributesFor(req))
+    );
     noStore(res);
     const bookmarkIds = await personalService.bookmarkIds(result.user.userId);
     res.json({ data: { user: result.user, bookmarkIds } });
@@ -47,7 +53,7 @@ async function logout(req, res, next) {
     // Clearing the cookie is not enough on its own: the row is deleted so the
     // token cannot be replayed from a copy of the cookie.
     await authService.logout(req.authToken || tokens.parseCookies(req.headers.cookie)[tokens.cookieName()]);
-    res.setHeader('Set-Cookie', tokens.clearSessionCookie());
+    res.setHeader('Set-Cookie', tokens.clearSessionCookie(tokens.cookieAttributesFor(req)));
     noStore(res);
     res.json({ data: { signedOut: true } });
   } catch (err) {

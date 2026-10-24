@@ -632,7 +632,7 @@ describe('Expired-session recovery', () => {
   });
 
   it('clears the stale identity before explaining what happened', () => {
-    const start = accountSource.indexOf('onSessionLost()');
+    const start = accountSource.indexOf('\n  onSessionLost()');
     assert.ok(start > -1);
     const body = accountSource.slice(start, start + 1400);
     assert.match(body, /this\.clearSession\(\)/);
@@ -700,9 +700,138 @@ describe('Component page layout', () => {
     assert.match(cssSource, /\.crumbs-back\s*\{/);
   });
 
+  it('gives the back link room below the path and the tags room above the description', () => {
+    const crumbs = /\.crumbs-back\s*\{([^}]*)\}/.exec(cssSource);
+    assert.ok(crumbs, '.crumbs-back should exist');
+    const top = /margin:\s*([\d.]+)rem/.exec(crumbs[1]);
+    assert.ok(top, 'the back link needs an explicit top margin');
+    assert.ok(Number(top[1]) >= 1, `expected at least 1rem below the breadcrumb, got ${top[1]}rem`);
+
+    const tags = /\.component-hero \.hero-tags\s*\{([^}]*)\}/.exec(cssSource);
+    assert.ok(tags, '.component-hero .hero-tags should exist');
+    const bottom = /margin-bottom:\s*([\d.]+)rem/.exec(tags[1]);
+    assert.ok(bottom, 'the tags need a bottom margin');
+    assert.ok(Number(bottom[1]) >= 1.2, `expected breathing room after the tags, got ${bottom[1]}rem`);
+  });
+
   it('renders the two personal actions a shade smaller than the primary one', () => {
     assert.match(detail, /btn btn-secondary btn-compact/);
     assert.match(cssSource, /\.btn-compact\s*\{[^}]*font-size:\s*0\.72rem/);
     assert.match(cssSource, /\.component-actions \.bookmark-btn\s*\{[^}]*font-size:\s*0\.72rem/);
+  });
+});
+
+describe('Session cookie survives an embedded page', () => {
+  const tokens = require('../src/security/tokens');
+  const config = require('../src/config');
+
+  it('marks the cookie SameSite=None over HTTPS when cross-site is allowed', () => {
+    const previous = config.session.sameSite;
+    config.session.sameSite = 'auto';
+    try {
+      const overHttps = tokens.cookieAttributesFor({ headers: { 'x-forwarded-proto': 'https' } });
+      assert.deepStrictEqual(overHttps, { sameSite: 'None', secure: true });
+
+      const cookie = tokens.serializeSessionCookie('tok', 3600, overHttps);
+      assert.match(cookie, /SameSite=None/);
+      assert.match(cookie, /Secure/);
+      assert.match(cookie, /HttpOnly/);
+    } finally {
+      config.session.sameSite = previous;
+    }
+  });
+
+  it('falls back to SameSite=Lax on plain HTTP, where Secure would be dropped', () => {
+    const previous = config.session.sameSite;
+    config.session.sameSite = 'auto';
+    try {
+      const plain = tokens.cookieAttributesFor({ headers: {} });
+      assert.deepStrictEqual(plain, { sameSite: 'Lax', secure: false });
+      assert.ok(!/Secure/.test(tokens.serializeSessionCookie('tok', 3600, plain)));
+    } finally {
+      config.session.sameSite = previous;
+    }
+  });
+
+  it('keeps SameSite=Lax by default, so a top-level site stays strict', () => {
+    const attributes = tokens.cookieAttributesFor({ headers: { 'x-forwarded-proto': 'https' } });
+    assert.strictEqual(attributes.sameSite, 'Lax');
+  });
+
+  it('clears the cookie with the same attributes it was set with', () => {
+    const attributes = { sameSite: 'None', secure: true };
+    const cleared = tokens.clearSessionCookie(attributes);
+    assert.match(cleared, /SameSite=None/);
+    assert.match(cleared, /Max-Age=0/);
+    assert.match(cleared, /Secure/);
+  });
+
+  it('has the preview server opt into the embedded policy', () => {
+    const previewSource = fs.readFileSync(path.join(repoRoot, 'scripts/preview-server.js'), 'utf8');
+    assert.match(previewSource, /SESSION_COOKIE_SAMESITE[^\n]*'auto'/);
+  });
+});
+
+describe('Sign-in cannot be undone by its own page load', () => {
+  const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
+
+  it('ignores a session probe that started before the identity changed', () => {
+    // A slow /auth/me issued at page load must not overwrite a sign-in that
+    // completed while it was in flight.
+    assert.match(accountSource, /sessionVersion/);
+    assert.match(accountSource, /bumpSessionVersion\(\)/);
+    assert.match(accountSource, /if \(version === this\.sessionVersion\)/);
+  });
+
+  it('proves the cookie stuck before leaving the sign-in page', () => {
+    const login = accountSource.slice(accountSource.indexOf('async submitLogin'));
+    assert.match(login, /const check = await api\.auth\.me\(\)/);
+    assert.match(login, /did not keep the session cookie/);
+    assert.match(login, /this\.clearSession\(\)/);
+  });
+
+  it('re-checks a live session when the tab regains focus', () => {
+    assert.match(accountSource, /watchFocus/);
+    assert.match(accountSource, /visibilitychange/);
+  });
+});
+
+describe('Cross-site checks survive a proxying host', () => {
+  const fs2 = require('node:fs');
+  const authMiddleware = fs2.readFileSync(path.join(repoRoot, 'server/src/middleware/auth.js'), 'utf8');
+
+  it('trusts Sec-Fetch-Site when the browser sends it', () => {
+    assert.match(authMiddleware, /sec-fetch-site/);
+    assert.match(authMiddleware, /'same-origin', 'same-site', 'none'/);
+    assert.match(authMiddleware, /CSRF_BLOCKED/);
+  });
+
+  it('accepts a proxied Host when falling back to Origin', () => {
+    assert.match(authMiddleware, /acceptableHosts/);
+    assert.match(authMiddleware, /x-forwarded-host/i);
+    assert.match(authMiddleware, /publicBaseUrl/);
+  });
+});
+
+describe('Preview demo credentials', () => {
+  const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
+  const previewSource = fs.readFileSync(path.join(repoRoot, 'scripts/preview-server.js'), 'utf8');
+
+  it('lists the demo accounts on the sign-in page when the server offers them', () => {
+    assert.match(accountSource, /renderDemoAccounts/);
+    assert.match(accountSource, /'\/preview\/demo-accounts'/);
+    assert.match(accountSource, /fill-demo-account/);
+  });
+
+  it('serves them from the preview server only, and routes the path there', () => {
+    assert.match(previewSource, /\/api\/preview\/demo-accounts/);
+    assert.match(previewSource, /ACCOUNT_PATH = .*preview/);
+  });
+
+  it('keeps the real application free of such an endpoint', () => {
+    const appRoutes = ['server/src/routes/authRoutes.js', 'server/src/routes/userRoutes.js', 'server/src/routes/adminRoutes.js', 'server/src/routes/catalogueRoutes.js']
+      .map(file => fs.readFileSync(path.join(repoRoot, file), 'utf8'))
+      .join('\n');
+    assert.ok(!/demo-accounts/.test(appRoutes));
   });
 });

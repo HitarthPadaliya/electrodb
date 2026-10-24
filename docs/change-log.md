@@ -547,3 +547,31 @@ collections and live sessions instead of signing everyone out mid-review.
 On the component page, three small placement corrections: the back link now sits with the breadcrumb
 path rather than among the buttons, the tag pills sit directly under the component name, and "Save"
 and "Add to collection" are a shade smaller than the primary action beside them.
+
+## 26. Signing in and being signed straight back out
+
+Signing in could appear to succeed and then land on a signed-out page, and saving or collecting a
+component would answer "sign in" to someone who had just done exactly that.
+
+The cause was the session cookie's `SameSite=Lax` attribute. A Lax cookie is **not sent at all** when
+the page is embedded in another origin, which is how the preview is displayed. The sign-in worked,
+the browser stored the cookie, and then never handed it back: every later request was anonymous, so
+the page and the API disagreed about who the visitor was.
+
+- `SESSION_COOKIE_SAMESITE` now chooses the policy: `lax` (default, correct for a site opened
+  directly), `strict`, `none`, or `auto`, which means `SameSite=None; Secure` when the request came
+  over HTTPS and `Lax` when it came over plain HTTP — because a `Secure` cookie over HTTP is simply
+  dropped. The preview server selects `auto`; HTTPS is detected from the connection, then
+  `X-Forwarded-Proto`, then the browser's own `Origin`/`Referer`.
+- The origin check no longer rejects a proxy that rewrites `Host`: `Sec-Fetch-Site` is trusted when
+  the browser sends it, and the `Origin` comparison also accepts `X-Forwarded-Host` and
+  `PUBLIC_BASE_URL`. A genuinely cross-site request is still refused.
+- Two client-side guards against the "instant sign-out" feeling: the session probe that starts at
+  page load is discarded if the identity changed while it was in flight, and the sign-in form
+  re-reads `/api/auth/me` before navigating. If the browser did not keep the cookie, the form says
+  so plainly instead of bouncing the visitor back to the same screen.
+- The sign-in page now lists the preview's demo accounts (DBA, Developer, User) with a one-click
+  fill, from an endpoint that exists only in the preview server.
+
+Spacing on the component page: the back link sits a little further below the breadcrumb path, and
+the tag pills have real space beneath them before the description.

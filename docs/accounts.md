@@ -57,6 +57,17 @@ Rollback statements are at the top of each migration file.
 - **Sessions** — a 32-byte random token in an `HttpOnly`, `SameSite=Lax` cookie (plus `Secure` when
   `SESSION_COOKIE_SECURE=true`, which defaults to true when `NODE_ENV=production`). The database
   stores only the SHA-256 digest, so a database dump cannot be replayed as a live session.
+- **Embedded deployments** — a `SameSite=Lax` cookie is *not sent at all* when the page is inside a
+  frame from another origin. Sign-in then succeeds, the browser keeps the cookie, never returns it,
+  and every following request is anonymous: it looks exactly like being signed out a second after
+  signing in. `SESSION_COOKIE_SAMESITE=auto` makes the cookie `SameSite=None; Secure` when the
+  request arrived over HTTPS and `Lax` otherwise (a `Secure` cookie is dropped over plain HTTP). The
+  preview server uses `auto`; a normal top-level deployment should leave it at `lax`. The
+  same-origin check is what protects state-changing requests, not this flag alone.
+- **Stale probes cannot undo a sign-in** — the initial `/api/auth/me` request is discarded if the
+  identity changed while it was in flight, and the sign-in page re-checks `/api/auth/me` before
+  navigating away. If the browser did not keep the cookie, the form says so instead of bouncing the
+  visitor back.
 - **Session fixation** — every successful login creates a brand-new session row and cookie; a
   pre-existing cookie is never promoted.
 - **Expiry and revocation** — sessions expire after `SESSION_TTL_HOURS` (default 168). The row is
@@ -68,9 +79,11 @@ Rollback statements are at the top of each migration file.
   wiped. Any `401` from a personal endpoint makes the client drop its cached identity, correct the
   header, and either continue to the sign-in page (inside a guarded page) or say plainly that the
   session ended and the change was not saved, with a link back to the page the visitor was reading.
-- **CSRF** — state-changing requests must be same-origin: `Sec-Fetch-Site` must not be
-  `cross-site`, and an `Origin` header, when present, must match the request host. The session
-  cookie is `SameSite=Lax` as well.
+- **CSRF** — state-changing requests must be same-origin. `Sec-Fetch-Site`, which page script cannot
+  forge, is trusted when present (`same-origin`, `same-site`, `none`); otherwise `Origin` must match
+  the request host, `X-Forwarded-Host` or `PUBLIC_BASE_URL`, so a reverse proxy that rewrites `Host`
+  does not reject legitimate writes. A `cross-site` value or a foreign origin is refused with
+  `403 CSRF_BLOCKED`.
 - **Rate limiting** — in-memory fixed windows per IP: 10 logins / 15 min, 20 registrations / hour,
   10 password changes / 15 min. Sufficient for a single instance; a multi-instance deployment would
   move this to shared storage.
@@ -210,6 +223,9 @@ in-memory store, so the pages work without MySQL. It seeds three accounts (passw
 | `developer@preview.local` | `Developer` |
 | `user@preview.local` | `User` |
 
+The sign-in page lists these three accounts with a one-click fill, served by
+`GET /api/preview/demo-accounts` — an endpoint that exists **only** in the preview server.
+
 These exist only in the preview process and prove nothing about the MySQL bootstrap. The preview
 keeps its in-memory state in `.preview-state.json` (gitignored), so a restart keeps accounts,
 bookmarks, collections **and live sessions** instead of silently signing every reviewer out.
@@ -232,13 +248,19 @@ Honest summary of what was and was not verified in this environment.
   `404`s, recently-viewed de-duplication and ordering, dashboard counts, password change revoking
   other sessions, role enforcement for every route group, self-role-change and self-deactivation
   refusals, last-DBA protection, and the stored hash format.
-- `npm run test:offline` — **52/52**: the 34 original checks (shell assets, cache headers, content constraints), 8 account-security checks (cookie flags, token digests, role mapping, hash format, no client-side token storage, script order) and 10 regression checks for expired-session recovery and the component-page layout.
+- `npm run test:offline` — **66/66**: the 34 original checks (shell assets, cache headers, content constraints), 8 account-security checks (cookie flags, token digests, role mapping, hash format, no client-side token storage, script order) and 24 regression checks for session recovery, cookie policy, cross-site behaviour, preview
+  credentials and the component-page layout.
 - `css-tree` parse of `styles.css`: **0 errors**, brace depth 0.
 - End-to-end UI drive with jsdom against the preview server: guest nav, guest bookmark → sign-in
   dialog, protected-route redirect with `next`, login, dashboard counts, bookmark toggle (and the
   card leaving the bookmarks list), save state on a component page, collection creation, add to
   collection through the dialog, profile update, `#/admin` refused to a `User`, DBA seeing three
   accounts, and sign-out returning to the guest nav.
+
+- Cross-site-safe cookies: `SameSite=None; Secure` over HTTPS with `SESSION_COOKIE_SAMESITE=auto`,
+  `Lax` over plain HTTP, and a proxied `Host` no longer breaking the origin check.
+- Sign-in then reload with the same cookie, in both direct and proxied modes; saving a component and
+  adding it to a collection both work after the reload.
 
 - Session recovery after the server-side session dies: the header corrects itself, the guest prompt
   is not shown, and the dialog offers a link back to the same component

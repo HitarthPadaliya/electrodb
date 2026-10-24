@@ -263,6 +263,9 @@ const app = {
       case 'sign-out':
         account.signOut();
         break;
+      case 'fill-demo-account':
+        account.fillDemoAccount(arg);
+        break;
       case 'toggle-bookmark':
         account.toggleBookmark(arg, element);
         break;
@@ -362,6 +365,7 @@ const app = {
           await this.renderSearch(params.get('q') || '', Number(params.get('page')) || 1);
         } else if (section === 'login') {
           account.renderLogin(params);
+          await account.renderDemoAccounts();
         } else if (section === 'register') {
           if (account.isSignedIn()) {
             window.location.hash = '#/dashboard';

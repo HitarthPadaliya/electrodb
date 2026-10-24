@@ -11,17 +11,48 @@ const account = {
   bookmarkIds: new Set(),
 
   // ---------------------------------------------------------------- session
+  // Incremented whenever the identity changes under the app's own control. A
+  // session probe that started before that change must not apply its (now
+  // stale) answer - that is how a slow /auth/me could sign a visitor back out
+  // immediately after a successful sign-in.
+  sessionVersion: 0,
+
+  bumpSessionVersion() {
+    this.sessionVersion += 1;
+    return this.sessionVersion;
+  },
+
   async loadSession() {
     this.watchSession();
+    const version = this.sessionVersion;
     try {
       const res = await api.auth.me();
-      this.applySession(res.data);
+      if (version === this.sessionVersion) this.applySession(res.data);
     } catch (err) {
       // A failed session probe is not an error worth showing: the site works
       // signed out.
-      this.applySession({ user: null, bookmarkIds: [] });
+      if (version === this.sessionVersion) this.applySession({ user: null, bookmarkIds: [] });
     }
     return this.user;
+  },
+
+  /** Re-check a live session when the tab comes back into focus. */
+  watchFocus() {
+    if (this.focusWatching) return;
+    this.focusWatching = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !this.isSignedIn()) return;
+      const now = Date.now();
+      if (now - (this.lastCheckAt || 0) < 60000) return;
+      this.lastCheckAt = now;
+      api.auth
+        .me()
+        .then(res => {
+          if (!res.data.user) this.onSessionLost();
+          else this.applySession(res.data);
+        })
+        .catch(() => {});
+    });
   },
 
   /**
@@ -35,6 +66,7 @@ const account = {
     if (this.watching) return;
     this.watching = true;
     window.addEventListener('electrodb:unauthorized', () => this.onSessionLost());
+    this.watchFocus();
   },
 
   /** Routes that cannot render at all without a session. */
@@ -45,6 +77,7 @@ const account = {
   /** Forget the local session. Returns true if the visitor looked signed in. */
   clearSession() {
     const wasSignedIn = this.isSignedIn();
+    this.bumpSessionVersion();
     this.applySession({ user: null, bookmarkIds: [] });
     return wasSignedIn;
   },
@@ -78,6 +111,7 @@ const account = {
 
   applySession(data = {}) {
     this.user = data.user || null;
+    this.lastCheckAt = Date.now();
     this.bookmarkIds = new Set((data.bookmarkIds || []).map(Number));
     this.renderNav();
     document.body.classList.toggle('is-signed-in', Boolean(this.user));
@@ -282,6 +316,7 @@ const account = {
         </header>
 
         ${registered ? '<p class="form-note form-note--success" role="status">Account created. Sign in to continue.</p>' : ''}
+        <div id="demo-accounts" hidden></div>
 
         <form class="auth-form" data-form="login" novalidate>
           <div class="form-group">
@@ -303,6 +338,55 @@ const account = {
         </form>
       </div>
     `;
+  },
+
+  /**
+   * The preview server exposes its demo accounts; the real application does not
+   * have that endpoint, in which case nothing is rendered.
+   */
+  async renderDemoAccounts() {
+    const host = document.getElementById('demo-accounts');
+    if (!host) return;
+
+    let payload = null;
+    try {
+      const res = await api.request('/preview/demo-accounts');
+      payload = res.data;
+    } catch (err) {
+      host.hidden = true;
+      return;
+    }
+    if (!payload || !payload.accounts || !payload.accounts.length) return;
+
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="demo-accounts">
+        <p class="demo-accounts-title">Demo accounts <span>(preview data only)</span></p>
+        <p class="demo-accounts-password">Password for all of them: <code>${app.escapeHtml(payload.password)}</code></p>
+        <div class="demo-account-list">
+          ${payload.accounts
+            .map(
+              account => `
+            <button class="demo-account" type="button" data-action="fill-demo-account"
+                    data-arg="${app.escapeHtml(account.email)}">
+              <span class="demo-account-role">${app.escapeHtml(account.role)}</span>
+              <span class="demo-account-email">${app.escapeHtml(account.email)}</span>
+            </button>`
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+  },
+
+  fillDemoAccount(email) {
+    const payload = document.querySelector('.demo-accounts-password code');
+    const emailField = document.getElementById('login-email');
+    const passwordField = document.getElementById('login-password');
+    if (!emailField || !passwordField) return;
+    emailField.value = email;
+    passwordField.value = payload ? payload.textContent : '';
+    passwordField.focus();
   },
 
   renderRegister() {
@@ -870,9 +954,28 @@ const account = {
     submit.textContent = 'Signing in…';
 
     try {
+      this.bumpSessionVersion();
       const res = await api.auth.login({ email, password });
       this.applySession(res.data);
-      app.toast(`Signed in as ${res.data.user.username}.`, 'success');
+
+      // Prove the browser kept the session cookie. If it did not - a blocked or
+      // cross-site cookie, or a proxy stripping it - the next page would load
+      // signed out and the visitor would be back here with no explanation.
+      const check = await api.auth.me().catch(() => null);
+      if (!check || !check.data.user) {
+        this.clearSession();
+        this.showFormError(
+          errorEl,
+          'Signed in, but this browser did not keep the session cookie, so the next page would ask again. ' +
+            'Allow cookies for this site (or open the page in its own tab) and try once more.'
+        );
+        submit.disabled = false;
+        submit.textContent = 'Sign in';
+        return undefined;
+      }
+
+      this.applySession(check.data);
+      app.toast(`Signed in as ${check.data.user.username}.`, 'success');
       const next = this.value(form, 'next') || '#/dashboard';
       window.location.hash = next.startsWith('#/') ? next : '#/dashboard';
     } catch (err) {

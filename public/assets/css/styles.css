@@ -1661,17 +1661,18 @@ a:hover > .link-arrow,
    line of the breadcrumb. */
 .crumbs-back {
   display: flex;
-  margin: 0.35rem 0 0;
+  margin: 1.15rem 0 0;
 }
 
 .crumbs-back .back-link {
   padding: 0.2rem 0;
 }
 
-/* Tags sit directly under the component name, above the description. */
+/* Tags sit directly under the component name, above the description, with
+   enough air after them that the description reads as its own block. */
 .component-hero .hero-tags {
   margin-top: 0.85rem;
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
 }
 
 .component-actions {
@@ -3547,4 +3548,86 @@ input[type='range']:focus-visible {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+/* --- preview demo credentials on the sign-in page ---------------------- */
+.demo-accounts {
+  margin: 0 0 1.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: rgba(0, 167, 218, 0.04);
+}
+
+.demo-accounts-title {
+  margin: 0 0 0.15rem;
+  color: var(--fg-light);
+  font-family: var(--font-nav);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.demo-accounts-title span {
+  color: var(--text-light);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.demo-accounts-password {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.demo-accounts-password code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(0, 223, 193, 0.1);
+  color: var(--secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.demo-account-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.demo-account {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-light);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: var(--transition-surface);
+}
+
+.demo-account:hover {
+  border-color: rgba(0, 223, 193, 0.45);
+  color: var(--secondary);
+}
+
+.demo-account:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.demo-account-role {
+  color: var(--text-light);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.demo-account-email {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
 }

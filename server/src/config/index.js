@@ -25,7 +25,13 @@ const config = {
     // flag exists so a plain-HTTP staging box can opt out explicitly.
     secureCookie: process.env.SESSION_COOKIE_SECURE
       ? process.env.SESSION_COOKIE_SECURE === 'true'
-      : isProduction
+      : isProduction,
+    // lax | strict | none | auto
+    //   lax    the default; correct for a site served top-level
+    //   none   for a site embedded in another origin (needs HTTPS + Secure)
+    //   auto   none over HTTPS, lax otherwise - what the preview server uses,
+    //          because the preview is shown inside a frame
+    sameSite: String(process.env.SESSION_COOKIE_SAMESITE || 'lax').toLowerCase()
   },
   db: {
     host: process.env.DB_HOST || 'localhost',

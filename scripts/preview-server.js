@@ -660,6 +660,10 @@ function handleApi(req, res, url) {
 // in-memory store. The preview therefore enforces exactly the same
 // authorization rules as the Express application; only persistence differs.
 process.env.PERSONAL_STORE = 'memory';
+// The preview is shown inside the Arena frame, which is a cross-site context:
+// the session cookie has to be SameSite=None over HTTPS or the browser will
+// never send it back, and every sign-in would appear to fail.
+process.env.SESSION_COOKIE_SAMESITE = process.env.SESSION_COOKIE_SAMESITE || 'auto';
 
 const express = require('express');
 const errorHandler = require('../server/src/middleware/errorHandler');
@@ -689,7 +693,11 @@ function persistAccountState() {
   stateSaveTimer = setTimeout(() => {
     stateSaveTimer = null;
     try {
-      fs.writeFileSync(STATE_FILE, JSON.stringify(getStore().snapshot()));
+      // Write then rename: a process killed mid-write must not leave a
+      // truncated file that would sign everybody out on the next boot.
+      const temporary = `${STATE_FILE}.tmp`;
+      fs.writeFileSync(temporary, JSON.stringify(getStore().snapshot()));
+      fs.renameSync(temporary, STATE_FILE);
     } catch (err) {
       console.warn('Could not persist preview account state:', err.message);
     }
@@ -705,6 +713,20 @@ accountApi.use('/api', attachUser);
 accountApi.use('/api/auth', require('../server/src/routes/authRoutes'));
 accountApi.use('/api/users', require('../server/src/routes/userRoutes'));
 accountApi.use('/api/admin', require('../server/src/routes/adminRoutes'));
+// Demo credentials for the sign-in page. This endpoint only exists in the
+// preview server; the real application never exposes account details.
+accountApi.get('/api/preview/demo-accounts', (req, res) =>
+  json(res, {
+    data: {
+      password: PREVIEW_PASSWORD,
+      accounts: PREVIEW_ACCOUNTS.map(account => ({
+        role: account.roleCode,
+        email: account.email
+      }))
+    }
+  })
+);
+
 accountApi.use('/api', (req, res) =>
   json(res, { error: { code: 'NOT_FOUND', message: `Unknown account endpoint: ${req.method} ${req.path}` } }, 404)
 );
@@ -767,7 +789,7 @@ const MIME = {
   '.woff2': 'font/woff2', '.ico': 'image/x-icon'
 };
 
-const ACCOUNT_PATH = /^\/api\/(auth|users|admin)(\/|$)/;
+const ACCOUNT_PATH = /^\/api\/(auth|users|admin|preview)(\/|$)/;
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');

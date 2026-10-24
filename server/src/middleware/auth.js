@@ -8,6 +8,7 @@
 const tokens = require('../security/tokens');
 const roles = require('../security/roles');
 const authService = require('../services/authService');
+const config = require('../config');
 const { unauthorized, forbidden, tooManyRequests } = require('../errors');
 
 function readToken(req) {
@@ -28,7 +29,7 @@ async function attachUser(req, res, next) {
     const found = await authService.resolveSession(token);
     if (!found) {
       // Expired or revoked: drop the stale cookie so the browser stops sending it.
-      res.setHeader('Set-Cookie', tokens.clearSessionCookie());
+      res.setHeader('Set-Cookie', tokens.clearSessionCookie(tokens.cookieAttributesFor(req)));
       return next();
     }
 
@@ -77,8 +78,13 @@ function requireSameOrigin(req, res, next) {
   const safeMethod = ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
   if (safeMethod) return next();
 
-  const fetchSite = req.headers['sec-fetch-site'];
-  if (fetchSite && !['same-origin', 'none'].includes(fetchSite)) {
+  // Sec-Fetch-Site is set by the browser and cannot be forged by page script,
+  // so when it is present it is the most reliable answer available. It also
+  // survives a reverse proxy that rewrites Host, where comparing Origin to Host
+  // would reject perfectly legitimate requests.
+  const fetchSite = String(req.headers['sec-fetch-site'] || '').toLowerCase();
+  if (fetchSite) {
+    if (['same-origin', 'same-site', 'none'].includes(fetchSite)) return next();
     return next(forbidden('Cross-site request rejected.', 'CSRF_BLOCKED'));
   }
 
@@ -90,12 +96,40 @@ function requireSameOrigin(req, res, next) {
     } catch (err) {
       originHost = null;
     }
-    if (!originHost || originHost !== req.headers.host) {
+
+    if (!originHost || !acceptableHosts(req).has(originHost)) {
       return next(forbidden('Cross-site request rejected.', 'CSRF_BLOCKED'));
     }
   }
 
   next();
+}
+
+/**
+ * The hosts a same-origin request may legitimately report.
+ *
+ * Normally that is just the Host header. Behind a reverse proxy that rewrites
+ * Host (the preview environment does), the browser's Origin still names the
+ * public host, so X-Forwarded-Host and PUBLIC_BASE_URL have to be admitted too.
+ * A cross-site attacker controls neither, so this stays a same-origin check.
+ */
+function acceptableHosts(req) {
+  const hosts = new Set();
+  const add = value => {
+    if (!value) return;
+    const text = String(value).split(',')[0].trim();
+    if (!text) return;
+    try {
+      hosts.add(new URL(text.includes('://') ? text : `http://${text}`).host);
+    } catch (err) {
+      /* ignore an unparseable value */
+    }
+  };
+
+  add(req.headers.host);
+  add(req.headers['x-forwarded-host']);
+  add(config.publicBaseUrl);
+  return hosts;
 }
 
 /**
