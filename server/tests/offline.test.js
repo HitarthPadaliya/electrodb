@@ -423,6 +423,41 @@ describe('Detail page layout', () => {
   });
 });
 
+describe('Arrow motion language', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../../public/assets/css/styles.css'), 'utf8');
+
+  const shared = css.slice(
+    css.indexOf('--- Arrows carry a charge'),
+    css.indexOf('.section-sub {')
+  );
+
+  const body = selector => {
+    const start = css.indexOf(`${selector} {`);
+    assert.ok(start > -1, `${selector} is defined`);
+    return css.slice(start, css.indexOf('}', start));
+  };
+
+  it('charges the glyph itself instead of transforming it', () => {
+    assert.ok(/background-clip:\s*text/.test(shared), 'the light is clipped to the glyph itself');
+    assert.ok(/background-size:\s*400%/.test(shared), 'the charge has room to travel');
+    assert.ok(
+      !/transform|translate|rotate/i.test(shared),
+      'no arrow is translated or rotated, so none of them can trail'
+    );
+  });
+
+  it('runs the charge from tail to head, mirrored for left-pointing arrows', () => {
+    assert.ok(/background-position:\s*98% 0/.test(shared), 'the band waits at the far end of the track');
+    assert.ok(/background-position:\s*36% 0/.test(shared), 'it comes to rest inside the head');
+
+    assert.ok(/--arrow-angle:\s*270deg/.test(body('.back-link-arrow')), 'the back arrow runs right to left');
+    assert.ok(/background-position:\s*2% 0/.test(body('.back-link-arrow')), 'its band waits at the other end');
+
+    assert.ok(/--arrow-angle:\s*270deg/.test(body('.page-arrow--left')), 'the previous-page arrow runs right to left');
+    assert.ok(/background-position:\s*2% 0/.test(body('.page-arrow--left')), 'its band waits at the other end');
+  });
+});
+
 describe('Asset freshness', () => {
   const read = rel => fs.readFileSync(path.join(__dirname, '../..', rel), 'utf8');
 

@@ -385,17 +385,30 @@ Category / subcategory arrows
 - The section-link arrows share the same spring easing so every right-pointing arrow in the UI
   moves the same way.
 
-## 21. A tail-free tile arrow
+## 21. The arrows carry a charge
 
-The trail behind the category/subcategory arrow read as a defect rather than a gesture: any
-sub-pixel jump in the card during the lift left the line visibly detached from the glyph, and
-because it was a size animation it could never be perfectly tied to the arrow's travel.
+Two earlier attempts treated the tile arrow as something that *moves*: first a two-glyph
+conveyor, then a spring-loaded glyph trailing a gradient line, then a lift-and-tilt. The
+trail read as a defect (the line could detach from the glyph), and the tilt read as a stunt
+bolted onto the arrow rather than something the arrow itself was doing.
 
-The pseudo-element is gone entirely. The tile arrow is now a single glyph that **lifts and
-tilts** — `translate(4px, -2px) rotate(-28deg)` on a spring easing — so the motion points at
-the place the tile opens to instead of sliding along a rail. Press carries the same gesture
-one step further (6px / −3px) and `:focus-visible` gives keyboard users the same hint; only
-`transform` and `color` change, so nothing can be left behind mid-animation.
+So the arrow now does not move at all. It **carries a charge**: a narrow band of current -
+dim, teal, with a white-hot spark in it - runs along the arrow's own stroke from tail to tip
+and comes to rest pooled just behind the head, where it holds a soft glow for as long as the
+pointer stays.
 
-The inline section-link arrows (`.link-arrow`) and the back link keep their horizontal nudge:
-they sit inside running text, where a diagonal lift would read as a jitter.
+How it is built, and why that matters:
+
+- The band is painted *inside the glyph* with `background-clip: text`. A 400%-wide gradient is
+  parked at the far end of the track at rest (where only the idle colour is visible) and slid
+  into place on hover, so the light travels through the arrow's own strokes.
+- Because the light lives in the glyph, there is no second element to fall out of step with
+  the arrow, nothing to clip against the rounded tile and no tail to leave behind. It also
+  cannot be janked by layout work elsewhere on the card.
+- The direction is the message: right-pointing arrows are swept left to right, and the back
+  link and previous-page arrows use a mirrored gradient driven from the opposite end, so their
+  charge runs right to left. `:active` and `:focus-visible` get the same treatment.
+- The whole family - tile arrows, section-link arrows (`.link-arrow`), the back link and the
+  pagination arrows (`.page-arrow`) - now shares one block, so there is a single definition to
+  change. Where `background-clip: text` is unavailable the fallback is a plain colour change.
+- `prefers-reduced-motion` collapses the 380 ms sweep to nothing and leaves the arrow lit.
