@@ -331,3 +331,39 @@ describe('Detail page layout', () => {
     );
   });
 });
+
+describe('Asset freshness', () => {
+  const read = rel => fs.readFileSync(path.join(__dirname, '../..', rel), 'utf8');
+
+  it('stamps a version onto every asset URL the app emits', () => {
+    const app = read('public/assets/js/app.js');
+
+    assert.ok(app.includes('ASSET_VERSION'), 'the app derives a build stamp');
+    assert.ok(/asset\(path\)\s*{/.test(app), 'there is a single asset() helper');
+
+    // Every <img> the app renders goes through the helper.
+    const imgTags = [...app.matchAll(/<img[^>]*src="\$\{([^}]*)\}/g)].map(m => m[1]);
+    assert.ok(imgTags.length >= 6, 'the app renders several images');
+    imgTags.forEach(expr => {
+      assert.ok(/this\.asset\(/.test(expr), `image src is not versioned: ${expr}`);
+    });
+  });
+
+  it('loads the shell assets with an explicit version', () => {
+    const html = read('public/index.html');
+
+    ['styles.css', 'api.js', 'app.js'].forEach(name => {
+      const match = html.match(new RegExp(`${name.replace('.', '\\.')}\\?v=(\\d+)`));
+      assert.ok(match, `${name} is requested with a version`);
+      assert.ok(Number(match[1]) >= 8, `${name} is on the current version`);
+    });
+  });
+
+  it('never lets the preview server cache a stale drawing', () => {
+    const server = read('scripts/preview-server.js');
+
+    assert.ok(/no-store/.test(server), 'static responses are not stored');
+    assert.ok(/ETag/.test(server), 'a validator is provided for revalidation');
+    assert.ok(/304/.test(server), 'matching validators short-circuit to 304');
+  });
+});

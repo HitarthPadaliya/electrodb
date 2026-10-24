@@ -691,10 +691,27 @@ const server = http.createServer((req, res) => {
   }
 
   const ext = path.extname(filePath).toLowerCase();
-  res.writeHead(200, {
+  // A preview server must never hand back a stale drawing while the artwork is
+  // being iterated on. Serve with no-store plus a strong validator so even an
+  // intermediary proxy revalidates instead of replaying an old body.
+  const stat = fs.statSync(filePath);
+  const etag = `"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+  const headers = {
     'Content-Type': MIME[ext] || 'application/octet-stream',
-    'Cache-Control': 'no-cache'
-  });
+    'Cache-Control': 'no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    ETag: etag,
+    'Last-Modified': stat.mtime.toUTCString()
+  };
+
+  if (req.headers['if-none-match'] === etag) {
+    res.writeHead(304, headers);
+    res.end();
+    return;
+  }
+
+  res.writeHead(200, headers);
   fs.createReadStream(filePath).pipe(res);
 });
 

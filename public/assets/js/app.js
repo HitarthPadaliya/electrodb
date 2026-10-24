@@ -3,9 +3,33 @@
  * Hash-based SPA router + catalog renderers + database lab console.
  */
 
+const ASSET_VERSION = (() => {
+  try {
+    const script =
+      document.currentScript ||
+      Array.from(document.scripts).find(tag => /\/app\.js(\?|$)/.test(tag.src));
+    const stamp = script ? new URL(script.src, window.location.href).searchParams.get('v') : null;
+    return stamp || '0';
+  } catch (err) {
+    return '0';
+  }
+})();
+
 const app = {
   contentEl: null,
   currentXml: '',
+
+  /**
+   * Append the build stamp to an asset URL. Artwork is regenerated in place, so
+   * without this a browser or proxy can keep showing the previous drawing.
+   */
+  asset(path) {
+    if (!path) return path;
+    const value = String(path);
+    if (!value.startsWith('/')) return value;
+    const separator = value.includes('?') ? '&' : '?';
+    return `${value}${separator}v=${ASSET_VERSION}`;
+  },
 
   // ----------------------------------------------------------------
   // Bootstrapping
@@ -936,7 +960,7 @@ const app = {
           ${
             symbolPath
               ? `<figure class="component-art">
-                   <img src="${this.escapeHtml(symbolPath)}" alt="${this.escapeHtml(comp.name)} symbol" loading="lazy" data-hide-on-error>
+                   <img src="${this.escapeHtml(this.asset(symbolPath))}" alt="${this.escapeHtml(comp.name)} symbol" loading="lazy" data-hide-on-error>
                  </figure>`
               : `<div class="component-art component-art--empty" aria-hidden="true"><span>⚡</span></div>`
           }
@@ -950,7 +974,7 @@ const app = {
         <section class="detail-section">
           <h2 class="section-title">Circuit Diagram</h2>
           <figure class="diagram-body">
-            <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
+            <img src="${this.escapeHtml(this.asset(diagram.imagePath))}" alt="${this.escapeHtml(
               diagram.altText || `Circuit diagram for ${comp.name}`
             )}" loading="lazy">
             <div class="diagram-actions">
@@ -992,7 +1016,7 @@ const app = {
         <section class="detail-section">
           <h2 class="section-title">${this.escapeHtml(heading)}</h2>
           <figure class="diagram-body${sizing}">
-            <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
+            <img src="${this.escapeHtml(this.asset(diagram.imagePath))}" alt="${this.escapeHtml(
               diagram.altText || diagram.title
             )}" loading="lazy">
             <div class="diagram-actions">
@@ -1016,7 +1040,7 @@ const app = {
         <section class="detail-section">
           <h2 class="section-title">IC Pinout</h2>
           <figure class="diagram-body diagram-body--pinout">
-            <img src="${this.escapeHtml(pinout.imagePath)}" alt="${this.escapeHtml(
+            <img src="${this.escapeHtml(this.asset(pinout.imagePath))}" alt="${this.escapeHtml(
               pinout.altText || `Pinout for ${comp.name}`
             )}" loading="lazy">
             <div class="diagram-actions">
@@ -1094,7 +1118,7 @@ const app = {
         if (!src) return `<p class="result-text">No visual asset attached to this section.</p>`;
         return `
           <figure class="diagram-body">
-            <img src="${this.escapeHtml(src)}" alt="${this.escapeHtml(section.altText || section.title || 'Diagram')}" loading="lazy">
+            <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(section.altText || section.title || 'Diagram')}" loading="lazy">
           </figure>
         `;
       }
@@ -2271,7 +2295,7 @@ const app = {
           <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
           ${
             symbol
-              ? `<img class="component-card-symbol" src="${this.escapeHtml(symbol)}" alt="" loading="lazy" data-hide-on-error>`
+              ? `<img class="component-card-symbol" src="${this.escapeHtml(this.asset(symbol))}" alt="" loading="lazy" data-hide-on-error>`
               : ''
           }
         </div>
@@ -2393,7 +2417,7 @@ const app = {
 
     const body = `
       <div class="diagram-frame" style="min-height: 0;">
-        <img src="${this.escapeHtml(src)}" alt="${this.escapeHtml(title || 'Diagram')}" style="max-height: 70vh;">
+        <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(title || 'Diagram')}" style="max-height: 70vh;">
       </div>
     `;
     this.openModal(title || 'Diagram', body);
