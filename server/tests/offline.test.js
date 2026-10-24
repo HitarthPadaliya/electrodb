@@ -456,6 +456,27 @@ describe('Arrow motion language', () => {
     assert.ok(/--arrow-angle:\s*270deg/.test(body('.page-arrow--left')), 'the previous-page arrow runs right to left');
     assert.ok(/background-position:\s*2% 0/.test(body('.page-arrow--left')), 'its band waits at the other end');
   });
+
+  it('plots and then strikes the tile arrow instead of moving it', () => {
+    const app = fs.readFileSync(path.join(__dirname, '../../public/assets/js/app.js'), 'utf8');
+    const tile = css.slice(css.indexOf('.subcategory-arrow {'), css.indexOf('.subcategory-card:hover .subcategory-foot'));
+
+    // The glyph was replaced by a drawn arrow: shaft, beak, filament, strike, pen.
+    ['arrow-rest', 'arrow-shaft', 'arrow-head', 'arrow-core', 'arrow-strike', 'arrow-nib'].forEach(name => {
+      assert.ok(app.includes(`${name}"`), `the tile arrow draws a .${name}`);
+      assert.ok(new RegExp(`\\.${name}\\b`).test(tile), `the tile arrow styles .${name}`);
+    });
+
+    assert.ok(/pathLength="1"/.test(app), 'the plotted strokes are normalised for the dash reveal');
+    assert.ok(/stroke-dasharray:\s*1;/.test(tile), 'both strokes start undrawn');
+    assert.ok(/@keyframes arrow-plot/.test(tile), 'the pen draws');
+    assert.ok(/@keyframes arrow-nib-run/.test(tile), 'the pen travels with the ink');
+    assert.ok(/@keyframes arrow-burn/.test(tile), 'the filament lights');
+    assert.ok(/@keyframes arrow-strike/.test(tile), 'the tube is struck');
+    // Only the pen travels; every rule that paints the arrow is transform-free.
+    const rules = tile.slice(0, tile.indexOf('@keyframes arrow-plot'));
+    assert.ok(!/transform/.test(rules), 'the arrow itself is never transformed');
+  });
 });
 
 describe('Asset freshness', () => {

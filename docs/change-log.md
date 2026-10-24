@@ -408,7 +408,39 @@ How it is built, and why that matters:
 - The direction is the message: right-pointing arrows are swept left to right, and the back
   link and previous-page arrows use a mirrored gradient driven from the opposite end, so their
   charge runs right to left. `:active` and `:focus-visible` get the same treatment.
-- The whole family - tile arrows, section-link arrows (`.link-arrow`), the back link and the
-  pagination arrows (`.page-arrow`) - now shares one block, so there is a single definition to
-  change. Where `background-clip: text` is unavailable the fallback is a plain colour change.
+- The inline arrows - section links (`.link-arrow`), the back link and the pagination arrows
+  (`.page-arrow`) - share one block, so there is a single definition to change. Where
+  `background-clip: text` is unavailable the fallback is a plain colour change.
 - `prefers-reduced-motion` collapses the 380 ms sweep to nothing and leaves the arrow lit.
+
+## 22. The tile arrow is a tube that gets struck
+
+The charge was still "a nice gradient doing something". The tile arrow now has a *story*, and
+it is told in the site's own vocabulary.
+
+**Hovering a subcategory tile:** the flat arrow steps aside and a plotter draws the arrow as a
+tube - the pen runs the length of the shaft with its own hot tip riding the ink, lifts, and the
+two arms of the head close behind it. Then the tube lights: a white-hot filament fades up
+inside the stroke, the stroke blooms, and one short, slightly stuttering flash marks the
+strike. After that it just burns, steady, until the pointer leaves.
+
+Why this one is different from the three before it:
+
+- **Nothing about the arrow is transformed.** It is not translated, scaled or rotated - a
+  pencil moves, and it leaves. The only transform in the block belongs to the pen tip, and it
+  is welded to the ink by construction: the shaft is 13.6 units long and the pen travels
+  `translateX(0 → 13.6px)` on `linear` easing while the dash reveal runs `linear` for the same
+  210 ms, so the two can never drift apart.
+- **The arrow is drawn, not decorated.** The glyph was replaced with an inline SVG
+  (`pathLength="1"` on both plotted strokes) so the reveal is a real stroke reveal - shaft
+  first, then the beak - rather than a mask or a width animation.
+- **The light is inside the tube, not behind it.** The filament is the same geometry at
+  `stroke-width: 0.72`; the bloom is a `drop-shadow` on the SVG. Nothing can detach, nothing
+  can trail, nothing needs to be clipped by the rounded tile.
+- **The strike stutters once.** The flash dips and recovers before it dies, which is what makes
+  it read as a gas tube igniting rather than a brightness slider.
+- `:active` re-strikes the tube a shade hotter, `:focus-visible` runs the whole sequence, and
+  `prefers-reduced-motion` collapses the delays as well as the durations, so the arrow simply
+  appears drawn and lit.
+
+The inline arrows keep the charge from section 21.

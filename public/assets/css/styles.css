@@ -611,8 +611,7 @@ select:focus-visible,
 
 .link-arrow,
 .back-link-arrow,
-.page-arrow,
-.subcategory-arrow-glyph {
+.page-arrow {
   display: inline-block;
   line-height: 1;
   color: var(--arrow-idle, var(--muted));
@@ -624,9 +623,6 @@ select:focus-visible,
 a:hover > .link-arrow,
 .back-link:hover .back-link-arrow,
 .back-link:focus-visible .back-link-arrow,
-.subcategory-card:hover .subcategory-arrow-glyph,
-.subcategory-card:focus-visible .subcategory-arrow-glyph,
-.subcategory-card:active .subcategory-arrow-glyph,
 .page-btn:hover:not(:disabled) .page-arrow,
 .page-btn:focus-visible .page-arrow {
   color: var(--arrow-live, var(--secondary));
@@ -639,8 +635,7 @@ a:hover > .link-arrow,
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .link-arrow,
   .back-link-arrow,
-  .page-arrow,
-  .subcategory-arrow-glyph {
+  .page-arrow {
     background-image: linear-gradient(
       var(--arrow-angle, 90deg),
       var(--arrow-idle, var(--muted)) 0%,
@@ -672,19 +667,11 @@ a:hover > .link-arrow,
   a:hover > .link-arrow,
   .back-link:hover .back-link-arrow,
   .back-link:focus-visible .back-link-arrow,
-  .subcategory-card:hover .subcategory-arrow-glyph,
   .page-btn:hover:not(:disabled) .page-arrow,
   .page-btn:focus-visible .page-arrow {
     background-position: 36% 0;
     color: transparent;
     filter: drop-shadow(0 0 5px var(--arrow-glow, rgba(0, 223, 193, 0.45)));
-  }
-
-  .subcategory-card:focus-visible .subcategory-arrow-glyph,
-  .subcategory-card:active .subcategory-arrow-glyph {
-    background-position: 36% 0;
-    color: transparent;
-    filter: drop-shadow(0 0 7px var(--arrow-glow, rgba(0, 223, 193, 0.55)));
   }
 }
 
@@ -1185,23 +1172,189 @@ a:hover > .link-arrow,
   font-variant-numeric: tabular-nums;
 }
 
-/* The tile arrow - an indicator, never a slider.
-   Nothing about the arrow moves, grows or is duplicated. What travels is
-   light: a narrow band of current runs along the arrow's own stroke, tail to
-   tip, and comes to rest pooled in the head. It is painted *inside* the glyph
-   (see "Arrows carry a charge" above), so the charge cannot detach from the
-   arrow, cannot stretch into a tail and cannot be clipped by the tile. */
+/* The tile arrow is a gas tube, and hovering strikes it.
+   A tiny plotter first draws the tube - the pen runs the length of the shaft,
+   lifts, and the beak closes - then the tube lights: a white-hot filament fades
+   up inside the stroke, the stroke blooms, and one short, slightly stuttering
+   flash marks the strike before it settles into a steady burn. Nothing about
+   the arrow is slid, scaled or rotated; what moves is the pen, and it leaves.
+   The foot label is unchanged: "5 components" and a lit arrow. */
 .subcategory-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   width: 26px;
-  height: 20px;
-  font-size: 1rem;
-  line-height: 1;
-  --arrow-idle: var(--muted);
-  --arrow-live: var(--secondary);
-  --arrow-glow: rgba(0, 223, 193, 0.45);
+  height: 16px;
+}
+
+.subcategory-arrow-svg {
+  display: block;
+  width: 24px;
+  height: 14px;
+  overflow: visible;
+  /* The bloom arrives a beat after the pen and lingers a beat longer. */
+  transition: filter 300ms var(--ease-out) 200ms;
+}
+
+.subcategory-arrow-svg path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The unlit tube: the flat arrow every other affordance uses. */
+.arrow-rest {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  transition: opacity 110ms var(--ease-out);
+}
+
+/* The two strokes the pen lays down. Both wait at full offset - invisible -
+   and the animations' `both` fill keeps them drawn. */
+.arrow-shaft,
+.arrow-head {
+  stroke: var(--secondary);
+  stroke-width: 1.6;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+
+/* The filament and the strike live inside the same stroke. */
+.arrow-core {
+  stroke: #d9fff8;
+  stroke-width: 0.72;
+  opacity: 0;
+}
+
+.arrow-strike {
+  stroke: #eafffb;
+  stroke-width: 2.2;
+  opacity: 0;
+}
+
+/* The pen itself: a hot tip with a soft halo, present only while it draws. */
+.arrow-nib {
+  opacity: 0;
+}
+
+.arrow-nib-halo {
+  fill: rgba(0, 223, 193, 0.22);
+}
+
+.arrow-nib-tip {
+  fill: #eafffb;
+}
+
+.subcategory-card:hover .arrow-rest,
+.subcategory-card:focus-visible .arrow-rest {
+  opacity: 0;
+}
+
+.subcategory-card:hover .arrow-shaft,
+.subcategory-card:focus-visible .arrow-shaft {
+  animation: arrow-plot 210ms linear both;
+}
+
+.subcategory-card:hover .arrow-nib,
+.subcategory-card:focus-visible .arrow-nib {
+  animation: arrow-nib-run 210ms linear both;
+}
+
+.subcategory-card:hover .arrow-head,
+.subcategory-card:focus-visible .arrow-head {
+  animation: arrow-plot 170ms var(--ease-out) 190ms both;
+}
+
+.subcategory-card:hover .arrow-core,
+.subcategory-card:focus-visible .arrow-core {
+  animation: arrow-burn 200ms var(--ease-out) 330ms both;
+}
+
+.subcategory-card:hover .arrow-strike,
+.subcategory-card:focus-visible .arrow-strike {
+  animation: arrow-strike 260ms var(--ease-out) 340ms both;
+}
+
+.subcategory-card:hover .subcategory-arrow-svg,
+.subcategory-card:focus-visible .subcategory-arrow-svg {
+  filter: drop-shadow(0 0 5px rgba(0, 223, 193, 0.5));
+}
+
+/* A press re-strikes the tube, a shade hotter. */
+.subcategory-card:active .arrow-shaft {
+  stroke: var(--accent-hover);
+  animation: arrow-plot 170ms linear both;
+}
+
+.subcategory-card:active .arrow-head {
+  stroke: var(--accent-hover);
+  animation: arrow-plot 140ms var(--ease-out) 150ms both;
+}
+
+.subcategory-card:active .arrow-nib {
+  animation: arrow-nib-run 170ms linear both;
+}
+
+@keyframes arrow-plot {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* 13.6 is the shaft's length, so the nib stays welded to the ink. */
+@keyframes arrow-nib-run {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(1.36px);
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(13.6px);
+  }
+}
+
+@keyframes arrow-burn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+/* The strike: one bright bloom with a small stutter, then darkness. */
+@keyframes arrow-strike {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.6;
+  }
+  40% {
+    opacity: 0.12;
+  }
+  58% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .subcategory-card:hover .subcategory-foot {
@@ -2885,6 +3038,7 @@ input[type='range']:focus-visible {
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }

@@ -2030,7 +2030,17 @@ const app = {
         <span class="subcategory-foot">
           <span class="subcategory-foot-count"><b>${count}</b> component${count === 1 ? '' : 's'}</span>
           <span class="subcategory-arrow" aria-hidden="true">
-            <span class="subcategory-arrow-glyph">&#8594;</span>
+            <svg class="subcategory-arrow-svg" viewBox="0 0 24 14" width="24" height="14" focusable="false">
+              <path class="arrow-rest" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-shaft" pathLength="1" d="M3 7H16.6" />
+              <path class="arrow-head" pathLength="1" d="M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-core" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-strike" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <g class="arrow-nib">
+                <circle class="arrow-nib-halo" cx="3" cy="7" r="2.5" />
+                <circle class="arrow-nib-tip" cx="3" cy="7" r="1.15" />
+              </g>
+            </svg>
           </span>
         </span>
       </a>
