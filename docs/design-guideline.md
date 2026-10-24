@@ -178,7 +178,7 @@ Constraints: primary key; unique slug; parent foreign key; `is_active IN ('Y','N
 | `main_image_path` | VARCHAR(500) | Optional media path |
 | `circuit_symbol_path` | VARCHAR(500) | Optional symbol SVG path |
 | `datasheet_url` | VARCHAR(1000) | Optional verified document URL |
-| `is_illustrative` | CHAR(1) default 'N' | Indicates illustrative sample data |
+| `is_illustrative` | TINYINT(1) default 0 | Marks seed/sample data; **not surfaced in the UI** (the "Illustrative model" badge was removed) |
 | `is_published` | CHAR(1) default 'Y' | Catalogue visibility |
 | `created_at` | TIMESTAMP | Creation time |
 | `updated_at` | TIMESTAMP | Last change |

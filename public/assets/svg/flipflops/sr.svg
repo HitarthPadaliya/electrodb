@@ -2,11 +2,11 @@
   <title>SR Flip-Flop Symbol</title>
   <defs>
     <style>
-      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; stroke-linecap: round; }
-      .body { stroke: #1e293b; stroke-width: 2.5; fill: #f8fafc; }
-      .text-title { font-family: system-ui, sans-serif; font-size: 14px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
-      .text-pin { font-family: monospace; font-size: 12px; font-weight: bold; fill: #1e293b; }
-      .clk-tri { stroke: #1e293b; stroke-width: 2; fill: none; }
+      .wire { stroke: #00a7da; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+      .body { stroke: #168fe5; stroke-width: 2.5; fill: #0d1117; }
+      .text-title { font-family: Consolas, Consolas; font-size: 14px; font-weight: bold; fill: #e8eaed; text-anchor: middle; }
+      .text-pin { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #c5c7c9; }
+      .clk-tri { stroke: #21262d; stroke-width: 2; fill: none; }
     </style>
   </defs>
   <rect x="60" y="20" width="100" height="140" rx="4" class="body" />

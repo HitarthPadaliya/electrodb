@@ -2,13 +2,13 @@
   <title>JK Flip-Flop State Diagram</title>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#00a7da" />
     </marker>
     <style>
-      .state { fill: #eff6ff; stroke: #2563eb; stroke-width: 3; }
-      .state-txt { font-family: system-ui, sans-serif; font-size: 16px; font-weight: bold; fill: #1e293b; text-anchor: middle; dominant-baseline: middle; }
-      .trans { stroke: #2563eb; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .trans-label { font-family: system-ui, sans-serif; font-size: 12px; font-weight: 600; fill: #0f172a; text-anchor: middle; background: white; }
+      .state { fill: #0d1117; stroke: #00a7da; stroke-width: 3; }
+      .state-txt { font-family: Consolas, Consolas; font-size: 16px; font-weight: bold; fill: #c5c7c9; text-anchor: middle; dominant-baseline: middle; }
+      .trans { stroke: #00a7da; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .trans-label { font-family: Consolas, Consolas; font-size: 12px; font-weight: 600; fill: #e8eaed; text-anchor: middle; background: white; }
     </style>
   </defs>
 

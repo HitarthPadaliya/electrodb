@@ -2,10 +2,10 @@
   <title>Zener Diode</title>
   <defs>
     <style>
-      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
-      .body { stroke: #1e293b; stroke-width: 2.5; fill: #3b82f6; }
-      .bar { stroke: #1e293b; stroke-width: 3; stroke-linecap: round; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .wire { stroke: #00a7da; stroke-width: 2.5; fill: none; }
+      .body { stroke: #168fe5; stroke-width: 2.5; fill: #101f38; }
+      .bar { stroke: #21262d; stroke-width: 3; stroke-linecap: round; }
+      .lbl { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #c5c7c9; text-anchor: middle; }
     </style>
   </defs>
   <!-- Leads -->

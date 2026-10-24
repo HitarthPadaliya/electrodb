@@ -143,7 +143,7 @@ async function getComponentContent(componentId) {
 
 async function getComponentDiagrams(componentId) {
   const [rows] = await pool.query(
-    `SELECT diagram_id, component_id, title, image_path, alt_text, caption, display_order
+    `SELECT diagram_id, component_id, title, diagram_kind, image_path, alt_text, caption, display_order
      FROM component_diagrams
      WHERE component_id = ?
      ORDER BY display_order ASC, diagram_id ASC`,

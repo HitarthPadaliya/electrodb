@@ -132,9 +132,29 @@ describe('ElectroDB Catalogue API Tests', () => {
     assert.ok(typeof charEq.content === 'string');
     assert.ok(charEq.content.includes('Q_{next}'));
 
-    // Verify diagram asset path
+    // Verify diagram asset path and kind
     assert.ok(comp.diagrams.length > 0);
     assert.ok(comp.diagrams[0].imagePath.endsWith('.svg'));
+
+    const kinds = comp.diagrams.map(d => d.kind);
+    assert.ok(kinds.includes('SYMBOL'), 'A pin-level symbol diagram must be present');
+    assert.ok(kinds.includes('CIRCUIT'), 'A gate/device-level circuit diagram must be present');
+
+    const circuit = comp.diagrams.find(d => d.kind === 'CIRCUIT');
+    assert.ok(
+      circuit.imagePath.startsWith('/assets/svg/circuits/'),
+      'Circuit diagrams live under /assets/svg/circuits/'
+    );
+
+    // The design reference drawing is shipped verbatim for the JK flip-flop.
+    assert.strictEqual(circuit.imagePath, '/assets/svg/circuits/jk-flip-flop-circuit.svg');
+  });
+
+  it('GET /api/components/:id should not classify components with an educational tag', async () => {
+    const res = await request('/api/components/jk-flip-flop');
+    assert.strictEqual(res.status, 200);
+    const slugs = res.json.data.tags.map(t => t.slug);
+    assert.ok(!slugs.includes('educational-example'), 'The #educational-example tag was removed from the seed');
   });
 
   it('GET /api/components/non-existent-id should return 404 error envelope', async () => {

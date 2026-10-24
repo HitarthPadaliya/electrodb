@@ -126,8 +126,9 @@ npm install
 # Verify database connection and schema
 npm run check-db
 
-# Run automated tests (29 tests, requires the seeded database)
+# Run automated tests (30 database tests + 4 DB-free contract tests)
 npm test
+npm run test:offline
 
 # Run complete system verification audit
 npm run verify
@@ -154,11 +155,32 @@ http://localhost:3000/
 | `#/categories/<id-or-slug>` | Category page with breadcrumbs, subcategories, and components |
 | `#/tags` | All reusable tags with component counts |
 | `#/tags/<id-or-slug>` | Components carrying a tag |
-| `#/components/<id-or-slug>` | Component detail: overview, tables, equations, diagrams, specifications |
+| `#/components/<id-or-slug>` | Component detail: hero (title + description + symbol), circuit diagram, tables, equations, supporting diagrams, specifications |
 | `#/search?q=...` | Search results |
 | `#/lab` | Academic lab console (Assignment 10 & 11 demonstrations) |
 
 The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
+
+### Diagram artwork
+
+`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte:
+
+| Reference file | Served as | Shown |
+|---|---|---|
+| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | JK Flip-Flop hero symbol |
+| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | JK Flip-Flop circuit diagram, directly below the hero |
+
+Every other drawing is generated from those two references:
+
+```bash
+npm run svg:restyle    # recolour existing symbol/state/timing artwork to the reference palette
+npm run svg:circuits   # generate the gate/device-level circuit diagram for all 147 components
+```
+
+`component_diagrams` carries a `diagram_kind` (`SYMBOL`, `CIRCUIT`, `STATE`, `TIMING`, `OTHER`)
+so the frontend can place each drawing: the pin-level **symbol** in the hero and the
+gate/device-level **circuit diagram** immediately beneath it. Anything previously labelled
+"Circuit / Symbol Diagram" was a pin-level block drawing, which is what the rename corrects.
 
 ### Previewing the UI without MySQL
 
@@ -213,7 +235,10 @@ against a seeded MySQL/MariaDB database.
 |---|---|
 | `npm start` | Launches the Express API + frontend at `http://localhost:3000` (requires MySQL) |
 | `npm run preview` | Frontend-only preview at `http://localhost:3000` using data derived from `electrodb.sql`; useful when MySQL is unavailable |
-| `npm test` | Runs the 29 automated integration tests via Node test runner |
+| `npm test` | Runs the 30 database integration tests (needs seeded MySQL) |
+| `npm run test:offline` | Runs the 4 DB-free contract tests (diagram mapping, SVG restyle) |
+| `npm run svg:restyle` | Recolours catalogue artwork to the reference palette |
+| `npm run svg:circuits` | Regenerates circuit diagrams for every component |
 | `npm run check-db` | Tests MariaDB/MySQL connection and prints table row counts |
 | `npm run benchmark` | Executes high-resolution query benchmarking before and after secondary indexes |
 | `npm run verify` | Performs a 6-point system verification audit |

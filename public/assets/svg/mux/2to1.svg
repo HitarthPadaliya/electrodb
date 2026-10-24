@@ -2,10 +2,10 @@
   <title>2:1 MUX</title>
   <defs>
     <style>
-      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
-      .body { stroke: #1e293b; stroke-width: 2.5; fill: #eff6ff; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 11px; font-weight: bold; fill: #1e293b; }
-      .title { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+      .wire { stroke: #00a7da; stroke-width: 2.5; fill: none; }
+      .body { stroke: #168fe5; stroke-width: 2.5; fill: #0d1117; }
+      .lbl { font-family: Consolas, Consolas; font-size: 11px; font-weight: bold; fill: #c5c7c9; }
+      .title { font-family: Consolas, Consolas; font-size: 13px; font-weight: bold; fill: #e8eaed; text-anchor: middle; }
     </style>
   </defs>
   <!-- Trapezoid Body -->

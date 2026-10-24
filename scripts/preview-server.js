@@ -79,7 +79,7 @@ for (const line of lines) {
 const tagDefs = [
   ['digital', 'digital'], ['sequential-logic', 'sequential-logic'], ['combinational-logic', 'combinational-logic'],
   ['semiconductor', 'semiconductor'], ['analog', 'analog'], ['power', 'power'], ['sensor', 'sensor'],
-  ['memory', 'memory'], ['electromechanical', 'electromechanical'], ['educational-example', 'educational-example'],
+  ['memory', 'memory'], ['electromechanical', 'electromechanical'],
   ['timing', 'timing'], ['state-machine', 'state-machine'], ['la-te-x', 'latex']
 ];
 const tags = tagDefs.map(([name, slug], index) => ({ tag_id: index + 1, name, slug }));
@@ -99,7 +99,6 @@ const componentTags = components.map(component => {
   if ([19, 20].includes(cid)) add('sensor');
   if (cid === 21) add('memory');
   if ([22, 23].includes(cid)) add('electromechanical');
-  if (component.is_illustrative === 1) add('educational-example');
   return { component_id: component.component_id, tag_ids: [...ids] };
 });
 
@@ -328,31 +327,36 @@ function specificationsFor(component) {
 
 function diagramsFor(component) {
   const diagrams = [];
-  if (component.circuit_symbol_path) {
-    const absolute = path.join(PUBLIC, component.circuit_symbol_path);
-    if (fs.existsSync(absolute)) {
-      diagrams.push({
-        diagramId: 1, title: 'Circuit / Symbol Diagram',
-        imagePath: component.circuit_symbol_path,
-        altText: `Circuit symbol for ${component.name}`,
-        caption: 'Pin-level circuit representation.'
-      });
-    }
-  }
-  const candidates = [
-    ['State Diagram', `/assets/svg/flipflops/${component.slug}-state.svg`],
-    ['State Diagram', `/assets/svg/counters/${component.slug}-state.svg`],
-    ['Timing Diagram', `/assets/svg/flipflops/${component.slug}-timing.svg`],
-    ['Timing Diagram', `/assets/svg/counters/${component.slug}-timing.svg`]
-  ];
-  for (const [title, imagePath] of candidates) {
-    if (fs.existsSync(path.join(PUBLIC, imagePath)) && !diagrams.some(d => d.title === title)) {
-      diagrams.push({
-        diagramId: diagrams.length + 1, title, imagePath,
-        altText: `${title} for ${component.name}`, caption: `Illustrative ${title.toLowerCase()}.`
-      });
-    }
-  }
+  const add = (title, kind, imagePath, altText, caption) => {
+    if (!imagePath) return;
+    if (!fs.existsSync(path.join(PUBLIC, imagePath))) return;
+    if (diagrams.some(d => d.imagePath === imagePath)) return;
+    diagrams.push({ diagramId: diagrams.length + 1, title, kind, imagePath, altText, caption });
+  };
+
+  // Hero artwork: the pin-level block symbol.
+  add('Symbol Diagram', 'SYMBOL', component.circuit_symbol_path,
+    `Pin-level symbol for ${component.name}`, 'Pin-level block symbol.');
+
+  // Gate/transistor-level schematic, shown directly beneath the hero.
+  // The JK flip-flop uses the hand-drawn reference drawing verbatim.
+  const circuitPath =
+    component.slug === 'jk-flip-flop'
+      ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
+      : `/assets/svg/circuits/${component.slug}.svg`;
+  add('Circuit Diagram', 'CIRCUIT', circuitPath,
+    `Circuit diagram for ${component.name}`, 'Gate- and device-level circuit.');
+
+  // Supporting artwork.
+  add('State Diagram', 'STATE', `/assets/svg/flipflops/${component.slug}-state.svg`,
+    `State diagram for ${component.name}`, 'State transitions between stored values.');
+  add('State Diagram', 'STATE', `/assets/svg/counters/${component.slug}-state.svg`,
+    `State diagram for ${component.name}`, 'State transitions between stored values.');
+  add('Timing Diagram', 'TIMING', `/assets/svg/counters/${component.slug}-timing.svg`,
+    `Timing diagram for ${component.name}`, 'Signal levels over successive clock cycles.');
+  add('Timing Diagram', 'TIMING', `/assets/svg/flipflops/${component.slug}-timing.svg`,
+    `Timing diagram for ${component.name}`, 'Signal levels over successive clock cycles.');
+
   return diagrams;
 }
 

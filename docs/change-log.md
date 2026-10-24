@@ -249,3 +249,57 @@ reference much more closely, and motion across the app was reworked for consiste
 - Header search, mobile navigation, modal, toasts, and lab tabs all honour
   `prefers-reduced-motion`, and all icon imagery keeps an accessible fallback when a
   symbol fails to load.
+
+## 18. Diagram model, detail-page layout, and catalogue visual refresh
+
+**Change implemented: the detail page now follows the design reference exactly, the drawings
+are separated into symbols and real circuits, and every asset was redrawn in the reference
+palette.**
+
+Detail page
+- Hero order is now title → description → tags → actions → symbol, matching the reference.
+  The long description moved up out of a separate "Overview" section.
+- Removed from the detail page: the "Illustrative model" badge, the "Published" badge, the
+  category pill (the breadcrumb already states it), and the `#educational-example` tag.
+- The **circuit diagram now sits immediately below the hero**, before the tables. It opens
+  full screen with the existing modal.
+
+Diagrams vs. symbols
+- Most artwork previously titled "Circuit / Symbol Diagram" was a pin-level block drawing.
+  `component_diagrams` gained `diagram_kind` (`SYMBOL` / `CIRCUIT` / `STATE` / `TIMING` /
+  `OTHER`); the pin-level drawing is now titled **Symbol Diagram** and appears in the hero,
+  while a separate **Circuit Diagram** row holds the gate/device-level schematic.
+- `GET /api/components/:slug` returns `kind` on every diagram so the client can place them.
+
+Artwork
+- The two reference drawings from `electrodb-frontend/img/` are shipped verbatim:
+  `jk-flip-flop.svg` → `public/assets/svg/flipflops/jk.svg`,
+  `jk-flip-flop_circuit.svg` → `public/assets/svg/circuits/jk-flip-flop-circuit.svg`.
+- `scripts/restyle-svgs.js` recolours the remaining 191 symbol/state/timing drawings to the
+  reference palette (`#0d1117` bodies, `#21262d` borders, `#00a7da` inputs, `#00dfc1` outputs,
+  `#8a8d93` dashed controls, Consolas labels) and widens any viewBox that clipped a label.
+  Because the artwork is now natively dark, the CSS `invert(1) hue-rotate(180deg)` hack was
+  removed.
+- `scripts/build-circuit-diagrams.js` generates a gate/device-level schematic for all 147
+  components from a small schematic DSL (gates, MOSFETs, diodes, resistors, block stages),
+  using the same colours and typography — so "circuit diagram" now means a circuit.
+
+Layout and tables
+- Category pages show subcategories as numbered `.subcategory-card` buttons: still card-like
+  as before, but compact, teal-tinted, with an ordinal, a count chip and a sliding arrow, and
+  clearly distinct from component cards and parent category cards.
+- Every component card (home, catalog, search, tag, category) shows only name, symbol and
+  summary — no category or "Illustrative" badges anywhere.
+- Tables were rebuilt: sticky-feeling gradient headers with uppercase tracked column labels,
+  hairline column separators, zebra rows, an accent edge on hover, tabular numerals, and a
+  monospace value column. Specification tables stay left-aligned and read like a definition list.
+
+Database / backend / tests
+- `database/01_schema.sql` and `electrodb.sql`: `component_diagrams.diagram_kind` enum plus an
+  index; seed inserts for SYMBOL / CIRCUIT / STATE / TIMING rows.
+- `repository.getComponentDiagrams` selects `diagram_kind`; the service maps it to `kind`.
+- The `educational-example` tag was removed from the tag seed, from the derived tag assignment,
+  and from the preview server.
+- `server/tests/api.test.js` asserts the symbol/circuit pair and the reference circuit path;
+  `server/tests/offline.test.js` (new, `npm run test:offline`) covers the diagram mapping and
+  the SVG restyle pipeline without a database.

@@ -2,10 +2,10 @@
   <title>LED</title>
   <defs>
     <style>
-      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
-      .body { stroke: #1e293b; stroke-width: 2.5; fill: #3b82f6; }
-      .bar { stroke: #1e293b; stroke-width: 3; stroke-linecap: round; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .wire { stroke: #00a7da; stroke-width: 2.5; fill: none; }
+      .body { stroke: #168fe5; stroke-width: 2.5; fill: #101f38; }
+      .bar { stroke: #21262d; stroke-width: 3; stroke-linecap: round; }
+      .lbl { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #c5c7c9; text-anchor: middle; }
     </style>
   </defs>
   <!-- Leads -->
@@ -16,8 +16,8 @@
   <!-- Cathode Bar -->
   <line x1="120" y1="30" x2="120" y2="70" class="bar" />
   
-      <line x1="100" y1="28" x2="120" y2="12" class="wire" stroke="#ef4444" marker-end="url(#arrow)" />
-      <line x1="110" y1="33" x2="130" y2="17" class="wire" stroke="#ef4444" />
+      <line x1="100" y1="28" x2="120" y2="12" class="wire" stroke="#ff7b8a" marker-end="url(#arrow)" />
+      <line x1="110" y1="33" x2="130" y2="17" class="wire" stroke="#ff7b8a" />
     
   <text x="50" y="42" class="lbl">A</text>
   <text x="150" y="42" class="lbl">K</text>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Brushed DC Motor circuit diagram">
+  <title>Brushed DC Motor — circuit diagram</title>
+  <g>
+    <rect x="180" y="120" width="120" height="110" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
+    <text x="240" y="173" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">H</text>
+    <text x="240" y="190" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">BRIDGE</text>
+    <path d="M70,150 L180,150" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M70,200 L180,200" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <text x="70" y="142" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="9" font-weight="600" text-anchor="start">PWM</text>
+    <text x="70" y="192" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="9" font-weight="600" text-anchor="start">DIR</text>
+    <path d="M300,150 L420,150" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <path d="M300,200 L420,200" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="470" cy="176" r="50" fill="#0d1117" stroke="#00dfc1" stroke-width="2"/>
+    <text x="470" y="188" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="24" font-weight="700" text-anchor="middle">M</text>
+    <path d="M420,150 L428,146" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <path d="M420,200 L428,206" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Four-switch bridge sets direction and average motor voltage</text>
+  </g>
+</svg>

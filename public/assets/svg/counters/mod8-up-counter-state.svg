@@ -2,13 +2,13 @@
   <title>Mod-8 Up Counter State Diagram</title>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#00a7da" />
     </marker>
     <style>
-      .state { fill: #eff6ff; stroke: #2563eb; stroke-width: 2.5; }
-      .state-txt { font-family: monospace; font-size: 12px; font-weight: bold; fill: #1e3a8a; text-anchor: middle; dominant-baseline: middle; }
-      .trans { stroke: #2563eb; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
-      .center-lbl { font-family: system-ui, sans-serif; font-size: 13px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .state { fill: #0d1117; stroke: #00a7da; stroke-width: 2.5; }
+      .state-txt { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #101f38; text-anchor: middle; dominant-baseline: middle; }
+      .trans { stroke: #00a7da; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .center-lbl { font-family: Consolas, Consolas; font-size: 13px; font-weight: bold; fill: #c5c7c9; text-anchor: middle; }
     </style>
   </defs>
 

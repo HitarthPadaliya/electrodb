@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Buck Converter circuit diagram">
+  <title>Buck Converter — circuit diagram</title>
+  <g>
+    <text x="60" y="78" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_IN</text>
+    <path d="M60,86 L170,86" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <rect x="170" y="60" width="96" height="52" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
+    <text x="218" y="84" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">SW</text>
+    <text x="218" y="101" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">switch</text>
+    <path d="M266,86 L340,86" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M340,86 q14,-16 28,0 q14,16 28,0 q14,-16 28,0" fill="none" stroke="#00dfc1" stroke-width="2"/>
+    <text x="392" y="56" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="start">L1</text>
+    <path d="M424,86 L560,86" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="520" cy="86" r="3.2" fill="#00dfc1"/>
+    <text x="526" y="76" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_OUT</text>
+    <path d="M470,86 L470,136" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M458,158 h24 l-12,20 z" fill="#0d1117" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M458,178 h24" stroke="#00a7da" stroke-width="2.2"/>
+    <text x="470" y="148" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="middle">D1</text>
+    <path d="M470,200 L470,240" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M457,240 h26 M462,246 h16 M466,252 h8" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Switching regulator: inductor, freewheeling diode, and output capacitor</text>
+  </g>
+</svg>

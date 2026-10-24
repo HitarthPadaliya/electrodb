@@ -159,6 +159,7 @@ async function getComponentDetail(idOrSlug) {
   const diagrams = rawDiagrams.map(d => ({
     diagramId: d.diagram_id,
     title: d.title,
+    kind: d.diagram_kind || 'OTHER',
     imagePath: d.image_path,
     altText: d.alt_text,
     caption: d.caption,

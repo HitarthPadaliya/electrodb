@@ -595,8 +595,8 @@ const app = {
             <h2 class="section-title">Subcategories</h2>
             <span class="section-meta">${children.length} subfamilies</span>
           </div>
-          <div class="category-tiles">
-            ${children.map(child => this.subcategoryTile(child)).join('')}
+          <div class="subcategory-grid">
+            ${children.map((child, index) => this.subcategoryCard(child, index)).join('')}
           </div>
         </section>
       `;
@@ -861,11 +861,23 @@ const app = {
       { label: comp.name }
     ];
 
-    const heroLead = comp.shortDescription || comp.description || '';
-    const overviewSection = (comp.content || []).find(section => section.sectionKey === 'overview');
-    const overviewText =
-      comp.description ||
-      (overviewSection && typeof overviewSection.content === 'string' ? overviewSection.content : '');
+    // The description lives in the hero, directly beneath the title.
+    const heroLead =
+      comp.description || comp.shortDescription || '';
+
+    // Tags carry the classification; the category itself is already in the
+    // breadcrumb, so it is not repeated as a pill here.
+    const tagPills = tags
+      .filter(tag => tag && tag.slug && tag.slug !== 'educational-example')
+      .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
+      .join('');
+
+    const diagrams = comp.diagrams || [];
+    const byKind = kind => diagrams.filter(diagram => (diagram.kind || 'OTHER') === kind);
+    const symbolDiagram = byKind('SYMBOL')[0];
+    const circuitDiagrams = byKind('CIRCUIT');
+    const extraDiagrams = diagrams.filter(diagram => !['SYMBOL', 'CIRCUIT'].includes(diagram.kind || 'OTHER'));
+    const symbolPath = (symbolDiagram && symbolDiagram.imagePath) || comp.circuitSymbolPath;
 
     let html = `
       <div class="page">
@@ -875,21 +887,7 @@ const app = {
           <div class="component-hero-main">
             <h1 class="component-title">${this.escapeHtml(comp.name)}</h1>
             <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
-
-            <div class="hero-tags">
-              ${
-                categoryId
-                  ? `<a class="tag" href="#/categories/${encodeURIComponent(categoryId)}">${this.escapeHtml(categoryName)}</a>`
-                  : ''
-              }
-              ${
-                tags
-                  .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
-                  .join('')
-              }
-              ${comp.isIllustrative ? '<span class="badge-tag illustrative">Illustrative model</span>' : ''}
-              ${comp.isPublished ? '<span class="badge-tag published">Published</span>' : ''}
-            </div>
+            ${tagPills ? `<div class="hero-tags">${tagPills}</div>` : ''}
 
             <div class="component-actions">
               ${
@@ -909,25 +907,41 @@ const app = {
           </div>
 
           ${
-            comp.circuitSymbolPath
+            symbolPath
               ? `<figure class="component-art">
-                   <img src="${this.escapeHtml(comp.circuitSymbolPath)}" alt="${this.escapeHtml(comp.name)} circuit symbol" loading="lazy" data-hide-on-error>
-                   <figcaption>Circuit symbol</figcaption>
+                   <img src="${this.escapeHtml(symbolPath)}" alt="${this.escapeHtml(comp.name)} symbol" loading="lazy" data-hide-on-error>
+                   <figcaption>Symbol</figcaption>
                  </figure>`
               : `<div class="component-art component-art--empty" aria-hidden="true"><span>⚡</span></div>`
           }
         </section>
     `;
 
-    // Full description (when it is richer than the short summary)
-    if (overviewText && overviewText !== heroLead) {
+    // Circuit diagram, immediately after the hero — this is the gate- and
+    // device-level schematic, not the pin-level block symbol above.
+    circuitDiagrams.forEach(diagram => {
       html += `
-        <section class="detail-section">
-          <h2 class="section-title">Overview</h2>
-          <p class="prose">${this.escapeHtml(overviewText)}</p>
+        <section class="detail-section circuit-section">
+          <div class="section-head">
+            <h2 class="section-title">Circuit Diagram</h2>
+          </div>
+          <figure class="circuit-figure">
+            <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
+              diagram.altText || `Circuit diagram for ${comp.name}`
+            )}" loading="lazy">
+            ${diagram.caption ? `<figcaption>${this.escapeHtml(diagram.caption)}</figcaption>` : ''}
+          </figure>
+          <div class="circuit-actions">
+            <button
+              class="btn btn-secondary btn-sm"
+              type="button"
+              data-open-image="${this.escapeHtml(diagram.imagePath)}"
+              data-open-title="${this.escapeHtml(diagram.title || 'Circuit diagram')}"
+            >View fullscreen</button>
+          </div>
         </section>
       `;
-    }
+    });
 
     // Structured educational sections
     (comp.content || []).forEach(section => {
@@ -942,16 +956,17 @@ const app = {
       `;
     });
 
-    // Diagrams
-    if (comp.diagrams && comp.diagrams.length) {
+    // Supporting artwork (state, timing, …). The symbol and the circuit
+    // diagram are already displayed above, so they are not repeated here.
+    if (extraDiagrams.length) {
       html += `
         <section class="detail-section">
           <div class="section-head">
             <h2 class="section-title">Diagrams &amp; Visual Assets</h2>
-            <span class="section-meta">${comp.diagrams.length} assets</span>
+            <span class="section-meta">${extraDiagrams.length} assets</span>
           </div>
           <div class="diagram-grid">
-            ${comp.diagrams
+            ${extraDiagrams
               .map(
                 diagram => `
                   <article class="diagram-card">
@@ -2143,20 +2158,26 @@ const app = {
     `;
   },
 
-  subcategoryTile(category) {
+  /**
+   * Subcategory button: card-like (as before) but compact and distinct from
+   * both the parent category cards and the component cards.
+   */
+  subcategoryCard(category, index = 0) {
     const id = category.category_id !== undefined ? category.category_id : category.categoryId;
     const count = Number(
       category.component_count !== undefined ? category.component_count : category.componentCount || 0
     );
+    const ordinal = String(index + 1).padStart(2, '0');
 
     return `
-      <a class="category-tile" href="#/categories/${encodeURIComponent(id)}">
-        <span class="category-tile-mark" aria-hidden="true"></span>
-        <span class="category-tile-body">
-          <span class="category-tile-name">${this.escapeHtml(category.name)}</span>
-          <span class="category-tile-meta">${count} component${count === 1 ? '' : 's'}</span>
+      <a class="subcategory-card" href="#/categories/${encodeURIComponent(id)}">
+        <span class="subcategory-index" aria-hidden="true">${ordinal}</span>
+        <span class="subcategory-count">${count}</span>
+        <span class="subcategory-name">${this.escapeHtml(category.name)}</span>
+        <span class="subcategory-foot">
+          <span class="subcategory-meta">component${count === 1 ? '' : 's'}</span>
+          <span class="subcategory-arrow" aria-hidden="true">→</span>
         </span>
-        <span class="category-tile-arrow" aria-hidden="true">→</span>
       </a>
     `;
   },

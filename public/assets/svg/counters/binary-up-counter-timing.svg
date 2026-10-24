@@ -2,13 +2,13 @@
   <title>Binary Up Counter Timing Timing Diagram</title>
   <defs>
     <style>
-      .clk-wave { stroke: #0284c7; stroke-width: 2.5; fill: none; }
-      .q0-wave { stroke: #16a34a; stroke-width: 2.5; fill: none; }
-      .q1-wave { stroke: #d97706; stroke-width: 2.5; fill: none; }
-      .q2-wave { stroke: #dc2626; stroke-width: 2.5; fill: none; }
-      .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 4; }
-      .lbl { font-family: monospace; font-size: 12px; font-weight: bold; fill: #334155; }
-      .state-lbl { font-family: system-ui, sans-serif; font-size: 11px; fill: #64748b; text-anchor: middle; }
+      .clk-wave { stroke: #00a7da; stroke-width: 2.5; fill: none; }
+      .q0-wave { stroke: #00dfc1; stroke-width: 2.5; fill: none; }
+      .q1-wave { stroke: #f2b544; stroke-width: 2.5; fill: none; }
+      .q2-wave { stroke: #ff7b8a; stroke-width: 2.5; fill: none; }
+      .grid { stroke: #21262d; stroke-width: 1; stroke-dasharray: 4; }
+      .lbl { font-family: Consolas, Consolas; font-size: 12px; font-weight: bold; fill: #c5c7c9; }
+      .state-lbl { font-family: Consolas, Consolas; font-size: 11px; fill: #8a8d93; text-anchor: middle; }
     </style>
   </defs>
 

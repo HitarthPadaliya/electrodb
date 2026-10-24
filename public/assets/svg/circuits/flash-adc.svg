@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Flash ADC circuit diagram">
+  <title>Flash ADC — circuit diagram</title>
+  <g>
+    <path d="M120,62 L520,62" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <text x="60" y="58" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_REF</text>
+    <path d="M60,70 L120,62" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M150,62 h7.199999999999999 l5.039999999999999,-9 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,9 h7.199999999999999" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M246,62 h7.199999999999999 l5.039999999999999,-9 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,9 h7.199999999999999" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M342,62 h7.199999999999999 l5.039999999999999,-9 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,9 h7.199999999999999" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M438,62 h7.199999999999999 l5.039999999999999,-9 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,18 l5.039999999999999,-18 l5.039999999999999,9 h7.199999999999999" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M120,62 L120,200" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M107,200 h26 M112,206 h16 M116,212 h8" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+    <path d="M210,62 v34" stroke="#8a8d93" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <rect x="184" y="96" width="52" height="44" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
+    <text x="210" y="123" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">CMP</text>
+    <path d="M210,140 L210,240" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <text x="218" y="254" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">D0</text>
+    <path d="M306,62 v34" stroke="#8a8d93" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <rect x="280" y="96" width="52" height="44" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
+    <text x="306" y="123" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">CMP</text>
+    <path d="M306,140 L306,240" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <text x="314" y="254" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">D1</text>
+    <path d="M402,62 v34" stroke="#8a8d93" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <rect x="376" y="96" width="52" height="44" rx="8" fill="#0d1117" stroke="#168fe5" stroke-width="2"/>
+    <text x="402" y="123" fill="#e8eaed" font-family="Consolas, Consolas, monospace" font-size="13" font-weight="600" text-anchor="middle">CMP</text>
+    <path d="M402,140 L402,240" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <text x="410" y="254" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">D2</text>
+    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Flash ADC: a resistor ladder feeds one comparator per code</text>
+  </g>
+</svg>

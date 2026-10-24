@@ -128,15 +128,6 @@ img {
   max-width: 100%;
 }
 
-/*
- * Catalogue artwork was authored as dark line work on a light canvas.
- * Inverting it lets the diagrams sit directly on the dark page (as in the
- * design reference) instead of floating on a bright panel.
- */
-.main-content img[src*='/assets/svg/'] {
-  filter: invert(1) hue-rotate(180deg);
-}
-
 .main-content img.no-art {
   filter: none;
   background: rgba(255, 255, 255, 0.03);
@@ -1015,98 +1006,110 @@ select:focus-visible,
   color: var(--fg-light);
 }
 
-/* Category exploration — deliberately distinct from component cards:
-   a row-based list with a leading marker and a sliding arrow. */
-.category-tiles {
+/* Subcategory buttons — card-like (as before) but compact, numbered, and
+   visually distinct from both category cards and component cards. */
+.subcategory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.9rem;
 }
 
-.category-tile {
+.subcategory-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.95rem 1.1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem 1.15rem 0.95rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.012);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(160deg, rgba(0, 223, 193, 0.06) 0%, rgba(13, 17, 23, 0) 62%),
+    var(--card);
   color: inherit;
   text-decoration: none;
   overflow: hidden;
   transition: var(--transition-surface);
 }
 
-.category-tile::before {
+.subcategory-card::after {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
   width: 2px;
-  background: var(--secondary);
+  background: linear-gradient(180deg, var(--secondary), transparent 88%);
   opacity: 0;
-  transform: scaleY(0.35);
-  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+  transition: opacity var(--dur-2) var(--ease-out);
 }
 
-.category-tile:hover {
-  border-color: rgba(0, 223, 193, 0.4);
-  background: rgba(0, 223, 193, 0.045);
-  transform: translateX(3px);
+.subcategory-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 223, 193, 0.45);
+  box-shadow: 0 22px 48px -34px rgba(0, 223, 193, 0.75);
 }
 
-.category-tile:hover::before {
+.subcategory-card:hover::after {
   opacity: 1;
-  transform: scaleY(1);
 }
 
-.category-tile-mark {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: rgba(0, 223, 193, 0.85);
-  box-shadow: 0 0 12px rgba(0, 223, 193, 0.5);
+.subcategory-index {
+  font-family: var(--font-nav);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--secondary);
+  opacity: 0.85;
 }
 
-.category-tile-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
+.subcategory-count {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.9rem;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid rgba(0, 223, 193, 0.35);
+  border-radius: 999px;
+  background: rgba(0, 223, 193, 0.1);
+  color: var(--secondary);
+  font-family: var(--font-nav);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
-.category-tile-name {
+.subcategory-name {
   font-family: var(--font-accent);
-  font-size: 1rem;
+  font-size: 1.04rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--fg);
-  transition: color var(--dur-2) var(--ease-out);
+  overflow-wrap: break-word;
 }
 
-.category-tile:hover .category-tile-name {
-  color: var(--secondary);
+.subcategory-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(33, 38, 45, 0.8);
 }
 
-.category-tile-meta {
+.subcategory-meta {
   font-family: var(--font-nav);
-  font-size: 0.66rem;
-  letter-spacing: 0.13em;
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.category-tile-arrow {
-  margin-left: auto;
+.subcategory-arrow {
   color: var(--muted);
-  font-size: 1rem;
   transition: transform var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
 }
 
-.category-tile:hover .category-tile-arrow {
+.subcategory-card:hover .subcategory-arrow {
   color: var(--secondary);
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
 .tag-cloud {
@@ -1480,6 +1483,63 @@ select:focus-visible,
   margin-top: 3rem;
 }
 
+/* Circuit diagram immediately below the hero */
+.circuit-section {
+  margin-top: 2.25rem;
+}
+
+.circuit-figure {
+  position: relative;
+  margin: 1.1rem 0 0;
+  padding: clamp(1rem, 2.4vw, 1.9rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(720px 300px at 50% 0%, rgba(0, 167, 218, 0.09), transparent 66%),
+    linear-gradient(160deg, rgba(13, 17, 23, 0.9) 0%, rgba(5, 7, 14, 0.9) 100%);
+  overflow: hidden;
+}
+
+.circuit-figure::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 167, 218, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 167, 218, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 40%, #000 10%, transparent 78%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 10%, transparent 78%);
+}
+
+.circuit-figure img {
+  position: relative;
+  display: block;
+  width: min(100%, 780px);
+  height: auto;
+  margin: 0 auto;
+}
+
+.circuit-figure figcaption {
+  position: relative;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-nav);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+.circuit-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
 .detail-section .section-title {
   margin-bottom: 0.35rem;
 }
@@ -1502,37 +1562,65 @@ select:focus-visible,
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: rgba(8, 11, 19, 0.55);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(0, 167, 218, 0.05) 0%, rgba(8, 11, 19, 0.7) 40%),
+    var(--card);
+  box-shadow: 0 24px 60px -46px rgba(0, 0, 0, 0.95);
 }
 
 .edu-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: center;
   font-family: var(--font-body);
   font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.edu-table caption,
+.table-caption {
+  caption-side: bottom;
+  padding: 0.7rem 1rem;
+  color: var(--muted);
+  font-family: var(--font-nav);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
 }
 
 .edu-table th {
-  padding: 0.7rem 1rem;
-  background-color: var(--table-head);
+  position: relative;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(180deg, rgba(27, 87, 151, 0.66) 0%, rgba(20, 52, 88, 0.5) 100%);
   color: var(--fg);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-nav);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0, 167, 218, 0.4);
   white-space: nowrap;
 }
 
+.edu-table th:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
 .edu-table td {
-  padding: 0.6rem 1rem;
+  padding: 0.62rem 1rem;
   color: var(--fg-light);
-  border-bottom: 1px solid rgba(33, 38, 45, 0.85);
+  border-bottom: 1px solid rgba(33, 38, 45, 0.9);
+}
+
+.edu-table td:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.035);
 }
 
 .edu-table tbody tr:nth-child(even) {
-  background-color: var(--table-even);
+  background-color: rgba(33, 38, 45, 0.42);
 }
 
 .edu-table tbody tr {
@@ -1540,11 +1628,15 @@ select:focus-visible,
 }
 
 .edu-table tbody tr:hover {
-  background-color: var(--table-hover);
+  background-color: rgba(12, 39, 68, 0.9);
 }
 
 .edu-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.edu-table tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .edu-table .cell-highlight {
@@ -1552,6 +1644,13 @@ select:focus-visible,
   font-weight: 700;
 }
 
+.edu-table .cell-value {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+/* Specification tables read as a definition list, not a centred matrix. */
 .spec-table {
   text-align: left;
 }
@@ -1564,9 +1663,19 @@ select:focus-visible,
   text-align: left;
 }
 
-.spec-table td strong {
+.spec-table td:first-child {
   color: var(--fg);
   font-weight: 600;
+}
+
+.spec-table td:nth-child(2) {
+  color: var(--accent-hover);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.spec-table td:last-child {
+  max-width: 34ch;
 }
 
 .spec-source-note {
@@ -1578,9 +1687,9 @@ select:focus-visible,
 
 .table-caption {
   margin: 0.65rem 0 0;
-  font-size: 0.8rem;
-  font-style: italic;
   color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
 }
 
 /* Equations */
@@ -2453,7 +2562,7 @@ select:focus-visible,
   .components-grid,
   .tags-grid,
   .diagram-grid,
-  .category-tiles {
+  .subcategory-grid {
     grid-template-columns: 1fr;
   }
 

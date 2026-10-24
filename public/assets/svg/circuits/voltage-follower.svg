@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" width="100%" height="100%" role="img" aria-label="Voltage Follower circuit diagram">
+  <title>Voltage Follower — circuit diagram</title>
+  <g>
+    <path d="M300,116 L300,224 L430,170 Z" fill="#0d1117" stroke="#168fe5" stroke-width="2" stroke-linejoin="round"/>
+    <text x="322" y="146" fill="#c5c7c9" font-family="Consolas, Consolas, monospace" font-size="16" font-weight="600" text-anchor="start">−</text>
+    <text x="322" y="200" fill="#c5c7c9" font-family="Consolas, Consolas, monospace" font-size="14" font-weight="600" text-anchor="start">+</text>
+    <text x="362" y="176" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="400" text-anchor="start">A1</text>
+    <path d="M430,170 L560,170" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="560" cy="170" r="3.2" fill="#00dfc1"/>
+    <text x="566" y="174" fill="#00dfc1" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_OUT</text>
+    <text x="40" y="188" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="10" font-weight="600" text-anchor="start">V_IN</text>
+    <path d="M40,196 L300,196" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <path d="M500,170 L500,66 L240,66 L240,138 L300,138" fill="none" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+    <text x="28" y="318" fill="#8a8d93" font-family="Consolas, Consolas, monospace" font-size="11" font-weight="400" text-anchor="start">Unity-gain buffer: the output is tied directly to the inverting input</text>
+  </g>
+</svg>

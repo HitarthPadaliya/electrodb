@@ -154,6 +154,9 @@ CREATE TABLE IF NOT EXISTS component_diagrams (
   diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
+  -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
+  -- diagram, and from state/timing artwork, so the UI can place each one.
+  diagram_kind ENUM('SYMBOL','CIRCUIT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
   caption VARCHAR(500) NULL,
@@ -162,6 +165,7 @@ CREATE TABLE IF NOT EXISTS component_diagrams (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (diagram_id),
   KEY idx_component_diagrams_order (component_id, display_order),
+  KEY idx_component_diagrams_kind (component_id, diagram_kind),
   CONSTRAINT fk_component_diagrams_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
