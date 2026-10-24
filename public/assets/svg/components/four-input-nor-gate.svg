@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 282 172" role="img" aria-label="4-IN NOR symbol">
+  <title>4-IN NOR symbol</title>
+  <line x1="50" y1="74.4" x2="96" y2="74.4" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="79.9" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
+  <line x1="50" y1="88.8" x2="96" y2="88.8" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="94.3" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">B</text>
+  <line x1="50" y1="103.2" x2="96" y2="103.2" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="108.7" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">C</text>
+  <line x1="50" y1="117.6" x2="96" y2="117.6" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="123.1" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">D</text>
+  <path d="M96,60 Q117.12,108 96,156 Q144,156 172.8,108 Q144,60 96,60 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="197" cy="96" r="5" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <line x1="202" y1="96" x2="242" y2="96" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="252" y="101.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">Y</text>
+</svg>

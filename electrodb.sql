@@ -12,8 +12,9 @@
 --   * Components, educational content, and component diagrams
 --   * Separate truth/characteristic/excitation tables and equations
 --   * Specifications and component specifications
---   * Application user records for DBMS assignment demonstration
---   * Audit log
+--   * Application user records for the access-control demonstration
+--   * Sessions, bookmarks, collections and recently viewed components
+--   * Audit log, including triggers on app_users
 --   * Views, indexes, stored procedures, functions, cursors, and triggers
 --   * Consolidates the standalone Assignment 10 stored-program examples;
 --     duplicate routine/trigger definitions are intentionally not repeated
@@ -185,6 +186,9 @@ CREATE TABLE component_diagrams (
   diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
+  -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
+  -- diagram, and from state/timing artwork, so the UI can place each one.
+  diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
   caption VARCHAR(500) NULL,
@@ -193,6 +197,7 @@ CREATE TABLE component_diagrams (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (diagram_id),
   KEY idx_component_diagrams_order (component_id, display_order),
+  KEY idx_component_diagrams_kind (component_id, diagram_kind),
   CONSTRAINT fk_component_diagrams_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -241,6 +246,9 @@ CREATE TABLE component_specifications (
 CREATE TABLE app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
+  -- Login identifier. Nullable so rows created before accounts existed stay valid;
+  -- a UNIQUE key still permits several NULLs while keeping real addresses unique.
+  email VARCHAR(255) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role_code ENUM('NAIVE_USER','APP_DEVELOPER','DBA') NOT NULL DEFAULT 'NAIVE_USER',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -249,6 +257,7 @@ CREATE TABLE app_users (
   last_login_at TIMESTAMP NULL,
   PRIMARY KEY (user_id),
   UNIQUE KEY uq_app_users_username (username),
+  UNIQUE KEY uq_app_users_email (email),
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB;
 
@@ -318,7 +327,7 @@ INSERT INTO categories (category_id, parent_category_id, name, slug, description
 INSERT INTO tags (name, slug) VALUES
 ('digital','digital'),('sequential-logic','sequential-logic'),('combinational-logic','combinational-logic'),
 ('semiconductor','semiconductor'),('analog','analog'),('power','power'),('sensor','sensor'),
-('memory','memory'),('electromechanical','electromechanical'),('educational-example','educational-example'),
+('memory','memory'),('electromechanical','electromechanical'),
 ('timing','timing'),('state-machine','state-machine'),('la-te-x','latex');
 
 -- ------------------------------
@@ -526,8 +535,7 @@ JOIN tags t ON (
   (c.category_id IN (17,18) AND t.slug IN ('analog','power')) OR
   (c.category_id IN (19,20) AND t.slug IN ('sensor')) OR
   (c.category_id = 21 AND t.slug IN ('memory')) OR
-  (c.category_id IN (22,23) AND t.slug IN ('electromechanical')) OR
-  (c.is_illustrative = 1 AND t.slug = 'educational-example')
+  (c.category_id IN (22,23) AND t.slug IN ('electromechanical'))
 );
 
 -- ------------------------------
@@ -590,32 +598,34 @@ WHERE c.category_id=6;
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)','Operation'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0,0,'Hold'),JSON_ARRAY(0,0,1,1,'Hold'),JSON_ARRAY(0,1,0,0,'Reset'),JSON_ARRAY(0,1,1,0,'Reset'),
-           JSON_ARRAY(1,0,0,1,'Set'),JSON_ARRAY(1,0,1,1,'Set'),JSON_ARRAY(1,1,0,1,'Toggle'),JSON_ARRAY(1,1,1,0,'Toggle')))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'\\(\\overline{Q_n}\\)','Toggle')))
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'X','Invalid')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,'\\(Q_n\\)','Hold'),JSON_ARRAY(1,'\\(\\overline{Q_n}\\)','Toggle')))
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'Reset'),JSON_ARRAY(1,1,'Set')))
        END,
-       NULL,'Q(next) is the output after the active clock edge. X means don''t care where applicable.',3
+       NULL,'Qn is the stored state; Qn+1 is the state after the active clock edge.',3
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'characteristic_table', 'Characteristic Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)'),'rows',JSON_ARRAY(
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
            JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,1),JSON_ARRAY(1,1,1,0)))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
+           JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,'X'),JSON_ARRAY(1,1,1,'X')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
        END,
        NULL,NULL,4
 FROM components c JOIN content_types ct ON ct.code='TABLE'
@@ -651,37 +661,72 @@ SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
--- All visual assets use one generic diagram model. Titles describe the
--- diagram to people; the database does not store a diagram subtype.
+-- Visual assets share one model; diagram_kind records which drawing it is.
+-- SYMBOL is the pin-level block (what the hero shows); CIRCUIT is the
+-- all-NAND implementation shown immediately below the hero; PINOUT is the DIP
+-- package drawing shown beside the technical specifications.
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'Circuit / Symbol Diagram',
-       c.circuit_symbol_path, CONCAT('Diagram for ',c.name), NULL, 10
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
+       c.circuit_symbol_path, CONCAT('Pin-level symbol for ',c.name), 'Pin-level block symbol.', 10
 FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
+-- Logic gates have no circuit diagram: their implementation is the IC pinout.
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'State Diagram',
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
+       CASE c.slug
+         WHEN 'jk-flip-flop' THEN '/assets/svg/circuits/jk-flip-flop-circuit.svg'
+         ELSE CONCAT('/assets/svg/circuits/',c.slug,'.svg')
+       END,
+       CONCAT('Circuit diagram for ',c.name), 'All-NAND implementation.', 20
+FROM components c
+WHERE c.category_id <> 8;
+
+-- IC pinout, shown with the technical specifications.
+INSERT INTO component_diagrams
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Pinout Diagram', 'PINOUT',
+       CONCAT('/assets/svg/pinouts/',c.slug,'.svg'),
+       CONCAT('IC pinout for ',c.name), 'DIP package pin numbering.', 25
+FROM components c
+WHERE c.category_id IN (6,7,8,9,10,17,18,19,20,21);
+
+INSERT INTO component_diagrams
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'State Diagram', 'STATE',
        CASE c.slug
          WHEN 'decade-counter' THEN '/assets/svg/counters/decade-counter-state.svg'
          WHEN 'mod8-up-counter' THEN '/assets/svg/counters/mod8-up-counter-state.svg'
          WHEN 'mod8-down-counter' THEN '/assets/svg/counters/mod8-down-counter-state.svg'
-         WHEN 'jk-flip-flop' THEN '/assets/svg/flipflops/jk-flip-flop-state.svg'
-         WHEN 'd-flip-flop' THEN '/assets/svg/flipflops/d-flip-flop-state.svg'
-         WHEN 't-flip-flop' THEN '/assets/svg/flipflops/t-flip-flop-state.svg'
+         WHEN 'bcd-counter' THEN '/assets/svg/counters/bcd-counter-state.svg'
+         WHEN 'mod5-counter' THEN '/assets/svg/counters/mod5-counter-state.svg'
+         WHEN 'mod6-counter' THEN '/assets/svg/counters/mod6-counter-state.svg'
+         WHEN 'binary-ripple-counter' THEN '/assets/svg/counters/binary-ripple-counter-state.svg'
+         WHEN 'binary-up-counter' THEN '/assets/svg/counters/binary-up-counter-state.svg'
+         WHEN 'asynchronous-binary-counter' THEN '/assets/svg/counters/asynchronous-binary-counter-state.svg'
+         WHEN 'synchronous-binary-counter' THEN '/assets/svg/counters/synchronous-binary-counter-state.svg'
+         WHEN 'up-down-counter' THEN '/assets/svg/counters/up-down-counter-state.svg'
+         WHEN 'programmable-modulo-counter' THEN '/assets/svg/counters/programmable-modulo-counter-state.svg'
+         WHEN 'ring-counter' THEN '/assets/svg/counters/ring-counter-state.svg'
+         WHEN 'johnson-counter' THEN '/assets/svg/counters/johnson-counter-state.svg'
+         WHEN 'mod10-synchronous-counter' THEN '/assets/svg/counters/mod10-synchronous-counter-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END, CONCAT('State transitions for ',c.name), NULL, 11
+       END, CONCAT('State machine for ',c.name), 'Moore and Mealy machines, side by side.', 30
 FROM components c
 WHERE c.category_id IN (6,7);
 
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'Timing Diagram',
-       CONCAT('/assets/svg/counters/',c.slug,'-timing.svg'),
-       CONCAT('Timing diagram for ',c.name), NULL, 12
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Timing Diagram', 'TIMING',
+       CASE WHEN c.category_id=6
+            THEN CONCAT('/assets/svg/counters/',c.slug,'-timing.svg')
+            ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-timing.svg')
+       END,
+       CONCAT('Timing diagram for ',c.name), 'Signal levels over successive clock cycles.', 40
 FROM components c
-WHERE c.category_id=6;
+WHERE c.category_id IN (6,7);
 
 -- Representative Boolean equations for gates and multiplexers.
 INSERT INTO component_content
@@ -1034,7 +1079,134 @@ END$$
 DELIMITER ;
 
 -- ------------------------------
--- 20. Verification queries
+-- 20. Accounts: sessions and personal collections
+--     Mirrors database/11_auth_and_personalization.sql. This file is a fresh
+--     install, so the objects are created outright rather than migrated.
+--
+--     The cookie carries a random token; only its SHA-256 digest is stored here,
+--     so a database dump cannot be replayed as a live session.
+-- ------------------------------
+CREATE TABLE user_sessions (
+  session_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen_at TIMESTAMP NULL,
+  expires_at DATETIME NOT NULL,
+  PRIMARY KEY (session_id),
+  UNIQUE KEY uq_user_sessions_token (token_hash),
+  KEY idx_user_sessions_user (user_id),
+  KEY idx_user_sessions_expiry (expires_at),
+  CONSTRAINT fk_user_sessions_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- One row per (user, component): saving twice cannot create a duplicate.
+CREATE TABLE bookmarks (
+  bookmark_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (bookmark_id),
+  UNIQUE KEY uq_bookmarks_user_component (user_id, component_id),
+  KEY idx_bookmarks_user_created (user_id, created_at),
+  CONSTRAINT fk_bookmarks_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_bookmarks_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE collections (
+  collection_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(80) NOT NULL,
+  description VARCHAR(280) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (collection_id),
+  UNIQUE KEY uq_collections_user_name (user_id, name),
+  KEY idx_collections_user (user_id),
+  CONSTRAINT fk_collections_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT chk_collections_name CHECK (CHAR_LENGTH(TRIM(name)) > 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE collection_components (
+  collection_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (collection_id, component_id),
+  KEY idx_collection_components_component (component_id),
+  CONSTRAINT fk_collection_components_collection
+    FOREIGN KEY (collection_id) REFERENCES collections(collection_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_collection_components_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- DATETIME(6): two views inside the same second still have a definite order.
+CREATE TABLE recently_viewed (
+  user_id BIGINT UNSIGNED NOT NULL,
+  component_id BIGINT UNSIGNED NOT NULL,
+  last_viewed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (user_id, component_id),
+  KEY idx_recently_viewed_user_time (user_id, last_viewed_at),
+  CONSTRAINT fk_recently_viewed_user
+    FOREIGN KEY (user_id) REFERENCES app_users(user_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_recently_viewed_component
+    FOREIGN KEY (component_id) REFERENCES components(component_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Audit trail for account changes (mirrors database/12_app_user_audit.sql).
+-- Password material is never logged: an update records only whether it changed.
+DELIMITER $$
+
+CREATE TRIGGER trg_app_users_audit_ai
+AFTER INSERT ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'INSERT', CAST(NEW.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), NEW.username, NULL,
+     JSON_OBJECT('username', NEW.username, 'email', NEW.email,
+                 'role_code', NEW.role_code, 'is_active', NEW.is_active));
+END$$
+
+CREATE TRIGGER trg_app_users_audit_au
+AFTER UPDATE ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'UPDATE', CAST(NEW.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), NEW.username,
+     JSON_OBJECT('username', OLD.username, 'email', OLD.email, 'role_code', OLD.role_code,
+                 'is_active', OLD.is_active, 'password_changed', NOT (OLD.password_hash <=> NEW.password_hash)),
+     JSON_OBJECT('username', NEW.username, 'email', NEW.email, 'role_code', NEW.role_code,
+                 'is_active', NEW.is_active, 'password_changed', NOT (OLD.password_hash <=> NEW.password_hash)));
+END$$
+
+CREATE TRIGGER trg_app_users_audit_ad
+AFTER DELETE ON app_users FOR EACH ROW
+BEGIN
+  INSERT INTO application_audit_log
+    (table_name, operation_type, row_key, changed_at, db_user, application_user, old_values, new_values)
+  VALUES
+    ('app_users', 'DELETE', CAST(OLD.user_id AS CHAR), CURRENT_TIMESTAMP, CURRENT_USER(), OLD.username,
+     JSON_OBJECT('username', OLD.username, 'email', OLD.email,
+                 'role_code', OLD.role_code, 'is_active', OLD.is_active), NULL);
+END$$
+
+DELIMITER ;
+
+-- ------------------------------
+-- 21. Verification queries
 -- ------------------------------
 SELECT 'categories' AS table_name, COUNT(*) AS row_count FROM categories
 UNION ALL SELECT 'components', COUNT(*) FROM components
@@ -1042,7 +1214,11 @@ UNION ALL SELECT 'content_types', COUNT(*) FROM content_types
 UNION ALL SELECT 'component_content', COUNT(*) FROM component_content
 UNION ALL SELECT 'component_diagrams', COUNT(*) FROM component_diagrams
 UNION ALL SELECT 'specifications', COUNT(*) FROM specifications
-UNION ALL SELECT 'tags', COUNT(*) FROM tags;
+UNION ALL SELECT 'tags', COUNT(*) FROM tags
+UNION ALL SELECT 'app_users', COUNT(*) FROM app_users
+UNION ALL SELECT 'user_sessions', COUNT(*) FROM user_sessions
+UNION ALL SELECT 'bookmarks', COUNT(*) FROM bookmarks
+UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 
 -- Assignment 11 examples; record actual timings in your report.
 -- 1. Full-table display:

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 245" role="img" aria-label="Dual D Flip-Flop state machine">
+  <title>Dual D Flip-Flop state machine</title>
+  <path d="M92,126 C76,97 118,89 112,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <text x="122" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">D=0</text>
+  <path d="M126,147 Q210,147 294,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M294,147 L287,150 L287,144 Z" fill="#8a8d93"/>
+  <text x="210" y="162" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">D=1</text>
+  <path d="M294,147 Q210,103 126,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M126,147 L130.81,141.09 L133.59,146.41 Z" fill="#8a8d93"/>
+  <text x="203.04" y="111.71" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">D=0</text>
+  <path d="M308,126 C292,97 334,89 328,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <text x="338" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">D=1</text>
+  <circle cx="102" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="102" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=0</text>
+  <text x="102" y="185" fill="#00dfc1" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">0</text>
+  <circle cx="318" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="318" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=1</text>
+  <text x="318" y="185" fill="#00dfc1" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <text x="210" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Moore</text>
+  <path d="M508,126 C492,97 534,89 528,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <text x="538" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">0/0</text>
+  <path d="M542,147 Q626,147 710,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M710,147 L703,150 L703,144 Z" fill="#8a8d93"/>
+  <text x="626" y="162" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/1</text>
+  <path d="M710,147 Q626,103 542,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M542,147 L546.81,141.09 L549.59,146.41 Z" fill="#8a8d93"/>
+  <text x="619.04" y="111.71" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">0/0</text>
+  <path d="M724,126 C708,97 750,89 744,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <text x="754" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">1/1</text>
+  <circle cx="518" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="518" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=0</text>
+  <circle cx="734" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="734" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=1</text>
+  <text x="626" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Mealy</text>
+</svg>

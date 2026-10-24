@@ -1,0 +1,577 @@
+# ElectroDB — Design Decisions, Improvements, and Change Log
+
+This document records proposed changes and the rationale behind them. It distinguishes established project requirements from implementation recommendations. Update this file whenever a decision changes.
+
+## 1. Baseline carried forward
+
+The existing frontend specification describes:
+- An informational electronic-components catalogue.
+- Node.js backend and MySQL database in its original technology assumptions.
+- Hierarchical categories and data-driven component pages.
+- Core tables: `categories`, `components`, `content_types`, `category_content_types`, `component_content`, `specifications`, `component_specifications`.
+- Content types for text, image, table, equation, generic diagram, graph, and document; diagram assets now use a dedicated table.
+- Category-specific educational sections, including state/next-state tables for counters and truth/characteristic/excitation tables plus equations and timing diagrams for flip-flops.
+- No public login, profiles, cart, payment, ratings, reviews, or administrative editing.
+- Backend API as the source of catalogue data, not hardcoded UI records.
+
+The recent project requests additionally specify:
+- LaTeX source for equations so the frontend can render them.
+- Separate characteristic table and characteristic equation records, including flip-flops and other relevant components.
+- Data for roughly 40–50 components in the seed dataset, with relevant tags requested in a prior project conversation.
+- A page per category leaf as a useful implementation approach, but pages must still be generated from category IDs/data rather than hardcoded per-category data.
+- SVG paths as the common representation for all diagrams, with no database-level diagram subtype.
+- State-machine diagrams for relevant components.
+- A static website was previously requested for design reference; that static prototype should not be confused with the final data-driven frontend.
+
+## 2. Confirmed decision: keep MySQL and use equivalent stored programs
+
+**Decision: MySQL remains the database engine.** The backend will use Node.js with a MySQL driver such as `mysql2`. Assignment 10 calls for PL/SQL, which is Oracle-specific; implement the closest equivalents using MySQL stored procedures, stored functions, cursors, and triggers, and clearly disclose this dialect difference. If the instructor requires literal MySQL stored programs, this is a grading risk that must be confirmed; do not mislabel MySQL routines as PL/SQL.
+
+Implementation effect:
+1. Use MySQL-compatible DDL and stored-program syntax throughout.
+2. Use `AUTO_INCREMENT`, `DELIMITER` in supported SQL clients, `NEW`/`OLD` in triggers, `SIGNAL SQLSTATE '45000'` for deliberate validation errors, and `LIMIT` for pagination.
+3. Use the `mysql2` Node.js connection pool.
+4. Keep API/frontend responsibilities independent of database-specific syntax where practical.
+5. Document the statement-trigger mismatch: MySQL supports row-level triggers, not Oracle-style statement-level triggers. Use row-level normalization triggers as the closest functional equivalent and ask whether the instructor accepts it.
+
+## 3. Added academic lab console without expanding the public product
+
+**Change proposed: add a separate Lab Console route.**
+
+Why:
+- Assignment 11 requires forms and controls for CRUD, aggregate functions, filtering, joins, subqueries, correlated subqueries, XML output, timing/index analysis, views, and a dashboard.
+- The original public catalogue specification excludes administrative editing and login.
+
+Implementation:
+- Public routes remain Home, Category, Search, Component detail, and Not found.
+- Lab-only tools live under a separate `/lab` section.
+- Lab routes are development/demo functionality and can be disabled or protected in production.
+- Never expose an arbitrary SQL execution box. Use pre-approved query templates and allowlisted table/column/operator/function options.
+
+## 4. Confirmed decision: one generic diagram model
+
+**Decision: store every diagram in a dedicated `component_diagrams` table, without a diagram-type column.**
+
+The table stores `diagram_id`, `component_id`, `title`, `image_path`, `alt_text`, `caption`, `display_order`, and timestamps. Titles such as “Circuit Diagram”, “Timing Diagram”, and “State Diagram” are human-facing labels, not database classifications.
+
+Benefits:
+- One storage model and one frontend renderer for all diagram assets.
+- Adding a new diagram does not require a new type or enum value.
+- Multiple diagrams per component are straightforward.
+- Captions, accessibility text, and display order remain available.
+
+Implementation consequence: remove `diagram_kind` from `component_content`; diagram assets belong in `component_diagrams`. Keep tables, equations, prose, specifications, and documents distinct because they have different structures and rendering requirements.
+
+## 5. Separate equations from tables
+
+**Change proposed: one content record per distinct educational artifact.**
+
+Examples for a JK flip-flop:
+- `truth_table` → `TABLE`
+- `characteristic_table` → `TABLE`
+- `characteristic_equation` → `EQUATION` with LaTeX source
+- `excitation_table` → `TABLE`
+- `component_diagrams` row titled “Timing Diagram” referencing an SVG
+- `component_diagrams` row titled “State Diagram”
+
+Rationale:
+- Easier to validate and render each artifact.
+- Equations can use KaTeX/MathJax and fallback text.
+- Tables remain accessible, sortable if desired, and independently editable.
+- Required/optional content is controlled through category templates.
+
+## 6. Add explicit specification value semantics
+
+**Change proposed: model value kind and provenance.**
+
+Specification values can be numeric, textual, or ranges. Avoid forcing values such as `SPDT` into a numeric column. Store units explicitly and add a source note or illustrative flag where values are examples rather than manufacturer-confirmed values.
+
+Add correct names for input/output quantities when needed (`Number of Inputs`, `Number of Data Inputs`, `Number of Select Lines`, `Number of Outputs`). Do not misuse `Number of Bits`.
+
+## 7. Improve API safety and consistency
+
+**Change proposed: stable REST API with centralized service/repository layers.**
+
+- Routes validate input and delegate.
+- Services implement domain behavior.
+- Repository functions handle database access.
+- XML serialization is a dedicated layer.
+- Use bind variables and whitelists.
+- Avoid a general-purpose endpoint that executes arbitrary SQL from the browser.
+- Keep errors in a consistent structure and do not expose SQL stacks or credentials.
+
+This is an implementation improvement and does not alter the public product scope.
+
+## 8. Assignment trigger nuance
+
+**Change proposed: explicitly test the Oracle statement-trigger requirement instead of writing a row-trigger example and calling it a statement trigger.**
+
+In Oracle, a statement-level trigger cannot use `:NEW`/`:OLD` row values. The uppercase requirement therefore needs a valid implementation pattern (for example, a carefully designed compound trigger or a statement-level operation with recursion prevention). Keep a test script and explain the semantics. This is a technical clarification, not a relaxation of the assignment requirement.
+
+## 9. Views and transaction behavior
+
+**Change proposed: define the view's updateability before attempting writes through it.**
+
+A join view may not support direct inserts or updates. For the assignment demo:
+- Create a meaningful two-table view.
+- Execute a saved procedure that reads or inserts the underlying records.
+- If a write through the view itself is explicitly required, use an appropriate `INSTEAD OF` trigger where supported and document what is being tested.
+- Do not claim that a normal joined view is automatically insertable.
+
+## 10. Index benchmarking methodology
+
+**Change proposed: make timing evidence reproducible.**
+
+For each Assignment 11 query:
+1. Record the exact SQL and dataset size.
+2. Run multiple trials before indexing.
+3. Record timings and row counts.
+4. Create at least two indexes chosen for actual filter/join paths.
+5. Repeat under comparable conditions.
+6. Include execution-plan observations.
+7. Explain any regression or lack of improvement.
+
+Do not invent timings or promise that indexes always speed up queries. They may add write overhead and may not help full-table scans.
+
+## 11. Data seeding and educational accuracy
+
+**Change proposed: seed 40–50 catalogue components only after the schema/content contract is stable.**
+
+- Use categories and tags consistently; if tags are implemented, normalize them using `tags` and `component_tags` rather than comma-separated strings.
+- Seed all component-specific content as separate content records.
+- Ensure every diagram path points to a real SVG before marking it published.
+- Store equations as LaTeX source.
+- Label illustrative specifications clearly and do not imply they are verified datasheet ratings.
+- Do not infer absent specifications.
+
+The tag tables are an optional schema extension based on the prior seed-data request; they are not part of the seven-table core schema in the frontend requirements. Add them only if tag-based browsing/search is actually included.
+
+## 12. Category pages and Figma
+
+**Change proposed: implement reusable page templates, not a bespoke hardcoded page per category.**
+
+Figma can have a page/frame for each category family or category leaf to communicate visual differences, but the production implementation should reuse:
+- Category page template.
+- Component detail template.
+- Shared content renderers.
+- Shared tables/equations/SVG panels.
+- Shared loading/empty/error states.
+
+Use category ID and backend-provided content to choose what to render. If a category contains both child categories and components, display both.
+
+## 13. Proposed implementation order
+
+1. Confirm Oracle versus MySQL with the course/instructor.
+2. Freeze logical schema and API response contracts.
+3. Write Oracle DDL, constraints, indexes, and seed scripts.
+4. Implement required PL/SQL procedures/functions/triggers and test scripts.
+5. Implement the Node.js database pool and health check.
+6. Implement catalogue read APIs.
+7. Build the reusable frontend shell and catalogue pages.
+8. Add content renderers for tables, LaTeX, SVG, graphs, and documents.
+9. Add the isolated Assignment 11 Lab Console and XML routes.
+10. Benchmark the required queries and document results.
+11. Add 40–50 component seed records and validate each content artifact.
+12. Apply Figma styling and responsive/accessibility review.
+13. Run acceptance tests and update this change log.
+
+## 14. Decisions still requiring confirmation
+
+- [ ] MySQL is approved as the implementation engine for the PL/SQL assignment.
+- [ ] The exact Oracle version and local setup method are known.
+- [ ] Whether the lab console is development-only or must be demonstrable in the final deployment.
+- [ ] Whether tags are required in the final catalogue schema or only in seed-data classification.
+- [ ] Whether diagrams are stored only as static SVG files or whether vetted inline SVG is permitted.
+- [ ] Exact route naming and JSON response envelopes are agreed before parallel frontend/backend implementation.
+- [ ] Assignment timing measurements are captured from the real database rather than estimated.
+
+## 15. Frontend refit to the `electrodb-frontend` design reference
+
+**Change implemented: the main public frontend now uses the layout, styling, and colours of the static `electrodb-frontend/` prototype.**
+
+What was carried over:
+
+- Dark palette (`#05070E` page, `#0D1117` surfaces, `#00a7da` accent, `#00dfc1` secondary) and the existing table tokens (`#1b5797a1` header, `#21262dbb` even rows, `#0c2744` row hover).
+- Sticky translucent navbar with logo, wordmark, uppercase spaced navigation links, and the moving cursor spotlight.
+- Space Grotesk / Poppins / Lexend / Inter typography, the oversized uppercase hero heading, pill tags with the teal border, and the underlined uppercase section headings.
+- Breadcrumb separators, centred data tables, and the light artwork panel used for component symbols.
+
+What was added so the styling covers the whole application:
+
+- Hash routes for a full component catalog and for tags (`#/catalog`, `#/tags`, `#/tags/<slug>`), backed by new read endpoints `GET /api/components`, `GET /api/tags`, and `GET /api/tags/:tagId`.
+- Tags on component detail responses, rendered as tag pills that link into the tag browser.
+- Home hero search, header search, footer, 404 page, loading/empty/error states, pagination, modal image viewer, toast notifications, and a responsive mobile navigation drawer.
+- CSP-safe event handling: all previously inline `onclick`/`onsubmit`/`onchange`/`onerror` handlers were replaced with delegated `data-action`, `data-form`, and `data-change` listeners. This matters because Helmet sends `script-src-attr 'none'`, which silently blocked every lab-console button before the refit.
+- Helmet CSP now permits Google Fonts stylesheets and font files while keeping inline script execution disabled.
+
+Catalogue data is still loaded exclusively from the API; the refit adds no hard-coded component records to the frontend.
+
+## 16. Frontend-only preview server
+
+**Change implemented: `npm run preview` (`scripts/preview-server.js`).**
+
+The submitted environment for review does not always have MySQL/MariaDB available. Running
+`npm start` in that state serves the shell but returns `500` for every catalogue call, which
+makes the interface impossible to review or demo.
+
+The preview script serves the same `public/` assets and answers the REST contract from data
+parsed out of `electrodb.sql` at boot (147 components, 23 categories, 13 tags, derived tags,
+diagrams and specifications). It deliberately does **not** replace the application backend:
+there is no connection pool, no stored-procedure execution, and no write support, and it is
+not wired into `server/src/` or the automated tests. Assignment 10/11 database behaviour is
+still demonstrated through `npm start` against a seeded database.
+
+## 17. Interface refinement pass
+
+**Change implemented: the detail, category, and home screens now follow the design
+reference much more closely, and motion across the app was reworked for consistency.**
+
+- Site footer removed, along with the home-page JK flip-flop logic symbol and the
+  "Circuit Diagram Reference" spotlight; the hero is now a single text column.
+- Component detail hero rebuilt: an oversized uppercase title (up to `5rem`), the description
+  directly beneath it, one combined tag/badge row, and the circuit symbol floating on the
+  page background instead of inside a white panel.
+- All catalogue artwork is now inverted (`filter: invert(1) hue-rotate(180deg)`) so the
+  line diagrams read as light-on-dark directly on the page; the light `.symbol-card`,
+  `.diagram-spotlight-art`, and white `.diagram-frame` fills were removed.
+- "Back to <category>" is an inline text link with a sliding arrow and underline, not a button.
+- Category pages list subcategories as a distinct row-style `.category-tile` (marker, name,
+  count, sliding arrow), clearly different from `.component-card`.
+- Component cards everywhere (catalog, search, tag, category, and home listings) now show only
+  the name, symbol, and summary — the category tag and the "Illustrative" badge were removed
+  from the card face and appear only on the component's own page.
+- Motion system: shared `--ease-out` / `--ease-in-out` curves and `--dur-1..3` durations in
+  `:root`; every `transition: all` and ad-hoc timing replaced, gradients swapped for an
+  animatable `filter: brightness()` on primary buttons, the navbar underline now animates
+  `transform: scaleX()` instead of `width`, the cursor spotlight lerps on a composited
+  `translate3d` instead of writing `left`/`top` per mousemove, and page transitions are a
+  150–240 ms fade/rise rather than a long slide.
+- Header search, mobile navigation, modal, toasts, and lab tabs all honour
+  `prefers-reduced-motion`, and all icon imagery keeps an accessible fallback when a
+  symbol fails to load.
+
+## 18. Diagram model, detail-page layout, and catalogue visual refresh
+
+**Change implemented: the detail page now follows the design reference exactly, the drawings
+are separated into symbols and real circuits, and every asset was redrawn in the reference
+palette.**
+
+Detail page
+- Hero order is now title → description → tags → actions → symbol, matching the reference.
+  The long description moved up out of a separate "Overview" section.
+- Removed from the detail page: the "Illustrative model" badge, the "Published" badge, the
+  category pill (the breadcrumb already states it), and the `#educational-example` tag.
+- The **circuit diagram now sits immediately below the hero**, before the tables. It opens
+  full screen with the existing modal.
+
+Diagrams vs. symbols
+- Most artwork previously titled "Circuit / Symbol Diagram" was a pin-level block drawing.
+  `component_diagrams` gained `diagram_kind` (`SYMBOL` / `CIRCUIT` / `STATE` / `TIMING` /
+  `OTHER`); the pin-level drawing is now titled **Symbol Diagram** and appears in the hero,
+  while a separate **Circuit Diagram** row holds the gate/device-level schematic.
+- `GET /api/components/:slug` returns `kind` on every diagram so the client can place them.
+
+Artwork
+- The two reference drawings from `electrodb-frontend/img/` are shipped verbatim:
+  `jk-flip-flop.svg` → `public/assets/svg/flipflops/jk.svg`,
+  `jk-flip-flop_circuit.svg` → `public/assets/svg/circuits/jk-flip-flop-circuit.svg`.
+- `scripts/restyle-svgs.js` recolours the remaining 191 symbol/state/timing drawings to the
+  reference palette (`#0d1117` bodies, `#21262d` borders, `#00a7da` inputs, `#00dfc1` outputs,
+  `#8a8d93` dashed controls, Consolas labels) and widens any viewBox that clipped a label.
+  Because the artwork is now natively dark, the CSS `invert(1) hue-rotate(180deg)` hack was
+  removed.
+- `scripts/build-circuit-diagrams.js` generates a gate/device-level schematic for all 147
+  components from a small schematic DSL (gates, MOSFETs, diodes, resistors, block stages),
+  using the same colours and typography — so "circuit diagram" now means a circuit.
+
+Layout and tables
+- Category pages show subcategories as numbered `.subcategory-card` buttons: still card-like
+  as before, but compact, teal-tinted, with an ordinal, a count chip and a sliding arrow, and
+  clearly distinct from component cards and parent category cards.
+- Every component card (home, catalog, search, tag, category) shows only name, symbol and
+  summary — no category or "Illustrative" badges anywhere.
+- Tables were rebuilt: sticky-feeling gradient headers with uppercase tracked column labels,
+  hairline column separators, zebra rows, an accent edge on hover, tabular numerals, and a
+  monospace value column. Specification tables stay left-aligned and read like a definition list.
+
+Database / backend / tests
+- `database/01_schema.sql` and `electrodb.sql`: `component_diagrams.diagram_kind` enum plus an
+  index; seed inserts for SYMBOL / CIRCUIT / STATE / TIMING rows.
+- `repository.getComponentDiagrams` selects `diagram_kind`; the service maps it to `kind`.
+- The `educational-example` tag was removed from the tag seed, from the derived tag assignment,
+  and from the preview server.
+- `server/tests/api.test.js` asserts the symbol/circuit pair and the reference circuit path;
+  `server/tests/offline.test.js` (new, `npm run test:offline`) covers the diagram mapping and
+  the SVG restyle pipeline without a database.
+
+## 19. Artwork polish, table styling, benchmarks as tables, and calmer motion
+
+**Change implemented: preset/clear colours now cover every drawing, inversion bubbles sit on
+the body edge, tables follow the reference styling, the benchmark report is presented as
+tables, and navigation no longer animates the whole page.**
+
+Diagrams
+- `kit.boxDiagram` draws inversion bubbles *after* the body, centred on the edge, so each
+  circle reads as a full circle straddling the border (half in, half out). Pin stubs stop at
+  the bubble edge instead of running through it.
+- The clock wedge moved inside the body (`boxX … boxX + 12`), matching `jk-flip-flop.svg`.
+- Preset and clear keep their own colours in every generated box symbol (amber `#e8b455` /
+  violet `#b48cf0`), including their dashed stubs, bubbles and labels; ordinary control pins
+  such as `LOAD` stay grey. The two supplied reference drawings remain byte-for-byte as
+  delivered, so `flipflops/jk.svg` still shows the grey dashed stubs of the original file.
+- All 147 symbols (and the pinouts, circuits, state and timing drawings) were regenerated.
+
+Tables and equations
+- `.edu-table` now follows `electrodb-frontend/`: collapsed borders, a blue-tinted header band
+  (`--table-head`), zebra rows (`--table-even`), deep-blue hover (`--table-hover`), heavy
+  header weight, and a table that is centred and only as wide as its content.
+- Table headers are typeset in bold maths (`\boldsymbol`); body cells keep the normal weight.
+- Truth tables carry an **Operation** column and no longer repeat a separate `Q` column: the
+  next state is written as a function of the stored state — `Q_n`, `0`, `1` or
+  `\overline{Q_n}` — so one row describes a whole behaviour. Shared definition:
+  `scripts/lib/content-tables.js`, mirrored in `electrodb.sql` and `database/07_seed_data.sql`.
+- Equations start at `1.7rem` and `fitEquations()` scales each one to ~94% of its column with a
+  64px ceiling and a correction pass, so the maths grows without ever producing a horizontal
+  scrollbar (`overflow: hidden` on the block).
+
+Lab console
+- The **SQL Demos** and **Views** tabs are gone, along with the "Demo mode" pill and the
+  description under the title. The `v_component_catalogue` load button that referenced the
+  misspelled `getViewCatalog` client method went with them.
+- The index benchmark report from `database/10_query_timing_results.md` is parsed in the
+  browser (`parseBenchmarkReport`) and rendered as six tables — report header, before/after
+  summary, candidate indexes, per-query timings, execution plans, and conclusions — instead of
+  a truncated monospaced text dump. The "report lines" slider was removed.
+
+Navigation and micro-interaction
+- Page transitions are an opacity-only 150 ms fade: no more sliding a full page of cards and
+  drawings on every click, and the scroll reset now happens with the new markup.
+- Clicking search twice no longer re-renders (and re-animates) the same result set.
+- Every arrow now travels the way it points: section links, pagination, and the back link
+  slide left/right. The category tile arrow lost its filled circle — the arrow slides out while
+  a second one slides in behind it.
+- A category page shows the "Components" heading only when it actually has components (or is
+  an empty leaf); branch categories show their subcategories alone.
+
+## 20. Table restyle and a better tile-arrow animation
+
+**Change implemented: the benchmark tab keeps only the three tables that matter, the data
+tables were restyled from the ground up, and the category tiles got a new arrow motion.**
+
+Benchmark tab
+- The rendered report is now three tables — **Report**, **Execution timing summary** and
+  **Per-query timings**. The "Candidate indexes and their justification", "Execution plan and
+  analysis" and "Methodological conclusions" sections are no longer rendered (they remain in
+  `database/10_query_timing_results.md`); the parser and its `bench-cell-*` helpers were
+  trimmed to match.
+- Per-query rows now show the measured min–max range behind each average, the row count and
+  the index the optimiser used.
+
+Tables
+- Replaced the blue-banded, fully gridded table with one framed surface: a rounded
+  `--card`/`--bg` gradient panel, hairline row rules only (no vertical grid), a tinted header
+  band closed by a single accent rule, `--table-even` zebra rows and a `--table-hover` row
+  highlight that also lights the first cell with a 2px accent edge.
+- Header labels are quieter and tracked (0.8rem / 0.045em); maths headers stay untouched by
+  CSS so `\boldsymbol` remains the only thing making them bold.
+- Bench tables gained explicit cell roles (`bench-cell-key`, `bench-cell-value`,
+  `bench-cell-id`, `bench-cell-name`, `bench-cell-number`, `bench-cell-faster/slower`), so
+  numbers line up in tabular monospace and improvements/deteriorations are colour-coded.
+
+Category / subcategory arrows
+- The two-glyph conveyor is gone. The arrow now springs forward on hover with an overshoot
+  easing and pulls a short teal trail behind it; pressing the tile pushes it one step further
+  along the same line of travel. No filled circle, no clipping box, no duplicated glyph.
+- The section-link arrows share the same spring easing so every right-pointing arrow in the UI
+  moves the same way.
+
+## 21. The arrows carry a charge
+
+Two earlier attempts treated the tile arrow as something that *moves*: first a two-glyph
+conveyor, then a spring-loaded glyph trailing a gradient line, then a lift-and-tilt. The
+trail read as a defect (the line could detach from the glyph), and the tilt read as a stunt
+bolted onto the arrow rather than something the arrow itself was doing.
+
+So the arrow now does not move at all. It **carries a charge**: a narrow band of current -
+dim, teal, with a white-hot spark in it - runs along the arrow's own stroke from tail to tip
+and comes to rest pooled just behind the head, where it holds a soft glow for as long as the
+pointer stays.
+
+How it is built, and why that matters:
+
+- The band is painted *inside the glyph* with `background-clip: text`. A 400%-wide gradient is
+  parked at the far end of the track at rest (where only the idle colour is visible) and slid
+  into place on hover, so the light travels through the arrow's own strokes.
+- Because the light lives in the glyph, there is no second element to fall out of step with
+  the arrow, nothing to clip against the rounded tile and no tail to leave behind. It also
+  cannot be janked by layout work elsewhere on the card.
+- The direction is the message: right-pointing arrows are swept left to right, and the back
+  link and previous-page arrows use a mirrored gradient driven from the opposite end, so their
+  charge runs right to left. `:active` and `:focus-visible` get the same treatment.
+- The inline arrows - section links (`.link-arrow`), the back link and the pagination arrows
+  (`.page-arrow`) - share one block, so there is a single definition to change. Where
+  `background-clip: text` is unavailable the fallback is a plain colour change.
+- `prefers-reduced-motion` collapses the 380 ms sweep to nothing and leaves the arrow lit.
+
+## 22. The tile arrow is a tube that gets struck
+
+The charge was still "a nice gradient doing something". The tile arrow now has a *story*, and
+it is told in the site's own vocabulary.
+
+**Hovering a subcategory tile:** the flat arrow steps aside and a plotter draws the arrow as a
+tube - the pen runs the length of the shaft with its own hot tip riding the ink, lifts, and the
+two arms of the head close behind it. Then the tube lights: a white-hot filament fades up
+inside the stroke, the stroke blooms, and one short, slightly stuttering flash marks the
+strike. After that it just burns, steady, until the pointer leaves.
+
+Why this one is different from the three before it:
+
+- **Nothing about the arrow is transformed.** It is not translated, scaled or rotated - a
+  pencil moves, and it leaves. The only transform in the block belongs to the pen tip, and it
+  is welded to the ink by construction: the shaft is 13.6 units long and the pen travels
+  `translateX(0 → 13.6px)` on `linear` easing while the dash reveal runs `linear` for the same
+  210 ms, so the two can never drift apart.
+- **The arrow is drawn, not decorated.** The glyph was replaced with an inline SVG
+  (`pathLength="1"` on both plotted strokes) so the reveal is a real stroke reveal - shaft
+  first, then the beak - rather than a mask or a width animation.
+- **The light is inside the tube, not behind it.** The filament is the same geometry at
+  `stroke-width: 0.72`; the bloom is a `drop-shadow` on the SVG. Nothing can detach, nothing
+  can trail, nothing needs to be clipped by the rounded tile.
+- **The strike stutters once.** The flash dips and recovers before it dies, which is what makes
+  it read as a gas tube igniting rather than a brightness slider.
+- `:active` re-strikes the tube a shade hotter, `:focus-visible` runs the whole sequence, and
+  `prefers-reduced-motion` collapses the delays as well as the durations, so the arrow simply
+  appears drawn and lit.
+
+The inline arrows keep the charge from section 21.
+
+## 23. The tube powers down as deliberately as it lights up
+
+Leaving a tile used to be a snap: hover animations are removed the moment the pointer goes,
+so the lit tube vanished in a frame and the flat arrow faded in behind it.
+
+Every step of the tile arrow is now a **transition instead of a keyframe**, which gives the
+return trip its own choreography. The trick is that a transition takes its timing from the
+rule being transitioned *to*, so the outward and return journeys can be ordered differently
+from two rules on the same elements:
+
+| | out (normal → hover) | back (hover → normal) |
+| --- | --- | --- |
+| flat arrow | out immediately, 110 ms | returns only once the page is clear, 240–400 ms |
+| shaft | draws, 210 ms `linear` | rewinds, 110–250 ms |
+| beak | closes last, 170 ms after a 190 ms beat | lifts first, 120 ms |
+| filament | fades up, 200 ms after a 330 ms beat | cools at once, 150 ms |
+| bloom | arrives after 200 ms | dies over 240 ms |
+
+Two consequences worth having:
+
+- **Leaving mid-draw rewinds from wherever the ink had reached.** A transition interpolates
+  from the current value, so a half-drawn shaft un-draws from the halfway point instead of
+  snapping back to nothing.
+- **The pen only exists on the way in.** Its travel is still a keyframe (it has to appear,
+  move and lift inside one gesture), and keyframes are dropped on exit, which is exactly the
+  behaviour wanted: the ink lifts by itself, no pen returns to collect it.
+
+`prefers-reduced-motion` now zeroes `transition-delay` as well as `transition-duration` and
+`animation-delay`, so the reduced-motion state is the finished, lit arrow with no staged waits.
+
+## 24. Accounts, roles, bookmarks and collections
+
+The catalogue stays public; everything that belongs to a person now needs an account. This is an
+**extension**, not a rebuild: the same Express app, the same schema files and the same frontend
+shell, with a new layer on top.
+
+**Data.** Two additive migrations. `11_auth_and_personalization.sql` adds `app_users.email` (guarded
+by an `information_schema` check so it is safe to re-run) and four new tables — `user_sessions`,
+`bookmarks`, `collections`, `collection_components` — all with explicit foreign keys, unique keys
+for the idempotent operations (`(user_id, component_id)`, `(collection_id, component_id)`) and
+cascade rules that never touch the component rows themselves. `12_app_user_audit.sql` adds audit
+triggers on `app_users`; the password hash is never written to the log, only whether it changed.
+
+**Authentication without new dependencies.** `crypto.scrypt` with the parameters stored inside the
+hash string, `timingSafeEqual` for comparison, and a dummy verification for unknown addresses so the
+response time does not distinguish them. The session is a 32-byte random token in an HttpOnly,
+SameSite=Lax cookie; the database holds only its SHA-256 digest, which means a dump cannot be
+replayed and no signing secret has to be managed. Every login mints a new token, so a planted cookie
+is never promoted. Changing a password, changing a role or disabling an account revokes sessions
+immediately rather than waiting for expiry.
+
+**One interface, two stores.** The services talk to `personalMysqlStore` in production and
+`personalMemoryStore` in the preview server and the tests. Both implement the same contract, so the
+routes, middleware and services under test are the real ones — only persistence differs. The honest
+limit of that arrangement is written down in `docs/accounts.md` §9: it proves the logic, not the SQL.
+
+**Authorization is server-side only.** `attachUser` resolves the cookie against the database on
+every `/api` request; `requireAuth` / `requireRole` / `requireContentAuthor` / `requireAdmin` guard
+the routers; services take the user id from `req.user` and never from the body. There is no
+`userId` parameter anywhere in the personal endpoints to tamper with. Another account's collection
+answers `404` rather than `403`, so ids cannot be probed. The Lab Console — previously open — now
+needs a Developer or DBA, its account endpoints need a DBA, and deleting a component needs a DBA.
+Administration refuses self-role-changes, self-deactivation and demoting the last active DBA.
+
+**Interface.** Navigation is role-aware (guest / user / developer / DBA) but that is presentation
+only. New pages: sign in, register, profile, bookmarks, collections and a collection page, dashboard,
+and account administration. Protected routes redirect to `#/login?next=…` and return there. The
+bookmark control sits on every component card and on the component page; signed out, it explains
+why and links to the sign-in page that comes back to where you were, so the context is never lost.
+The control is a `<button>` beside the card link rather than inside it — valid markup, and reachable
+with a keyboard. State is reported through `aria-pressed`, form errors through `role="alert"`.
+
+**Bootstrap.** `npm run bootstrap:dba` creates or repairs the first administrator from
+`BOOTSTRAP_DBA_*` environment values. There is no web path to that role by design.
+
+**Evidence.** 55 new route-level tests plus the offline suite (42 tests, 8 of them new), a jsdom walk through the
+signed-out and signed-in flows, and a CSS parse check. What could not be run here — the migrations,
+the triggers and the MySQL store, because this environment has no MySQL binary — is listed as
+unverified in `docs/accounts.md` §9 rather than claimed as working.
+
+## 25. A dead session no longer looks like a bug
+
+Saving a component while signed in could answer with the *guest* sign-in dialog: the header still
+said "signed in", the save said otherwise. The page was holding an identity the server no longer
+had — the session had expired, been revoked, or the preview server had restarted and lost it — and
+nothing reconciled the two. Only the failing request knew, and it reported the failure as "you are
+not signed in".
+
+`api.request` now announces a `401` from any personal endpoint (`/auth/*` excluded, because a wrong
+password is a form error, not an expired session), and the account layer reacts once: it forgets the
+identity, redraws the header, and then either hands a guarded page over to the sign-in route with a
+way back, or — on a public page such as a component — says plainly that the session ended and the
+change was not saved, offering a link that returns to the same component. The bookmark toggle no
+longer shows the guest prompt for a rejected request.
+
+The preview server also stops being the cause: its in-memory account state is written to
+`.preview-state.json` (gitignored) and restored at boot, so a dev restart keeps accounts, bookmarks,
+collections and live sessions instead of signing everyone out mid-review.
+
+On the component page, three small placement corrections: the back link now sits with the breadcrumb
+path rather than among the buttons, the tag pills sit directly under the component name, and "Save"
+and "Add to collection" are a shade smaller than the primary action beside them.
+
+## 26. Signing in and being signed straight back out
+
+Signing in could appear to succeed and then land on a signed-out page, and saving or collecting a
+component would answer "sign in" to someone who had just done exactly that.
+
+The cause was the session cookie's `SameSite=Lax` attribute. A Lax cookie is **not sent at all** when
+the page is embedded in another origin, which is how the preview is displayed. The sign-in worked,
+the browser stored the cookie, and then never handed it back: every later request was anonymous, so
+the page and the API disagreed about who the visitor was.
+
+- `SESSION_COOKIE_SAMESITE` now chooses the policy: `lax` (default, correct for a site opened
+  directly), `strict`, `none`, or `auto`, which means `SameSite=None; Secure` when the request came
+  over HTTPS and `Lax` when it came over plain HTTP — because a `Secure` cookie over HTTP is simply
+  dropped. The preview server selects `auto`; HTTPS is detected from the connection, then
+  `X-Forwarded-Proto`, then the browser's own `Origin`/`Referer`.
+- The origin check no longer rejects a proxy that rewrites `Host`: `Sec-Fetch-Site` is trusted when
+  the browser sends it, and the `Origin` comparison also accepts `X-Forwarded-Host` and
+  `PUBLIC_BASE_URL`. A genuinely cross-site request is still refused.
+- Two client-side guards against the "instant sign-out" feeling: the session probe that starts at
+  page load is discarded if the identity changed while it was in flight, and the sign-in form
+  re-reads `/api/auth/me` before navigating. If the browser did not keep the cookie, the form says
+  so plainly instead of bouncing the visitor back to the same screen.
+- The sign-in page now lists the preview's demo accounts (DBA, Developer, User) with a one-click
+  fill, from an endpoint that exists only in the preview server.
+
+Spacing on the component page: the back link sits a little further below the breadcrumb path, and
+the tag pills have real space beneath them before the description.

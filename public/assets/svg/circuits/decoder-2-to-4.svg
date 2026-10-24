@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="2-to-4 Decoder circuit diagram">
+  <title>2-to-4 Decoder circuit diagram</title>
+  <path d="M220,150 H245.76 A28,28 0 0 1 245.76,206 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="284" cy="178" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M220,300 H245.76 A28,28 0 0 1 245.76,356 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="284" cy="328" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,40 H636.8 A40,40 0 0 1 636.8,120 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="80" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,145 H636.8 A40,40 0 0 1 636.8,225 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="185" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,250 H636.8 A40,40 0 0 1 636.8,330 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="290" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M600,355 H636.8 A40,40 0 0 1 636.8,435 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="688" cy="395" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,178 L140,178 L220,178" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,328 L180,328 L220,328" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="186" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A0</text>
+  <text x="34" y="336" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
+  <circle cx="140" cy="178" r="4.5" fill="#c5c7c9"/>
+  <circle cx="180" cy="328" r="4.5" fill="#c5c7c9"/>
+  <path d="M140,178 L140,440 L300,440 L300,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M290,178 L340,178 L340,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M180,328 L180,460 L460,460 L460,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M290,328 L500,328 L500,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M340,56 L600,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M500,104 L600,104" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,80 L940,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="88" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y0</text>
+  <path d="M300,161 L600,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M500,209 L600,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,185 L940,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="193" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y1</text>
+  <path d="M340,266 L600,266" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M460,314 L600,314" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,290 L940,290" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="298" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y2</text>
+  <path d="M300,371 L600,371" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M460,419 L600,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M694,395 L940,395" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="952" y="403" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y3</text>
+</svg>

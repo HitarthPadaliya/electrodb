@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 390" role="img" aria-label="Mod-6 Counter state machine">
+  <title>Mod-6 Counter state machine</title>
+  <path d="M231.56,102.55 Q261.1,117 290.63,131.45" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M290.63,131.45 L283.03,131.07 L285.66,125.68 Z" fill="#8a8d93"/>
+  <text x="267.69" y="103.53" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M312.19,166 Q312.19,192 312.19,218" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M312.19,218 L309.19,211 L315.19,211 Z" fill="#8a8d93"/>
+  <text x="327.19" y="192" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M290.63,252.55 Q261.1,267 231.56,281.45" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M231.56,281.45 L236.53,275.68 L239.16,281.07 Z" fill="#8a8d93"/>
+  <text x="267.69" y="280.47" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M188.44,281.45 Q158.9,267 129.37,252.55" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M129.37,252.55 L136.97,252.93 L134.34,258.32 Z" fill="#8a8d93"/>
+  <text x="152.31" y="280.47" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M107.81,218 Q107.81,192 107.81,166" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M107.81,166 L110.81,173 L104.81,173 Z" fill="#8a8d93"/>
+  <text x="92.81" y="192" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <path d="M129.37,131.45 Q158.9,117 188.44,102.55" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M188.44,102.55 L183.47,108.32 L180.84,102.93 Z" fill="#8a8d93"/>
+  <text x="152.31" y="103.53" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
+  <circle cx="210" cy="92" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="210" y="90" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">0</text>
+  <text x="210" y="106" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">000</text>
+  <circle cx="312.19" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="312.19" y="140" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">1</text>
+  <text x="312.19" y="156" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">001</text>
+  <circle cx="312.19" cy="242" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="312.19" y="240" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">2</text>
+  <text x="312.19" y="256" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">010</text>
+  <circle cx="210" cy="292" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="210" y="290" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">3</text>
+  <text x="210" y="306" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">011</text>
+  <circle cx="107.81" cy="242" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="107.81" y="240" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">4</text>
+  <text x="107.81" y="256" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">100</text>
+  <circle cx="107.81" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="107.81" y="140" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">5</text>
+  <text x="107.81" y="156" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">101</text>
+  <text x="210" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Moore</text>
+  <path d="M647.56,102.55 Q677.1,117 706.63,131.45" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M706.63,131.45 L699.03,131.07 L701.66,125.68 Z" fill="#8a8d93"/>
+  <text x="683.69" y="103.53" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/1</text>
+  <path d="M728.19,166 Q728.19,192 728.19,218" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M728.19,218 L725.19,211 L731.19,211 Z" fill="#8a8d93"/>
+  <text x="743.19" y="192" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/2</text>
+  <path d="M706.63,252.55 Q677.1,267 647.56,281.45" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M647.56,281.45 L652.53,275.68 L655.16,281.07 Z" fill="#8a8d93"/>
+  <text x="683.69" y="280.47" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/3</text>
+  <path d="M604.44,281.45 Q574.9,267 545.37,252.55" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M545.37,252.55 L552.97,252.93 L550.34,258.32 Z" fill="#8a8d93"/>
+  <text x="568.31" y="280.47" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/4</text>
+  <path d="M523.81,218 Q523.81,192 523.81,166" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M523.81,166 L526.81,173 L520.81,173 Z" fill="#8a8d93"/>
+  <text x="508.81" y="192" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/5</text>
+  <path d="M545.37,131.45 Q574.9,117 604.44,102.55" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M604.44,102.55 L599.47,108.32 L596.84,102.93 Z" fill="#8a8d93"/>
+  <text x="568.31" y="103.53" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/0</text>
+  <circle cx="626" cy="92" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="626" y="96" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">0</text>
+  <circle cx="728.19" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="728.19" y="146" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">1</text>
+  <circle cx="728.19" cy="242" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="728.19" y="246" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">2</text>
+  <circle cx="626" cy="292" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="626" y="296" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">3</text>
+  <circle cx="523.81" cy="242" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="523.81" y="246" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">4</text>
+  <circle cx="523.81" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="523.81" y="146" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">5</text>
+  <text x="626" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Mealy</text>
+</svg>

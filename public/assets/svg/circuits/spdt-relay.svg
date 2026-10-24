@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="SPDT Relay circuit diagram">
+  <title>SPDT Relay circuit diagram</title>
+  <path d="M90,130 L300,130" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="300" y="96" width="120" height="68" rx="8" fill="#0d1117" stroke="#00a7da" stroke-width="2"/>
+  <path d="M318,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M339,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M360,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M381,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M420,130 L560,130 L560,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="560" cy="130" r="4.5" fill="#c5c7c9"/>
+  <text x="40" y="138" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
+  <text x="470" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A2</text>
+  <path d="M560,250 L636,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="640" cy="250" r="4" fill="none" stroke="#e8eaed" stroke-width="2"/>
+  <path d="M646,250 L818,176" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round"/>
+  <path d="M646,250 L818,324" stroke="#8a8d93" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <path d="M860,170 L960,170" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M860,330 L960,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="470" y="258" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">COM</text>
+  <text x="972" y="178" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NO</text>
+  <text x="972" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NC</text>
+  <path d="M560,210 v22 M556,210 h8" stroke="#8a8d93" stroke-width="1.5"/>
+</svg>

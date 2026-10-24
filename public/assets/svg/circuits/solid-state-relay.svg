@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Solid-State Relay circuit diagram">
+  <title>Solid-State Relay circuit diagram</title>
+  <path d="M90,130 L300,130" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M300,114 l60,16 l-60,16 z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M360,114 v32" stroke="#00a7da" stroke-width="2.4"/>
+  <path d="M360,130 L470,130" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M470,130 h-24 M470,142 h-16 M470,154 h-8" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="138" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">LED+</text>
+  <path d="M560,80 v300" stroke="#21262d" stroke-width="2" stroke-dasharray="8 4"/>
+  <path d="M700,200 L820,200" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M760,200 l0,0" stroke="none"/>
+  <path d="M700,330 h120 M760,330 v-40" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round"/>
+  <text x="840" y="208" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">COM</text>
+  <text x="840" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">LOAD</text>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 356" role="img" aria-label="74LS02 pinout">
+  <title>74LS02 pinout</title>
+  <rect x="77.1" y="36" width="176.4" height="280" rx="10" ry="10" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <path d="M151.3,36 A14,14 0 0 0 179.3,36" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <circle cx="97.1" cy="55" r="4.5" fill="#8a8d93"/>
+  <line x1="43.1" y1="82" x2="77.1" y2="82" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="86" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">1</text>
+  <text x="35.1" y="87" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1Y</text>
+  <line x1="43.1" y1="116" x2="77.1" y2="116" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">2</text>
+  <text x="35.1" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1A</text>
+  <line x1="43.1" y1="150" x2="77.1" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">3</text>
+  <text x="35.1" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1B</text>
+  <line x1="43.1" y1="184" x2="77.1" y2="184" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="188" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">4</text>
+  <text x="35.1" y="189" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2Y</text>
+  <line x1="43.1" y1="218" x2="77.1" y2="218" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="222" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">5</text>
+  <text x="35.1" y="223" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2A</text>
+  <line x1="43.1" y1="252" x2="77.1" y2="252" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="256" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">6</text>
+  <text x="35.1" y="257" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">2B</text>
+  <line x1="43.1" y1="286" x2="77.1" y2="286" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="93.1" y="290" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">7</text>
+  <text x="35.1" y="291" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">GND</text>
+  <line x1="287.5" y1="82" x2="253.5" y2="82" stroke="#8a8d93" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="86" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">14</text>
+  <text x="295.5" y="87" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">VCC</text>
+  <line x1="287.5" y1="116" x2="253.5" y2="116" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">13</text>
+  <text x="295.5" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">4Y</text>
+  <line x1="287.5" y1="150" x2="253.5" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">12</text>
+  <text x="295.5" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">4B</text>
+  <line x1="287.5" y1="184" x2="253.5" y2="184" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="188" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">11</text>
+  <text x="295.5" y="189" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">4A</text>
+  <line x1="287.5" y1="218" x2="253.5" y2="218" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="222" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">10</text>
+  <text x="295.5" y="223" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">3Y</text>
+  <line x1="287.5" y1="252" x2="253.5" y2="252" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="256" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">9</text>
+  <text x="295.5" y="257" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">3B</text>
+  <line x1="287.5" y1="286" x2="253.5" y2="286" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="237.5" y="290" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">8</text>
+  <text x="295.5" y="291" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">3A</text>
+  <text x="165.3" y="182.72" fill="#c5c7c9" font-family="Consolas" font-size="20" font-weight="400" text-anchor="middle">74LS02</text>
+</svg>

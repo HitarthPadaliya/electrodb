@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 172" role="img" aria-label="XNOR GATE symbol">
+  <title>XNOR GATE symbol</title>
+  <line x1="50" y1="84" x2="96" y2="84" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="89.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
+  <line x1="50" y1="108" x2="96" y2="108" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="113.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">B</text>
+  <path d="M106,60 Q123.16,99 106,138 Q145,138 168.4,99 Q145,60 106,60 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="179" cy="96" r="5" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <line x1="184" y1="96" x2="224" y2="96" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="234" y="101.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">Y</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 756 248" role="img" aria-label="Mod-8 Down Counter timing diagram">
+  <title>Mod-8 Down Counter timing diagram</title>
+  <line x1="96" y1="32" x2="96" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="173.5" y1="32" x2="173.5" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="251" y1="32" x2="251" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="328.5" y1="32" x2="328.5" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="406" y1="32" x2="406" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="483.5" y1="32" x2="483.5" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="561" y1="32" x2="561" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="638.5" y1="32" x2="638.5" y2="234" stroke="#21262d" stroke-width="1"/>
+  <line x1="716" y1="32" x2="716" y2="234" stroke="#21262d" stroke-width="1"/>
+  <text x="84" y="65" fill="#c5c7c9" font-family="Consolas" font-size="15" font-weight="400" text-anchor="end">CLK</text>
+  <path d="M96,52 H173.5 V52 H173.5 V72 H251 V72 H251 V52 H328.5 V52 H328.5 V72 H406 V72 H406 V52 H483.5 V52 H483.5 V72 H561 V72 H561 V52 H638.5 V52 H638.5 V72 H716" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <text x="84" y="111" fill="#c5c7c9" font-family="Consolas" font-size="15" font-weight="400" text-anchor="end">Q0</text>
+  <path d="M96,118 H173.5 V118 H173.5 V98 H251 V98 H251 V118 H328.5 V118 H328.5 V98 H406 V98 H406 V118 H483.5 V118 H483.5 V98 H561 V98 H561 V118 H638.5 V118 H638.5 V98 H716" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linejoin="round"/>
+  <text x="84" y="157" fill="#c5c7c9" font-family="Consolas" font-size="15" font-weight="400" text-anchor="end">Q1</text>
+  <path d="M96,164 H173.5 V164 H173.5 V144 H251 H328.5 V144 H328.5 V164 H406 H483.5 V164 H483.5 V144 H561 H638.5 V144 H638.5 V164 H716" fill="none" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <text x="84" y="203" fill="#c5c7c9" font-family="Consolas" font-size="15" font-weight="400" text-anchor="end">Q2</text>
+  <path d="M96,210 H173.5 V210 H173.5 V190 H251 H328.5 H406 V190 H406 V210 H483.5 V210 H483.5 V190 H561 H638.5 H716" fill="none" stroke="#00dfc1" stroke-width="2" stroke-linejoin="round"/>
+</svg>

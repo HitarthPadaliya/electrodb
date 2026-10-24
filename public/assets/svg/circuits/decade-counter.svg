@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Decade Counter circuit diagram">
+  <title>Decade Counter circuit diagram</title>
+  <path d="M120,94 H156.8 A40,40 0 0 1 156.8,174 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="208" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M120,314 H156.8 A40,40 0 0 1 156.8,394 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="208" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M50,450 L84,450 L84,110 L120,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="24" y="458" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
+  <path d="M84,110 L84,330 L120,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="84" cy="110" r="4.5" fill="#c5c7c9"/>
+  <path d="M214,354 L250,354 L250,158 L120,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M214,134 L290,134 L290,378 L120,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="250" cy="354" r="4.5" fill="#c5c7c9"/>
+  <circle cx="290" cy="134" r="4.5" fill="#c5c7c9"/>
+  <path d="M290,134 L290,452 L248,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="224" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q0</text>
+  <path d="M368,94 H404.8 A40,40 0 0 1 404.8,174 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="456" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M368,314 H404.8 A40,40 0 0 1 404.8,394 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="456" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M290,94 L332,94 L332,110 L368,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M332,110 L332,330 L368,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="332" cy="110" r="4.5" fill="#c5c7c9"/>
+  <path d="M462,354 L498,354 L498,158 L368,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M462,134 L538,134 L538,378 L368,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="498" cy="354" r="4.5" fill="#c5c7c9"/>
+  <circle cx="538" cy="134" r="4.5" fill="#c5c7c9"/>
+  <path d="M538,134 L538,452 L496,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="472" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q1</text>
+  <path d="M616,94 H652.8 A40,40 0 0 1 652.8,174 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="704" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M616,314 H652.8 A40,40 0 0 1 652.8,394 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="704" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M538,94 L580,94 L580,110 L616,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M580,110 L580,330 L616,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="580" cy="110" r="4.5" fill="#c5c7c9"/>
+  <path d="M710,354 L746,354 L746,158 L616,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M710,134 L786,134 L786,378 L616,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="746" cy="354" r="4.5" fill="#c5c7c9"/>
+  <circle cx="786" cy="134" r="4.5" fill="#c5c7c9"/>
+  <path d="M786,134 L786,452 L744,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="720" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q2</text>
+  <path d="M864,94 H900.8 A40,40 0 0 1 900.8,174 H864 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="952" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M864,314 H900.8 A40,40 0 0 1 900.8,394 H864 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="952" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M786,94 L828,94 L828,110 L864,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M828,110 L828,330 L864,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="828" cy="110" r="4.5" fill="#c5c7c9"/>
+  <path d="M958,354 L994,354 L994,158 L864,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M958,134 L1034,134 L1034,378 L864,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="994" cy="354" r="4.5" fill="#c5c7c9"/>
+  <circle cx="1034" cy="134" r="4.5" fill="#c5c7c9"/>
+  <path d="M1034,134 L1034,452 L992,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="968" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q3</text>
+</svg>
