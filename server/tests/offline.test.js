@@ -469,12 +469,26 @@ describe('Arrow motion language', () => {
 
     assert.ok(/pathLength="1"/.test(app), 'the plotted strokes are normalised for the dash reveal');
     assert.ok(/stroke-dasharray:\s*1;/.test(tile), 'both strokes start undrawn');
-    assert.ok(/@keyframes arrow-plot/.test(tile), 'the pen draws');
     assert.ok(/@keyframes arrow-nib-run/.test(tile), 'the pen travels with the ink');
-    assert.ok(/@keyframes arrow-burn/.test(tile), 'the filament lights');
     assert.ok(/@keyframes arrow-strike/.test(tile), 'the tube is struck');
+    assert.ok(/stroke-dashoffset:\s*1;/.test(tile), 'the ink waits at full offset');
+    assert.ok(/stroke-dashoffset:\s*0;/.test(tile), 'hovering reels it out');
+    assert.ok(
+      /stroke-dashoffset 210ms linear/.test(tile) && /stroke-dashoffset 140ms linear 110ms/.test(tile),
+      'the shaft draws forwards and rewinds backwards from wherever it reached'
+    );
+    assert.ok(
+      /stroke-dashoffset 170ms var\(--ease-out\) 190ms/.test(tile),
+      'the beak closes last on the way in'
+    );
+    assert.ok(/stroke-dashoffset 120ms linear/.test(tile), 'and lifts first on the way out');
+    assert.ok(
+      /transition: opacity 110ms var\(--ease-out\);/.test(tile) &&
+        /transition: opacity 160ms var\(--ease-out\) 240ms;/.test(tile),
+      'the flat arrow leaves at once and only returns once the page is clear'
+    );
     // Only the pen travels; every rule that paints the arrow is transform-free.
-    const rules = tile.slice(0, tile.indexOf('@keyframes arrow-plot'));
+    const rules = tile.slice(0, tile.indexOf('@keyframes'));
     assert.ok(!/transform/.test(rules), 'the arrow itself is never transformed');
   });
 });

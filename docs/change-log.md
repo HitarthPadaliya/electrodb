@@ -444,3 +444,33 @@ Why this one is different from the three before it:
   appears drawn and lit.
 
 The inline arrows keep the charge from section 21.
+
+## 23. The tube powers down as deliberately as it lights up
+
+Leaving a tile used to be a snap: hover animations are removed the moment the pointer goes,
+so the lit tube vanished in a frame and the flat arrow faded in behind it.
+
+Every step of the tile arrow is now a **transition instead of a keyframe**, which gives the
+return trip its own choreography. The trick is that a transition takes its timing from the
+rule being transitioned *to*, so the outward and return journeys can be ordered differently
+from two rules on the same elements:
+
+| | out (normal → hover) | back (hover → normal) |
+| --- | --- | --- |
+| flat arrow | out immediately, 110 ms | returns only once the page is clear, 240–400 ms |
+| shaft | draws, 210 ms `linear` | rewinds, 110–250 ms |
+| beak | closes last, 170 ms after a 190 ms beat | lifts first, 120 ms |
+| filament | fades up, 200 ms after a 330 ms beat | cools at once, 150 ms |
+| bloom | arrives after 200 ms | dies over 240 ms |
+
+Two consequences worth having:
+
+- **Leaving mid-draw rewinds from wherever the ink had reached.** A transition interpolates
+  from the current value, so a half-drawn shaft un-draws from the halfway point instead of
+  snapping back to nothing.
+- **The pen only exists on the way in.** Its travel is still a keyframe (it has to appear,
+  move and lift inside one gesture), and keyframes are dropped on exit, which is exactly the
+  behaviour wanted: the ink lifts by itself, no pen returns to collect it.
+
+`prefers-reduced-motion` now zeroes `transition-delay` as well as `transition-duration` and
+`animation-delay`, so the reduced-motion state is the finished, lit arrow with no staged waits.

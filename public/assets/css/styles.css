@@ -1172,13 +1172,22 @@ a:hover > .link-arrow,
   font-variant-numeric: tabular-nums;
 }
 
-/* The tile arrow is a gas tube, and hovering strikes it.
-   A tiny plotter first draws the tube - the pen runs the length of the shaft,
-   lifts, and the beak closes - then the tube lights: a white-hot filament fades
-   up inside the stroke, the stroke blooms, and one short, slightly stuttering
-   flash marks the strike before it settles into a steady burn. Nothing about
-   the arrow is slid, scaled or rotated; what moves is the pen, and it leaves.
-   The foot label is unchanged: "5 components" and a lit arrow. */
+/* The tile arrow is a gas tube, and it powers down as deliberately as it
+   lights up.
+
+   In:  a plotter draws the tube - the pen runs the length of the shaft, lifts,
+        and the beak closes behind it - then the tube is struck: a white-hot
+        filament fades up inside the stroke, the stroke blooms, and one short
+        stuttering flash marks the ignition.
+   Out: the filament cools, the ink is lifted back off the page head first and
+        then shaft, and only once the page is clear does the flat arrow fade
+        back in.
+
+   Both journeys are transitions rather than keyframes, and each element's
+   *destination* rule carries that direction's timing - which is how the return
+   trip gets a different order to the outward one. The practical payoff: let go
+   halfway through the draw and the ink rewinds from wherever it had reached
+   instead of snapping. */
 .subcategory-arrow {
   display: inline-flex;
   align-items: center;
@@ -1192,8 +1201,9 @@ a:hover > .link-arrow,
   width: 24px;
   height: 14px;
   overflow: visible;
-  /* The bloom arrives a beat after the pen and lingers a beat longer. */
-  transition: filter 300ms var(--ease-out) 200ms;
+  filter: none;
+  /* Out: the bloom dies with the filament. */
+  transition: filter 240ms var(--ease-out);
 }
 
 .subcategory-arrow-svg path {
@@ -1202,22 +1212,38 @@ a:hover > .link-arrow,
   stroke-linejoin: round;
 }
 
-/* The unlit tube: the flat arrow every other affordance uses. */
+/* The unlit tube: the flat arrow every other affordance uses. It only comes
+   back once the ink has been lifted off, hence the delay. */
 .arrow-rest {
   stroke: var(--muted);
   stroke-width: 1.6;
-  transition: opacity 110ms var(--ease-out);
+  opacity: 1;
+  transition: opacity 160ms var(--ease-out) 240ms;
 }
 
-/* The two strokes the pen lays down. Both wait at full offset - invisible -
-   and the animations' `both` fill keeps them drawn. */
+/* The two strokes the pen lays down. Full dash offset is full invisibility, so
+   the ink needs no opacity of its own - one property carries the whole draw
+   and its reverse. */
 .arrow-shaft,
 .arrow-head {
   stroke: var(--secondary);
   stroke-width: 1.6;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  opacity: 0;
+  transition: stroke 160ms var(--ease-out);
+}
+
+/* Out: the beak lifts first, the shaft follows it off the page. */
+.arrow-head {
+  transition:
+    stroke-dashoffset 120ms linear,
+    stroke 160ms var(--ease-out);
+}
+
+.arrow-shaft {
+  transition:
+    stroke-dashoffset 140ms linear 110ms,
+    stroke 160ms var(--ease-out);
 }
 
 /* The filament and the strike live inside the same stroke. */
@@ -1225,6 +1251,8 @@ a:hover > .link-arrow,
   stroke: #d9fff8;
   stroke-width: 0.72;
   opacity: 0;
+  /* Out: the light cools before the ink leaves. */
+  transition: opacity 150ms var(--ease-out);
 }
 
 .arrow-strike {
@@ -1246,14 +1274,27 @@ a:hover > .link-arrow,
   fill: #eafffb;
 }
 
+/* ---- setting off ---- */
 .subcategory-card:hover .arrow-rest,
 .subcategory-card:focus-visible .arrow-rest {
   opacity: 0;
+  transition: opacity 110ms var(--ease-out);
 }
 
 .subcategory-card:hover .arrow-shaft,
 .subcategory-card:focus-visible .arrow-shaft {
-  animation: arrow-plot 210ms linear both;
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 210ms linear,
+    stroke 160ms var(--ease-out);
+}
+
+.subcategory-card:hover .arrow-head,
+.subcategory-card:focus-visible .arrow-head {
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 170ms var(--ease-out) 190ms,
+    stroke 160ms var(--ease-out);
 }
 
 .subcategory-card:hover .arrow-nib,
@@ -1261,14 +1302,11 @@ a:hover > .link-arrow,
   animation: arrow-nib-run 210ms linear both;
 }
 
-.subcategory-card:hover .arrow-head,
-.subcategory-card:focus-visible .arrow-head {
-  animation: arrow-plot 170ms var(--ease-out) 190ms both;
-}
-
+/* ---- striking ---- */
 .subcategory-card:hover .arrow-core,
 .subcategory-card:focus-visible .arrow-core {
-  animation: arrow-burn 200ms var(--ease-out) 330ms both;
+  opacity: 0.9;
+  transition: opacity 200ms var(--ease-out) 330ms;
 }
 
 .subcategory-card:hover .arrow-strike,
@@ -1279,38 +1317,21 @@ a:hover > .link-arrow,
 .subcategory-card:hover .subcategory-arrow-svg,
 .subcategory-card:focus-visible .subcategory-arrow-svg {
   filter: drop-shadow(0 0 5px rgba(0, 223, 193, 0.5));
+  transition: filter 300ms var(--ease-out) 200ms;
 }
 
-/* A press re-strikes the tube, a shade hotter. */
-.subcategory-card:active .arrow-shaft {
-  stroke: var(--accent-hover);
-  animation: arrow-plot 170ms linear both;
-}
-
+/* A press re-strikes the lit tube, a shade hotter. */
+.subcategory-card:active .arrow-shaft,
 .subcategory-card:active .arrow-head {
   stroke: var(--accent-hover);
-  animation: arrow-plot 140ms var(--ease-out) 150ms both;
 }
 
-.subcategory-card:active .arrow-nib {
-  animation: arrow-nib-run 170ms linear both;
+.subcategory-card:active .arrow-strike {
+  animation: arrow-strike 260ms var(--ease-out) both;
 }
 
-@keyframes arrow-plot {
-  from {
-    stroke-dashoffset: 1;
-    opacity: 0;
-  }
-  6% {
-    opacity: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-
-/* 13.6 is the shaft's length, so the nib stays welded to the ink. */
+/* 13.6 is the shaft's length, so the nib stays welded to the ink: same linear
+   easing, same 210 ms as the draw. */
 @keyframes arrow-nib-run {
   0% {
     opacity: 0;
@@ -1326,15 +1347,6 @@ a:hover > .link-arrow,
   100% {
     opacity: 0;
     transform: translateX(13.6px);
-  }
-}
-
-@keyframes arrow-burn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 0.9;
   }
 }
 
@@ -3041,6 +3053,7 @@ input[type='range']:focus-visible {
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
   }
 
   .cursor-glow {
