@@ -17,6 +17,8 @@ const kit = require('../../scripts/lib/svg-kit');
 const circuits = require('../../scripts/lib/circuit-templates');
 const machines = require('../../scripts/lib/machines');
 const { SPECS } = require('../../scripts/lib/component-specs');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function stubComponent(overrides = {}) {
   return {
@@ -226,5 +228,34 @@ describe('Diagram generator contract', () => {
       if (!spec.circuit) return;
       assert.ok(circuits.TEMPLATES[spec.circuit], `${slug} references a missing template: ${spec.circuit}`);
     });
+  });
+});
+
+describe('Detail page layout', () => {
+  it('keeps the IC pinout in its own section, apart from the specifications', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../../public/assets/js/app.js'), 'utf8');
+
+    const pinoutHeading = source.indexOf('<h2 class="section-title">IC Pinout</h2>');
+    const specHeading = source.indexOf('<h2 class="section-title">Technical Specifications</h2>');
+
+    assert.ok(pinoutHeading > -1, 'the pinout gets its own heading');
+    assert.ok(specHeading > -1, 'the specifications keep their heading');
+    assert.ok(pinoutHeading < specHeading, 'the pinout is read before the specifications table');
+    assert.ok(
+      !source.includes('spec-layout'),
+      'the pinout is no longer nested inside the specifications block'
+    );
+  });
+
+  it('centres every diagram and lets state and timing drawings fill the column', () => {
+    const css = fs.readFileSync(path.join(__dirname, '../../public/assets/css/styles.css'), 'utf8');
+
+    const diagramBody = css.slice(css.indexOf('.diagram-body {'), css.indexOf('.diagram-body img'));
+    assert.ok(/align-items:\s*center/.test(diagramBody), 'diagrams are centred in their column');
+
+    assert.ok(
+      /\.diagram-body\.diagram-body--compact img,\s*\n\.diagram-body\.diagram-body--timing img/.test(css),
+      'state and timing drawings share the wider ceiling'
+    );
   });
 });

@@ -1566,16 +1566,17 @@ select:focus-visible,
   max-width: 88ch;
 }
 
-/* Tables - mirrors the reference truth tables */
+/* Tables.
+   A quiet, light-grey surface: the header is its own band with a rule under
+   it, the rows are separated by hairlines, and nothing in the table is ever
+   tinted with the accent colour. */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background:
-    linear-gradient(180deg, rgba(0, 167, 218, 0.05) 0%, rgba(8, 11, 19, 0.7) 40%),
-    var(--card);
-  box-shadow: 0 24px 60px -46px rgba(0, 0, 0, 0.95);
+  background: var(--card);
+  box-shadow: 0 20px 48px -40px rgba(0, 0, 0, 0.9);
 }
 
 .edu-table {
@@ -1584,32 +1585,46 @@ select:focus-visible,
   border-spacing: 0;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 0.94rem;
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* Header: a distinct band, sentence case and one step larger than the cells,
+   closed off by a double rule. */
+.edu-table thead {
+  background: #171c24;
 }
 
 .edu-table th {
   position: relative;
-  padding: 0.9rem 1rem;
-  background: linear-gradient(180deg, rgba(30, 36, 44, 0.95) 0%, rgba(19, 23, 29, 0.9) 100%);
-  color: var(--fg-light);
+  padding: 1rem 1.1rem 0.85rem;
+  color: var(--fg);
   font-family: var(--font-nav);
-  font-size: 0.86rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border-strong);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
   white-space: nowrap;
+  border-bottom: 2px solid var(--border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .edu-table th:not(:last-child) {
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.edu-table th:first-child {
+  border-top-left-radius: calc(var(--radius-md) - 1px);
+}
+
+.edu-table th:last-child {
+  border-top-right-radius: calc(var(--radius-md) - 1px);
 }
 
 .edu-table td {
-  padding: 0.62rem 1rem;
+  padding: 0.7rem 1.1rem;
   color: var(--fg-light);
-  border-bottom: 1px solid rgba(33, 38, 45, 0.9);
+  border-bottom: 1px solid rgba(33, 38, 45, 0.65);
 }
 
 /* Symbols rendered through KaTeX must inherit the table's grey, never the
@@ -1622,31 +1637,33 @@ select:focus-visible,
 }
 
 .edu-table th .katex {
+  color: var(--fg);
   font-weight: 700;
 }
 
 .edu-table td:not(:last-child) {
-  border-right: 1px solid rgba(255, 255, 255, 0.035);
-}
-
-.edu-table tbody tr:nth-child(even) {
-  background-color: rgba(33, 38, 45, 0.42);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .edu-table tbody tr {
   transition: background-color var(--dur-1) linear;
 }
 
+.edu-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.018);
+}
+
 .edu-table tbody tr:hover {
-  background-color: rgba(12, 39, 68, 0.9);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .edu-table tbody tr:last-child td {
   border-bottom: 0;
 }
 
+/* A grey marker on the hovered row, never the accent. */
 .edu-table tbody tr:hover td:first-child {
-  box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.32);
 }
 
 .edu-table .cell-highlight {
@@ -1661,16 +1678,21 @@ select:focus-visible,
 }
 
 /* Specification tables read as a definition list, not a centred matrix. */
+.spec-table-wrap {
+  margin-top: 1.25rem;
+}
+
 .spec-table {
   text-align: left;
 }
 
-.spec-table th:first-child {
-  width: 30%;
-}
-
+.spec-table th,
 .spec-table td {
   text-align: left;
+}
+
+.spec-table th:first-child {
+  width: 42%;
 }
 
 .spec-table td:first-child {
@@ -1684,10 +1706,6 @@ select:focus-visible,
   font-size: 0.88rem;
 }
 
-.spec-table td:last-child {
-  max-width: 34ch;
-}
-
 .spec-source-note {
   display: block;
   margin-top: 0.15rem;
@@ -1696,11 +1714,12 @@ select:focus-visible,
 }
 
 /* Equations */
-/* Equations sit directly on the page: no card, no border, no source footnote. */
+/* Equations sit directly on the page: no card, no border, no scroller. They
+   are scaled to fill the column (see fitEquations in app.js). */
 .equation-block {
   margin: 1.35rem 0 0;
-  overflow-x: auto;
-  text-align: left;
+  overflow: visible;
+  text-align: center;
 }
 
 .equation-block .katex {
@@ -1710,22 +1729,25 @@ select:focus-visible,
 
 .equation-block .katex-display {
   margin: 0;
-  text-align: left;
+  text-align: center;
 }
 
 /* Diagram sections.
    A drawing is content, not a card: it sits directly under its own heading on
    the page background, the way a truth table sits under "Truth Table". */
 .diagram-body {
-  margin: 1.5rem 0 0;
+  margin: 1.5rem auto 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 0.9rem;
 }
 
 .diagram-body img {
   display: block;
+  margin-inline: auto;
   width: 100%;
   max-width: 100%;
   height: auto;
@@ -1755,19 +1777,22 @@ select:focus-visible,
   max-width: min(100%, 560px);
 }
 
-/* State diagrams are deliberately compact. */
-.diagram-body--compact img {
-  max-width: min(100%, 640px);
+/* State and timing drawings carry far more detail than a symbol, so they get
+   the full column width. The doubled class beats the directory rules above. */
+.diagram-body.diagram-body--compact img,
+.diagram-body.diagram-body--timing img {
+  max-width: min(100%, 1000px);
 }
 
-.diagram-body--pinout img {
-  max-width: min(100%, 460px);
+.diagram-body.diagram-body--pinout img {
+  max-width: min(100%, 620px);
 }
 
 .diagram-actions {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Fullscreen diagram viewer (opened by "View fullscreen"). */
@@ -1784,27 +1809,6 @@ select:focus-visible,
   max-width: 100%;
   max-height: 70vh;
   object-fit: contain;
-}
-
-/* Specifications + pinout side by side where a part is an IC. */
-.spec-layout {
-  margin-top: 1.25rem;
-}
-
-.spec-layout--with-figure {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
-  gap: clamp(1.25rem, 2.5vw, 2.25rem);
-  align-items: start;
-}
-
-.spec-layout-table > .table-responsive,
-.spec-layout .table-responsive {
-  margin-top: 0 !important;
-}
-
-.spec-layout--with-figure .diagram-body {
-  margin-top: 0;
 }
 
 /* ----------------------------------------------------------------
@@ -2679,8 +2683,7 @@ input[type='range']:focus-visible {
   .categories-grid,
   .components-grid,
   .tags-grid,
-  .subcategory-grid,
-  .spec-layout--with-figure {
+  .subcategory-grid {
     grid-template-columns: 1fr;
   }
 

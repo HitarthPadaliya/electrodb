@@ -984,12 +984,14 @@ const app = {
     extraDiagrams.forEach(diagram => {
       const kind = diagram.kind || 'OTHER';
       const isState = kind === 'STATE';
+      const isTiming = kind === 'TIMING';
       const heading =
         kind === 'STATE' ? 'State Machine' : kind === 'TIMING' ? 'Timing Diagram' : diagram.title || 'Diagram';
+      const sizing = isState ? ' diagram-body--compact' : isTiming ? ' diagram-body--timing' : '';
       html += `
         <section class="detail-section">
           <h2 class="section-title">${this.escapeHtml(heading)}</h2>
-          <figure class="diagram-body${isState ? ' diagram-body--compact' : ''}">
+          <figure class="diagram-body${sizing}">
             <img src="${this.escapeHtml(diagram.imagePath)}" alt="${this.escapeHtml(
               diagram.altText || diagram.title
             )}" loading="lazy">
@@ -1006,57 +1008,56 @@ const app = {
       `;
     });
 
-    // Specifications. When the part is an IC, its pinout is shown here so the
-    // diagram and the electrical figures are read together.
+    // The IC pinout is a drawing, so it is its own section rather than being
+    // folded into the specifications table.
     const pinout = byKind('PINOUT')[0];
-    if ((comp.specifications && comp.specifications.length) || pinout) {
+    if (pinout) {
+      html += `
+        <section class="detail-section">
+          <h2 class="section-title">IC Pinout</h2>
+          <figure class="diagram-body diagram-body--pinout">
+            <img src="${this.escapeHtml(pinout.imagePath)}" alt="${this.escapeHtml(
+              pinout.altText || `Pinout for ${comp.name}`
+            )}" loading="lazy">
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(pinout.imagePath)}"
+                data-open-title="${this.escapeHtml(pinout.title || 'Pinout diagram')}"
+              >View fullscreen</button>
+            </div>
+          </figure>
+        </section>
+      `;
+    }
+
+    // Technical specifications, on their own.
+    if (comp.specifications && comp.specifications.length) {
       html += `
         <section class="detail-section">
           <h2 class="section-title">Technical Specifications</h2>
-          <div class="spec-layout${pinout ? ' spec-layout--with-figure' : ''}">
-            ${
-              comp.specifications && comp.specifications.length
-                ? `<div class="table-responsive spec-layout-table">
-                     <table class="edu-table spec-table">
-                       <thead>
-                         <tr>
-                           <th>Specification</th>
-                           <th>Value</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         ${comp.specifications
-                           .map(
-                             spec => `
-                               <tr>
-                                 <td>${this.formatCell(spec.name)}</td>
-                                 <td>${this.escapeHtml(spec.value || '-')}${spec.unit && !String(spec.value || '').includes(spec.unit) ? ` ${this.escapeHtml(spec.unit)}` : ''}</td>
-                               </tr>
-                             `
-                           )
-                           .join('')}
-                       </tbody>
-                     </table>
-                   </div>`
-                : ''
-            }
-            ${
-              pinout
-                ? `<figure class="diagram-body diagram-body--pinout">
-                     <img src="${this.escapeHtml(pinout.imagePath)}" alt="${this.escapeHtml(
-                       pinout.altText || `Pinout for ${comp.name}`
-                     )}" loading="lazy">
-                     <div class="diagram-actions">
-                       <button
-                         class="btn btn-secondary btn-sm"
-                         type="button"
-                         data-open-image="${this.escapeHtml(pinout.imagePath)}"
-                         data-open-title="${this.escapeHtml(pinout.title || 'Pinout diagram')}"
-                       >View fullscreen</button>
-                     </div>
-                   </figure>`
-                : ''
-            }
+          <div class="table-responsive spec-table-wrap">
+            <table class="edu-table spec-table">
+              <thead>
+                <tr>
+                  <th>Specification</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${comp.specifications
+                  .map(
+                    spec => `
+                      <tr>
+                        <td>${this.formatCell(spec.name)}</td>
+                        <td>${this.escapeHtml(spec.value || '-')}${spec.unit && !String(spec.value || '').includes(spec.unit) ? ` ${this.escapeHtml(spec.unit)}` : ''}</td>
+                      </tr>
+                    `
+                  )
+                  .join('')}
+              </tbody>
+            </table>
           </div>
         </section>
       `;
@@ -1223,6 +1224,8 @@ const app = {
       }
     });
 
+    this.fitEquations();
+
     document.querySelectorAll('[data-katex-inline]').forEach(el => {
       const latex = el.getAttribute('data-katex-inline');
       if (!latex) return;
@@ -1231,6 +1234,30 @@ const app = {
       } catch (err) {
         console.warn('KaTeX inline render error:', err);
       }
+    });
+  },
+
+  /**
+   * Scale each rendered equation so it fills its column instead of being
+   * clipped into a horizontal scroller. Short equations grow up to a ceiling;
+   * an unusually long one is shrunk just enough to fit.
+   */
+  fitEquations() {
+    document.querySelectorAll('.equation-block').forEach(block => {
+      const katex = block.querySelector('.katex-display > .katex') || block.querySelector('.katex');
+      if (!katex) return;
+
+      katex.style.fontSize = '';
+      const available = block.clientWidth;
+      if (!available) return; // no layout (e.g. headless DOM): keep the CSS size
+
+      const baseSize = parseFloat(window.getComputedStyle(katex).fontSize) || 24;
+      const natural = katex.getBoundingClientRect().width;
+      if (!natural) return;
+
+      const target = available * 0.8;
+      const scale = Math.min(2, Math.max(0.75, target / natural));
+      katex.style.fontSize = `${(baseSize * scale).toFixed(2)}px`;
     });
   },
 
@@ -2417,3 +2444,11 @@ const app = {
 };
 
 window.addEventListener('DOMContentLoaded', () => app.init());
+
+// Equations are sized to the column, so they must be re-fitted when the
+// column changes width.
+let equationResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(equationResizeTimer);
+  equationResizeTimer = setTimeout(() => app.fitEquations(), 150);
+});
