@@ -3299,6 +3299,13 @@ input[type='range']:focus-visible {
   margin-top: auto;
 }
 
+/* The card is now a container with a link and a button inside it, so the
+   keyboard needs the same highlight the pointer gets. */
+.component-card:focus-within {
+  border-color: rgba(0, 167, 218, 0.55);
+  box-shadow: var(--shadow-glow);
+}
+
 .bookmark-btn {
   display: inline-flex;
   align-items: center;
