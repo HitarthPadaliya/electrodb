@@ -15,6 +15,15 @@ async function getHealth(req, res, next) {
   }
 }
 
+async function getStats(req, res, next) {
+  try {
+    const stats = await catalogueService.getStats();
+    res.json({ data: stats });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getCategories(req, res, next) {
   try {
     const categories = await catalogueService.getCategoriesTree();
@@ -131,6 +140,7 @@ async function search(req, res, next) {
 }
 
 module.exports = {
+  getStats,
   getHealth,
   getCategories,
   getCategory,

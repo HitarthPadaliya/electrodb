@@ -835,3 +835,68 @@ describe('Preview demo credentials', () => {
     assert.ok(!/demo-accounts/.test(appRoutes));
   });
 });
+
+describe('Summary figures are counted, never typed in', () => {
+  const appSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/app.js'), 'utf8');
+  const apiSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/api.js'), 'utf8');
+  const previewSource = fs.readFileSync(path.join(repoRoot, 'scripts/preview-server.js'), 'utf8');
+
+  it('maps the database row into numbers, including the diagram total', async () => {
+    // MySQL hands back strings (and NULLs) here, so both are normalised.
+    repo.getCatalogueCounts = async () => ({
+      components: '147',
+      components_total: '147',
+      categories: '23',
+      subfamilies: '18',
+      tags: '12',
+      diagrams: '446',
+      specifications: '24',
+      content_sections: '378'
+    });
+
+    const stats = await service.getStats();
+    assert.equal(stats.components, 147);
+    assert.equal(stats.categories, 23);
+    assert.equal(stats.subfamilies, 18);
+    assert.equal(stats.tags, 12);
+    assert.equal(stats.diagrams, 446);
+    assert.equal(stats.specifications, 24);
+    assert.equal(stats.contentSections, 378);
+  });
+
+  it('returns zeros instead of NaN when a count is missing', async () => {
+    repo.getCatalogueCounts = async () => ({ components: null, diagrams: undefined });
+
+    const stats = await service.getStats();
+    assert.equal(stats.components, 0);
+    assert.equal(stats.diagrams, 0);
+    assert.ok(Object.values(stats).every(value => Number.isFinite(value)));
+  });
+
+  it('exposes the counts over the catalogue API', () => {
+    const routeSource = fs.readFileSync(path.join(repoRoot, 'server/src/routes/catalogueRoutes.js'), 'utf8');
+    const controllerSource = fs.readFileSync(path.join(repoRoot, 'server/src/controllers/catalogueController.js'), 'utf8');
+    const repositorySource = fs.readFileSync(path.join(repoRoot, 'server/src/db/repository.js'), 'utf8');
+
+    assert.match(routeSource, /router\.get\('\/stats', catalogueController\.getStats\)/);
+    assert.match(controllerSource, /catalogueService\.getStats\(\)/);
+    assert.match(repositorySource, /FROM component_diagrams\) AS diagrams/);
+    assert.match(apiSource, /getStats\(\) \{\s*return this\.request\('\/stats'\);/);
+  });
+
+  it('renders the hero figures from that payload', () => {
+    assert.match(appSource, /api\.getStats\(\)/);
+    assert.match(appSource, /const heroStats = \[/);
+    assert.match(appSource, /if \(diagramCount !== null\) heroStats\.push/);
+    // The old typed-in totals must not come back.
+    assert.ok(!/192/.test(appSource), 'hero must not carry a typed-in diagram count');
+    assert.ok(!/147-component seed dataset/.test(appSource), 'lab note must not hard-code the dataset size');
+  });
+
+  it('counts the same figures in the preview server', () => {
+    assert.match(previewSource, /function catalogueStats\(\)/);
+    assert.match(previewSource, /if \(p === '\/api\/stats'\)/);
+    assert.match(previewSource, /rowOnlyCounts\.specifications/);
+    assert.ok(!/row_count: 18\b/.test(previewSource), 'preview dashboard must not invent the specification count');
+  });
+});

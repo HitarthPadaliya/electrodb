@@ -575,3 +575,22 @@ the page and the API disagreed about who the visitor was.
 
 Spacing on the component page: the back link sits a little further below the breadcrumb path, and
 the tag pills have real space beneath them before the description.
+
+## 27. The summary figures are counted, not typed in
+
+The home page carried its own totals: "192 SVG diagrams" was a literal in the template, and the
+benchmark note named the "147-component seed dataset" by hand. Both were descriptions of the data
+written at a moment when they happened to be right, and both would quietly become wrong as soon as
+the catalogue changed.
+
+- `GET /api/stats` counts the catalogue in one round-trip — published components, components in
+  total, categories, subfamilies, tags, diagram rows, specification definitions and content
+  sections — and the hero band renders whatever it returns. Nothing in the client holds a total.
+- The diagram tile is only rendered when the count actually arrived; there is no fallback number. If
+  the request fails the page still renders, with components, categories and subfamilies taken from
+  the category tree it already loaded, and the search placeholder uses the same figure.
+- The lab benchmark note now reads its dataset size from the same endpoint.
+- The preview server computes the same figures from the seed it serves (`catalogueStats()`), and its
+  lab dashboard no longer reports invented row counts (`components × 3`, `specifications: 18`). Its
+  seed parser also stopped dropping the last row of every `INSERT … VALUES` block, which had been
+  misfiling two components as unpublished and under-reporting the catalogue by two.
