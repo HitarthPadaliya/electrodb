@@ -484,7 +484,7 @@ describe('Arrow motion language', () => {
   const css = fs.readFileSync(path.join(__dirname, '../../public/assets/css/styles.css'), 'utf8');
 
   const shared = css.slice(
-    css.indexOf('--- Arrows carry a charge'),
+    css.indexOf('--- Small arrows step'),
     css.indexOf('.section-sub {')
   );
 
@@ -494,24 +494,38 @@ describe('Arrow motion language', () => {
     return css.slice(start, css.indexOf('}', start));
   };
 
-  it('charges the glyph itself instead of transforming it', () => {
-    assert.ok(/background-clip:\s*text/.test(shared), 'the light is clipped to the glyph itself');
-    assert.ok(/background-size:\s*400%/.test(shared), 'the charge has room to travel');
+  it('steps the small arrows instead of charging them', () => {
     assert.ok(
-      !/transform|translate|rotate/i.test(shared),
-      'no arrow is translated or rotated, so none of them can trail'
+      /transform var\(--dur-1\) var\(--ease-out\)/.test(shared),
+      'the arrow is the thing that moves'
     );
+    assert.ok(
+      /transform: translateX\(var\(--arrow-step\)\)/.test(shared),
+      'hovering steps it along its own axis'
+    );
+    assert.ok(!/background-clip/.test(shared), 'nothing is painted inside the glyph');
+    assert.ok(!/background-position/.test(shared), 'there is no travelling band to park');
+    assert.ok(!/drop-shadow/.test(shared), 'and no glow at this size');
+    assert.ok(!/background-clip/.test(css), 'the glyph charge was removed outright');
   });
 
-  it('runs the charge from tail to head, mirrored for left-pointing arrows', () => {
-    assert.ok(/background-position:\s*98% 0/.test(shared), 'the band waits at the far end of the track');
-    assert.ok(/background-position:\s*36% 0/.test(shared), 'it comes to rest inside the head');
+  it('points each small arrow the way it looks, pagination included', () => {
+    assert.ok(
+      /\.link-arrow,\s*\n\.back-link-arrow,\s*\n\.page-arrow \{\s*\n[\s\S]*?--arrow-step:\s*0\.28em/.test(shared),
+      'every small arrow steps right by default'
+    );
+    assert.ok(
+      /\.back-link-arrow,\s*\n\.page-arrow--left \{\s*\n\s*--arrow-step:\s*-0\.28em/.test(shared),
+      'the two left-pointing arrows step left instead'
+    );
+    assert.ok(
+      /\.back-link:hover \.back-link-arrow,[\s\S]*?\.page-btn:hover:not\(:disabled\) \.page-arrow,/.test(shared),
+      'the back link and pagination share the step'
+    );
 
-    assert.ok(/--arrow-angle:\s*270deg/.test(body('.back-link-arrow')), 'the back arrow runs right to left');
-    assert.ok(/background-position:\s*2% 0/.test(body('.back-link-arrow')), 'its band waits at the other end');
-
-    assert.ok(/--arrow-angle:\s*270deg/.test(body('.page-arrow--left')), 'the previous-page arrow runs right to left');
-    assert.ok(/background-position:\s*2% 0/.test(body('.page-arrow--left')), 'its band waits at the other end');
+    const page = css.slice(css.lastIndexOf('.page-arrow {'), css.lastIndexOf('.page-arrow {') + 200);
+    assert.ok(/--arrow-idle:\s*var\(--fg-light\)/.test(page), 'pagination keeps its palette');
+    assert.ok(!/background-position/.test(page), 'with no leftover charge rules');
   });
 
   it('plots and then strikes the tile arrow instead of moving it', () => {

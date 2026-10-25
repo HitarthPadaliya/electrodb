@@ -413,6 +413,9 @@ How it is built, and why that matters:
   (`.page-arrow`) - share one block, so there is a single definition to change. Where
   `background-clip: text` is unavailable the fallback is a plain colour change.
 - `prefers-reduced-motion` collapses the 380 ms sweep to nothing and leaves the arrow lit.
+- **Superseded for the small arrows in §30.** The sweep only ever worked at tile size; section
+  links, the back link and the pagination arrows now step instead, and only the category tiles
+  keep a lit arrow.
 
 ## 22. The tile arrow is a tube that gets struck
 
@@ -444,7 +447,7 @@ Why this one is different from the three before it:
   `prefers-reduced-motion` collapses the delays as well as the durations, so the arrow simply
   appears drawn and lit.
 
-The inline arrows keep the charge from section 21.
+The inline arrows keep the charge from section 21 (until §30, which gives them back a plain step).
 
 ## 23. The tube powers down as deliberately as it lights up
 
@@ -628,3 +631,20 @@ stubs of the original Illustrator export.
   (`<slug>.svg`) and there is nothing new under `electrodb-frontend/`.
 - `npm run test:offline` checks the invariant: reference digest unchanged, reference free of the two
   pin colours, copy free of extra geometry, and the seed pointing at the copy.
+
+## 30. Small arrows just point
+
+The arrow treatment that shipped for the category tiles - light running inside the glyph, then a
+glow in the head - was applied to every decorative arrow. On a one-line link it never lands: "Back
+to category", "All tags ->" and the pagination chevrons are set at 0.78rem, so the travelling band
+is a few pixels of gradient crossing a 12px glyph, and the glow reads as a smudge.
+
+- Section links, the back link and the pagination arrows now step: the arrow slides 0.28em along its
+  own axis while the pointer is on it, and eases back when the pointer leaves. Left-pointing arrows
+  step left, right-pointing arrows step right, and disabled pagination arrows do not move at all.
+- The charge rules were removed rather than hidden - `background-clip`, the parked
+  `background-position` bands and the `drop-shadow` glow are gone from the stylesheet, along with the
+  `--arrow-angle` and `--arrow-glow` custom properties that only fed them.
+- The category and subcategory tiles keep their drawn arrow (`.subcategory-arrow`): the plotter pen,
+  the filament and the strike. That one is 24px wide with a whole tile behind it, so it has room to
+  be seen, and it is the only arrow that still carries the effect.

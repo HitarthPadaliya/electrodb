@@ -575,9 +575,7 @@ select:focus-visible,
   opacity: 0.65;
 }
 
-/* One motion language for every arrow in the UI: the arrow itself travels in
-   the direction it points - right arrows slide right, left arrows slide left.
-   No ripples, no filled circles. */
+/* Section links: "All categories ->", "View all components ->", "All tags ->". */
 .section-link {
   display: inline-flex;
   align-items: center;
@@ -592,21 +590,17 @@ select:focus-visible,
   transition: color var(--dur-2) var(--ease-out);
 }
 
-/* --- Arrows carry a charge ------------------------------------------------
-   One motion language for every small arrow in the UI: section links, the back
-   link and the category tiles. The arrow itself never moves - what travels is
-   light. A narrow band of current runs along the arrow's own stroke from tail
-   to tip and comes to rest pooled in the head, so the gesture always points
-   exactly where the arrow points.
-
-   The light is painted inside the glyph (background-clip: text), which is the
-   whole point: there is no second element to fall out of step with the arrow,
-   nothing to clip against a rounded tile and no tail to leave behind. The
-   fallback, where text clipping is unavailable, is a plain colour change. */
+/* --- Small arrows step, they do not perform -------------------------------
+   The section links, the back link and the pagination arrows are small: a
+   charge running inside a 14px glyph cannot be seen at that size, and anything
+   more elaborate makes a one-line link feel busy. They get the plainest
+   gesture there is - the arrow itself steps the way it points while the
+   pointer is on it, and walks back when the pointer leaves. The category
+   tiles are the exception and keep their drawn, lit arrow (see
+   `.subcategory-arrow`); they have the room for it. */
 .section-link {
   --arrow-idle: var(--accent);
   --arrow-live: var(--accent-hover);
-  --arrow-glow: rgba(0, 167, 218, 0.5);
 }
 
 .link-arrow,
@@ -615,7 +609,16 @@ select:focus-visible,
   display: inline-block;
   line-height: 1;
   color: var(--arrow-idle, var(--muted));
-  transition: color var(--dur-2) var(--ease-out);
+  /* Right-pointing by default; left-pointing arrows negate it below. */
+  --arrow-step: 0.28em;
+  transition:
+    transform var(--dur-1) var(--ease-out),
+    color var(--dur-2) var(--ease-out);
+}
+
+.back-link-arrow,
+.page-arrow--left {
+  --arrow-step: -0.28em;
 }
 
 .section-link:hover .link-arrow,
@@ -626,53 +629,7 @@ a:hover > .link-arrow,
 .page-btn:hover:not(:disabled) .page-arrow,
 .page-btn:focus-visible .page-arrow {
   color: var(--arrow-live, var(--secondary));
-}
-
-.section-link:hover {
-  color: var(--accent-hover);
-}
-
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-  .link-arrow,
-  .back-link-arrow,
-  .page-arrow {
-    background-image: linear-gradient(
-      var(--arrow-angle, 90deg),
-      var(--arrow-idle, var(--muted)) 0%,
-      var(--arrow-idle, var(--muted)) 30%,
-      var(--arrow-live, var(--secondary)) 36%,
-      var(--arrow-live, var(--secondary)) 43%,
-      #eafffb 47%,
-      var(--arrow-live, var(--secondary)) 52%,
-      var(--arrow-live, var(--secondary)) 58%,
-      var(--arrow-idle, var(--muted)) 64%,
-      var(--arrow-idle, var(--muted)) 100%
-    );
-    background-size: 400% 100%;
-    background-repeat: no-repeat;
-    /* Parked at the far end of the track: the charge then runs *towards* the
-       head instead of lighting the head first. */
-    background-position: 98% 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    transition:
-      background-position 380ms var(--ease-out),
-      filter 420ms var(--ease-out);
-  }
-
-  .section-link:hover .link-arrow,
-  .section-link:focus-visible .link-arrow,
-  a:hover > .link-arrow,
-  .back-link:hover .back-link-arrow,
-  .back-link:focus-visible .back-link-arrow,
-  .page-btn:hover:not(:disabled) .page-arrow,
-  .page-btn:focus-visible .page-arrow {
-    background-position: 36% 0;
-    color: transparent;
-    filter: drop-shadow(0 0 5px var(--arrow-glow, rgba(0, 223, 193, 0.45)));
-  }
+  transform: translateX(var(--arrow-step));
 }
 
 .section-sub {
@@ -1746,18 +1703,6 @@ a:hover > .link-arrow,
     border-color var(--dur-2) var(--ease-out);
 }
 
-/* The back arrow points left, so its charge runs the other way: the gradient is
-   mirrored and the band is driven from the opposite end of the track. */
-.back-link-arrow {
-  --arrow-angle: 270deg;
-  background-position: 2% 0;
-}
-
-.back-link:hover .back-link-arrow,
-.back-link:focus-visible .back-link-arrow {
-  background-position: 64% 0;
-}
-
 .back-link:hover {
   color: var(--accent-hover);
   border-bottom-color: rgba(0, 167, 218, 0.45);
@@ -2106,21 +2051,10 @@ a:hover > .link-arrow,
   color: var(--accent-hover);
 }
 
-/* Pagination arrows take the same charge; "previous" runs mirrored. */
+/* Pagination arrows take the same step; only their palette differs. */
 .page-arrow {
   --arrow-idle: var(--fg-light);
   --arrow-live: var(--accent-hover);
-  --arrow-glow: rgba(0, 167, 218, 0.45);
-}
-
-.page-arrow--left {
-  --arrow-angle: 270deg;
-  background-position: 2% 0;
-}
-
-.page-btn:hover:not(:disabled) .page-arrow--left,
-.page-btn:focus-visible .page-arrow--left {
-  background-position: 64% 0;
 }
 
 .page-btn.active {
