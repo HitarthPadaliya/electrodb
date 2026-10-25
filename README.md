@@ -182,10 +182,15 @@ The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables
 
 `electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte:
 
-| Reference file | Served as | Shown |
-|---|---|---|
-| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | JK Flip-Flop hero symbol |
-| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | JK Flip-Flop circuit diagram, directly below the hero |
+| Reference file | Shipped verbatim as | Served as | Shown |
+|---|---|---|---|
+| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | `public/assets/svg/flipflops/jk-flip-flop.svg` | JK Flip-Flop hero symbol |
+| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | same file | JK Flip-Flop circuit diagram, directly below the hero |
+
+The delivered JK symbol stays byte-for-byte as supplied and is not served. The page displays a copy of
+it, `flipflops/jk-flip-flop.svg`, built from the reference by `scripts/build-diagrams.js`: identical
+canvas and geometry, with the preset and clear pins carrying the house colours (amber `#e8b455` for
+PRE, violet `#b48cf0` for CLR) on their dashed stubs, inversion bubbles and labels.
 
 Every other drawing is generated from those two references:
 

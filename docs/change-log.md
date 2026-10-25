@@ -318,7 +318,8 @@ Diagrams
 - Preset and clear keep their own colours in every generated box symbol (amber `#e8b455` /
   violet `#b48cf0`), including their dashed stubs, bubbles and labels; ordinary control pins
   such as `LOAD` stay grey. The two supplied reference drawings remain byte-for-byte as
-  delivered, so `flipflops/jk.svg` still shows the grey dashed stubs of the original file.
+  delivered (`electrodb-frontend/img/`, archived in public as `flipflops/jk.svg`); the page
+  shows the recoloured copy described in §29 instead of the delivered file.
 - All 147 symbols (and the pinouts, circuits, state and timing drawings) were regenerated.
 
 Tables and equations
@@ -605,3 +606,25 @@ described the plumbing rather than the person's own data.
 - The panel is now a slim bar at the end of the page holding the **Sign out** button alone,
   right-aligned against the card edge. No heading, no note.
 - The header search styles are untouched: an earlier attempt at retuning them was reverted.
+
+## 29. The delivered JK drawing stays delivered; the page shows its copy
+
+`jk-flip-flop.svg` is the visual reference the whole diagram set is modelled on, and it is the one
+drawing nothing may edit. It was also the file the JK Flip-Flop page displayed, which meant the
+preset/clear colour rule of §19 stopped at the front door: the hero symbol kept the grey dashed
+stubs of the original Illustrator export.
+
+- `public/assets/svg/flipflops/jk-flip-flop.svg` is a copy of the reference, built by
+  `scripts/build-diagrams.js` (`referenceCopySymbol`) rather than drawn by hand. Canvas, geometry
+  and every label are carried over; only the preset/clear pins change — PRE's stub, inversion bubble
+  and label take the amber `#e8b455`, CLR's take the violet `#b48cf0`, using the same dashed stub and
+  hollow bubble the generated symbols use.
+- The build fails loudly if an expected anchor is missing from the reference, so an edited reference
+  cannot silently ship an unstyled copy. The reference itself is still never written: it stays
+  byte-for-byte as delivered (`md5 0464952732b79015f510079b71f1e6e8`), and so does its archived copy
+  at `flipflops/jk.svg`, which the build and restyle scripts both skip.
+- The seed (`electrodb.sql`, `database/07_seed_data.sql`) and therefore `GET /api/components/:slug`
+  now serve the copy as the symbol diagram. The filename follows the rest of the artwork
+  (`<slug>.svg`) and there is nothing new under `electrodb-frontend/`.
+- `npm run test:offline` checks the invariant: reference digest unchanged, reference free of the two
+  pin colours, copy free of extra geometry, and the seed pointing at the copy.

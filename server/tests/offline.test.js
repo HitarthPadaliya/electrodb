@@ -19,6 +19,7 @@ const machines = require('../../scripts/lib/machines');
 const { SPECS } = require('../../scripts/lib/component-specs');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const repoRoot = path.resolve(__dirname, '../..');
 
@@ -33,7 +34,7 @@ function stubComponent(overrides = {}) {
     short_description: 'short',
     description: 'long description',
     main_image_path: null,
-    circuit_symbol_path: '/assets/svg/flipflops/jk.svg',
+    circuit_symbol_path: '/assets/svg/flipflops/jk-flip-flop.svg',
     datasheet_url: null,
     is_illustrative: 1,
     is_published: 1,
@@ -55,7 +56,7 @@ function installStubs(diagrams) {
 describe('Component detail mapping', () => {
   it('exposes the diagram kind so the UI can place each drawing', async () => {
     installStubs([
-      { diagram_id: 1, title: 'Symbol Diagram', diagram_kind: 'SYMBOL', image_path: '/assets/svg/flipflops/jk.svg', alt_text: 'a', caption: 'c', display_order: 10 },
+      { diagram_id: 1, title: 'Symbol Diagram', diagram_kind: 'SYMBOL', image_path: '/assets/svg/flipflops/jk-flip-flop.svg', alt_text: 'a', caption: 'c', display_order: 10 },
       { diagram_id: 2, title: 'Circuit Diagram', diagram_kind: 'CIRCUIT', image_path: '/assets/svg/circuits/jk-flip-flop-circuit.svg', alt_text: 'b', caption: 'c', display_order: 20 }
     ]);
 
@@ -110,6 +111,60 @@ describe('SVG restyle pipeline', () => {
     const width = Number(out.match(/viewBox="0 0 ([\d.]+) /)[1]);
 
     assert.ok(width > 200, `expected a wider canvas, got ${width}`);
+  });
+});
+
+describe('Reference symbol and its displayed copy', () => {
+  const ROOT = repoRoot;
+  const REFERENCE = path.join(ROOT, 'electrodb-frontend/img/jk-flip-flop.svg');
+  const SERVED = path.join(ROOT, 'public/assets/svg/flipflops/jk-flip-flop.svg');
+  const reference = fs.readFileSync(REFERENCE, 'utf8');
+  const served = fs.readFileSync(SERVED, 'utf8');
+
+  it('leaves the supplied reference byte-for-byte as delivered', () => {
+    const digest = crypto.createHash('md5').update(fs.readFileSync(REFERENCE)).digest('hex');
+    assert.strictEqual(digest, '0464952732b79015f510079b71f1e6e8', 'reference artwork must not be edited');
+    assert.ok(!reference.includes('#e8b455') && !reference.includes('#b48cf0'), 'reference keeps its original greys');
+  });
+
+  it('serves a copy rather than the reference itself', () => {
+    assert.notStrictEqual(served, reference);
+    assert.ok(served.includes('viewBox="0 0 360 320"'), 'the copy keeps the reference canvas');
+    for (const anchor of [/<line\b/g, /<circle\b/g, /<text\b/g, /<rect\b/g, /<path\b/g]) {
+      assert.strictEqual(
+        (served.match(anchor) || []).length,
+        (reference.match(anchor) || []).length,
+        `the copy keeps every ${anchor.source} element of the reference`
+      );
+    }
+  });
+
+  it('recolours primary and clear on the copy only', () => {
+    const preset = '#e8b455';
+    const clear = '#b48cf0';
+    for (const colour of [preset, clear]) {
+      assert.ok(served.includes(colour), `copy uses ${colour}`);
+      assert.ok(!reference.includes(colour), `reference does not use ${colour}`);
+    }
+
+    const set = /<line class="(st1[45])" x1="180" y1="(?:40|280)"[^>]*\/>/g;
+    assert.deepStrictEqual((served.match(set) || []).length, 2, 'both control stubs are recoloured');
+    assert.ok(/<line class="st14" x1="180" y1="40" x2="180" y2="74"\/>/.test(served), 'preset stub is amber');
+    assert.ok(/<line class="st15" x1="180" y1="280" x2="180" y2="246"\/>/.test(served), 'clear stub is violet');
+    assert.ok(/<text class="st18"[^>]*>[\s\S]*?PRE/.test(served), 'preset label is amber');
+    assert.ok(/<text class="st19"[^>]*>[\s\S]*?CLR/.test(served), 'clear label is violet');
+    // The copy is authored, not restyled: both pipeline scripts skip it so a
+    // `npm run svg:restyle` sweep cannot repaint the recoloured pins.
+    const restyler = fs.readFileSync(path.join(ROOT, 'scripts/restyle-svgs.js'), 'utf8');
+    assert.ok(restyler.includes("'flipflops/jk-flip-flop.svg'"), 'restyle pipeline protects the copy');
+    const builder = fs.readFileSync(path.join(ROOT, 'scripts/build-diagrams.js'), 'utf8');
+    assert.ok(builder.includes("REFERENCE_COPY_SLUG = 'jk-flip-flop'"), 'build derives the copy from the reference');
+  });
+
+  it('catalogue records point at the copy, not the reference copy', () => {
+    const sql = fs.readFileSync(path.join(ROOT, 'electrodb.sql'), 'utf8');
+    assert.ok(sql.includes("'/assets/svg/flipflops/jk-flip-flop.svg'"), 'seed serves the copy');
+    assert.ok(!sql.includes("'/assets/svg/flipflops/jk.svg'"), 'seed never points at the verbatim archive');
   });
 });
 

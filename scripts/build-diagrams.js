@@ -38,6 +38,84 @@ const PROTECTED = new Set([
   'assets/svg/circuits/jk-flip-flop-circuit.svg'
 ]);
 
+// The delivered JK drawing is the reference the whole set is modelled on, so it
+// ships byte-for-byte and is never rewritten. The catalogue displays a copy of
+// it instead: identical canvas and geometry, with the preset/clear pins carrying
+// the house colours every generated symbol uses (amber preset, violet clear).
+const REFERENCE_SYMBOL = path.join(REPO, 'electrodb-frontend/img/jk-flip-flop.svg');
+const REFERENCE_COPY_SLUG = 'jk-flip-flop';
+
+// Each anchor appears exactly once in the visible layer of the reference; the
+// hidden <g class="st13"> duplicate keeps its original greys.
+const REFERENCE_RECOLOUR = [
+  ['class="st8" x1="180" y1="40" x2="180" y2="74"', 'class="st14" x1="180" y1="40" x2="180" y2="74"'],
+  ['class="st8" x1="180" y1="280" x2="180" y2="246"', 'class="st15" x1="180" y1="280" x2="180" y2="246"'],
+  ['class="st9" cx="180" cy="80" r="6"', 'class="st16" cx="180" cy="80" r="6"'],
+  ['class="st9" cx="180" cy="240" r="6"', 'class="st17" cx="180" cy="240" r="6"'],
+  ['<text class="st0" transform="translate(168.45 30)">', '<text class="st18" transform="translate(168.45 30)">'],
+  ['<text class="st0" transform="translate(168.45 300)">', '<text class="st19" transform="translate(168.45 300)">']
+];
+
+const REFERENCE_RECOLOUR_STYLES = `
+      .st14, .st15 {
+        fill: none;
+        stroke-width: 2px;
+        stroke-dasharray: 8 4;
+      }
+
+      .st14 {
+        stroke: ${kit.PALETTE.preset};
+      }
+
+      .st15 {
+        stroke: ${kit.PALETTE.clear};
+      }
+
+      .st16, .st17 {
+        fill: none;
+        stroke-width: 2px;
+      }
+
+      .st16 {
+        stroke: ${kit.PALETTE.preset};
+      }
+
+      .st17 {
+        stroke: ${kit.PALETTE.clear};
+      }
+
+      .st18, .st19 {
+        font-family: Consolas, Consolas;
+        font-size: 14px;
+      }
+
+      .st18 {
+        fill: ${kit.PALETTE.preset};
+      }
+
+      .st19 {
+        fill: ${kit.PALETTE.clear};
+      }`;
+
+/**
+ * Copy of the delivered reference with the preset/clear pins recoloured.
+ * Fails loudly if the reference no longer contains an expected anchor, so an
+ * edited reference cannot silently ship an unstyled copy.
+ */
+function referenceCopySymbol() {
+  let svg = fs.readFileSync(REFERENCE_SYMBOL, 'utf8');
+  for (const [from, to] of REFERENCE_RECOLOUR) {
+    if (!svg.includes(from)) {
+      throw new Error(`Reference symbol changed: expected ${from} in ${REFERENCE_SYMBOL}`);
+    }
+    svg = svg.replace(from, to);
+  }
+  if (!svg.includes('    </style>')) {
+    throw new Error(`Reference symbol has no style block: ${REFERENCE_SYMBOL}`);
+  }
+  return svg.replace('    </style>', `${REFERENCE_RECOLOUR_STYLES}\n    </style>`);
+}
+
 // ---------------------------------------------------------------- helpers
 function parsePin(raw) {
   let label = String(raw);
@@ -207,7 +285,8 @@ components.forEach(component => {
   const rel = component.circuit_symbol_path.replace(/^\//, '');
 
   let svg;
-  if (spec.gate) svg = gateSymbol(component.slug, spec);
+  if (component.slug === REFERENCE_COPY_SLUG) svg = referenceCopySymbol();
+  else if (spec.gate) svg = gateSymbol(component.slug, spec);
   else if (spec.device) svg = deviceSymbol(spec);
   else
     svg = kit.boxDiagram({
