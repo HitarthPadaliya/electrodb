@@ -28,7 +28,8 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 // ---------------------------------------------------------------- seed parsing
 function splitTuple(line) {
-  const inner = line.trim().replace(/^\(/, '').replace(/\),?$/, '');
+  // Rows end in '),' except the last row of a block, which ends in ');'.
+  const inner = line.trim().replace(/^\(/, '').replace(/\)[;,]*$/, '');
   const fields = [];
   let cur = '';
   let quoted = false;
@@ -50,12 +51,24 @@ const sql = fs.readFileSync(path.join(REPO, 'electrodb.sql'), 'utf8');
 const lines = sql.split('\n');
 const categories = [];
 const components = [];
+// Definition tables whose rows are only ever counted, never served.
+const rowOnlyCounts = { specifications: 0, content_types: 0 };
 let mode = null;
 
+const INSERT_MODES = [
+  ['INSERT INTO categories', 'categories'],
+  ['INSERT INTO components', 'components'],
+  ['INSERT INTO tags', 'tags'],
+  ['INSERT INTO specifications', 'specifications'],
+  ['INSERT INTO content_types', 'content_types']
+];
+
 for (const line of lines) {
-  if (line.startsWith('INSERT INTO categories')) { mode = 'categories'; continue; }
-  if (line.startsWith('INSERT INTO components')) { mode = 'components'; continue; }
-  if (line.startsWith('INSERT INTO tags')) { mode = 'tags'; continue; }
+  if (line.startsWith('INSERT INTO ')) {
+    const match = INSERT_MODES.find(([prefix]) => line.startsWith(prefix));
+    mode = match ? match[1] : null;
+    continue;
+  }
   if (mode && line.startsWith('SELECT ')) { mode = null; continue; }
   if (mode && line.startsWith('VALUES')) continue;
 
@@ -65,6 +78,8 @@ for (const line of lines) {
       category_id: Number(f[0]), parent_category_id: f[1] ? Number(f[1]) : null,
       name: f[2], slug: f[3], description: f[4], display_order: Number(f[5] || 0)
     });
+  } else if (mode && rowOnlyCounts[mode] !== undefined && line.trim().startsWith('(')) {
+    rowOnlyCounts[mode] += 1;
   } else if (mode === 'components' && line.trim().startsWith('(')) {
     const f = splitTuple(line);
     if (!/^\d+$/.test(f[0])) continue;
@@ -85,6 +100,13 @@ const tagDefs = [
   ['timing', 'timing'], ['state-machine', 'state-machine'], ['la-te-x', 'latex']
 ];
 const tags = tagDefs.map(([name, slug], index) => ({ tag_id: index + 1, name, slug }));
+
+// Preview-only audit history; the dashboard reports its real length.
+const AUDIT_LOG_FIXTURES = [
+  { audit_id: 12, table_name: 'components', operation_type: 'INSERT', row_key: '148', db_user: 'electrodb_app', changed_at: '2026-01-12 11:02:14', new_values: { name: 'Quad OR Gate', category_id: 8 } },
+  { audit_id: 11, table_name: 'components', operation_type: 'UPDATE', row_key: '17', db_user: 'electrodb_app', changed_at: '2026-01-12 10:58:03', new_values: { short_description: 'Updated summary' } },
+  { audit_id: 10, table_name: 'components', operation_type: 'DELETE', row_key: '149', db_user: 'electrodb_app', changed_at: '2026-01-12 10:55:41', old_values: { name: 'Temporary Example' } }
+];
 
 const tagSlugById = new Map(tags.map(t => [t.tag_id, t.slug]));
 const componentTags = components.map(component => {
@@ -150,6 +172,23 @@ function categoriesTree() {
       componentCount: categoryCount(c.category_id),
       children: catChildren(c.category_id)
     }));
+}
+
+// Everything the public pages print as a number is counted here, from the same
+// seed the mock serves. Nothing in this file should hard-code a total.
+function catalogueStats() {
+  return {
+    components: components.filter(c => c.is_published).length,
+    componentsTotal: components.length,
+    categories: categories.length,
+    subfamilies: categories.filter(c => c.parent_category_id !== null).length,
+    tags: tags.length,
+    diagrams: components.reduce((total, c) => total + diagramsFor(c).length, 0),
+    specifications: rowOnlyCounts.specifications,
+    contentSections: components.reduce((total, c) => total + contentFor(c).length, 0),
+    specificationValues: components.reduce((total, c) => total + specificationsFor(c).length, 0),
+    taggedComponents: componentTags.reduce((total, ct) => total + ct.tag_ids.length, 0)
+  };
 }
 
 function tagCounts() {
@@ -435,6 +474,8 @@ function handleApi(req, res, url) {
 
   if (p === '/api/health') return json(res, { status: 'ok', service: 'ElectroDB API (preview mock)', database: 'mock' });
 
+  if (p === '/api/stats') return json(res, { data: catalogueStats() });
+
   if (p === '/api/categories') return json(res, { data: categoriesTree() });
 
   if (p.startsWith('/api/categories/')) {
@@ -498,13 +539,7 @@ function handleApi(req, res, url) {
     ] });
   }
 
-  if (p === '/api/lab/audit-log') {
-    return json(res, { data: [
-      { audit_id: 12, table_name: 'components', operation_type: 'INSERT', row_key: '148', db_user: 'electrodb_app', changed_at: '2026-01-12 11:02:14', new_values: { name: 'Quad OR Gate', category_id: 8 } },
-      { audit_id: 11, table_name: 'components', operation_type: 'UPDATE', row_key: '17', db_user: 'electrodb_app', changed_at: '2026-01-12 10:58:03', new_values: { short_description: 'Updated summary' } },
-      { audit_id: 10, table_name: 'components', operation_type: 'DELETE', row_key: '149', db_user: 'electrodb_app', changed_at: '2026-01-12 10:55:41', old_values: { name: 'Temporary Example' } }
-    ] });
-  }
+  if (p === '/api/lab/audit-log') return json(res, { data: AUDIT_LOG_FIXTURES });
 
   if (p === '/api/lab/timing-report') {
     const report = fs.readFileSync(path.join(REPO, 'database/10_query_timing_results.md'), 'utf8');
@@ -512,18 +547,19 @@ function handleApi(req, res, url) {
   }
 
   if (p === '/api/lab/dashboard') {
+    const stats = catalogueStats();
     return json(res, { data: {
       tables: [
-        { table_name: 'categories', row_count: categories.length },
-        { table_name: 'components', row_count: components.length },
-        { table_name: 'tags', row_count: tags.length },
-        { table_name: 'component_tags', row_count: componentTags.reduce((s, ct) => s + ct.tag_ids.length, 0) },
-        { table_name: 'component_content', row_count: components.length * 3 },
-        { table_name: 'component_diagrams', row_count: components.length },
-        { table_name: 'specifications', row_count: 18 },
-        { table_name: 'component_specifications', row_count: components.length * 3 },
-        { table_name: 'app_users', row_count: 2 },
-        { table_name: 'application_audit_log', row_count: 12 }
+        { table_name: 'categories', row_count: stats.categories },
+        { table_name: 'components', row_count: stats.componentsTotal },
+        { table_name: 'tags', row_count: stats.tags },
+        { table_name: 'component_tags', row_count: stats.taggedComponents },
+        { table_name: 'component_content', row_count: stats.contentSections },
+        { table_name: 'component_diagrams', row_count: stats.diagrams },
+        { table_name: 'specifications', row_count: stats.specifications },
+        { table_name: 'component_specifications', row_count: stats.specificationValues },
+        { table_name: 'app_users', row_count: PREVIEW_ACCOUNTS.length },
+        { table_name: 'application_audit_log', row_count: AUDIT_LOG_FIXTURES.length }
       ],
       componentMetrics: {
         published_components: components.filter(c => c.is_published).length,

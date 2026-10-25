@@ -3,6 +3,7 @@ const router = express.Router();
 const catalogueController = require('../controllers/catalogueController');
 
 router.get('/health', catalogueController.getHealth);
+router.get('/stats', catalogueController.getStats);
 router.get('/categories', catalogueController.getCategories);
 router.get('/categories/:categoryId', catalogueController.getCategory);
 router.get('/categories/:categoryId/components', catalogueController.getCategoryComponents);

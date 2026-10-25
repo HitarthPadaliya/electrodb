@@ -18,7 +18,7 @@ The application also features a dedicated **Lab Console** that exercises the dat
 - **Security & Headers:** `helmet`, `cors`, parameterized SQL, allowlisted query templates
 - **Frontend:** Semantic HTML5, CSS3 responsive design tokens, vanilla JavaScript (hash-based Single Page Architecture) themed after the `electrodb-frontend/` design reference (dark cyan/teal palette, Space Grotesk/Poppins/Lexend/Inter typography, spotlight hover effects)
 - **LaTeX Math Rendering:** KaTeX
-- **Vector Graphics:** Custom SVG assets (192 vector diagrams: logic gates, flip-flop state machines, decade/mod-8 counter rings, timing waveforms, circuit symbols)
+- **Vector Graphics:** Custom SVG assets generated from the catalogue (circuit symbols, gate/device circuit implementations, IC pinouts, flip-flop state machines, counter rings, timing waveforms)
 - **Automated Testing:** Node.js native test runner (`node:test`)
 
 ---
@@ -90,7 +90,7 @@ electrodb/
 │   │   │   ├── api.js                       # API client (catalogue, accounts, lab)
 │   │   │   ├── account.js                   # Session, auth pages, bookmarks, collections, dashboard
 │   │   │   └── app.js                       # SPA router, renderers, KaTeX, lab console
-│   │   └── svg/                             # 192 SVG vector assets
+│   │   └── svg/                             # generated SVG vector assets
 └── scripts/
     ├── check-db-connection.js               # Database ping & diagnostic verification
     ├── preview-server.js                    # Frontend-only preview server (seed-derived data)
@@ -111,7 +111,7 @@ Import `electrodb.sql` via phpMyAdmin or command line:
 ```bash
 mysql -u root -p < electrodb.sql
 ```
-*(The database `electrodb` will be created, seeded with 147 components, 12 tables, 2 views, stored procedures, functions, and triggers).*
+*(Your database will be created, seeded with 147 components, 17 tables, 2 views, stored procedures, functions, and triggers).*
 
 ### Step 3: Configure Environment Variables
 Create `.env` in the repository root (or copy `.env.example`):
@@ -180,12 +180,18 @@ The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables
 
 ### Diagram artwork
 
-`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte:
+`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte and
+together defining the style every other drawing follows:
 
-| Reference file | Served as | Shown |
-|---|---|---|
-| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | JK Flip-Flop hero symbol |
-| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | JK Flip-Flop circuit diagram, directly below the hero |
+| Reference file | Shipped verbatim as | Served as | Shown |
+|---|---|---|---|
+| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | `public/assets/svg/flipflops/jk-flip-flop.svg` | JK Flip-Flop hero symbol |
+| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | same file | JK Flip-Flop circuit diagram, directly below the hero |
+
+The delivered JK symbol stays byte-for-byte as supplied and is not served. The page displays a copy of
+it, `flipflops/jk-flip-flop.svg`, built from the reference by `scripts/build-diagrams.js`: identical
+canvas and geometry, with the preset and clear pins carrying the house colours (amber `#e8b455` for
+PRE, violet `#b48cf0` for CLR) on their dashed stubs, inversion bubbles and labels.
 
 Every other drawing is generated from those two references:
 

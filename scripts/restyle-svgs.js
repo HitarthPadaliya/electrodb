@@ -23,10 +23,13 @@ const path = require('path');
 
 const SVG_ROOT = path.resolve(__dirname, '../public/assets/svg');
 
-// Files that are copied verbatim from the design reference and must never be
-// rewritten: they define the target style.
+// Files that come straight from the design reference and must never be
+// rewritten: they define the target style. `flipflops/jk-flip-flop.svg` is the
+// copy the catalogue displays, derived from the reference by
+// scripts/build-diagrams.js, which owns its content.
 const PROTECTED = new Set([
   'flipflops/jk.svg',
+  'flipflops/jk-flip-flop.svg',
   'circuits/jk-flip-flop-circuit.svg'
 ]);
 

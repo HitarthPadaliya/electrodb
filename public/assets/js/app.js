@@ -491,25 +491,52 @@ const app = {
   async renderHome() {
     this.setTitle();
 
-    const [categoryRes, tagRes, catalogRes] = await Promise.all([
+    const [categoryRes, tagRes, catalogRes, statsRes] = await Promise.all([
       api.getCategories(),
       api.getTags().catch(() => ({ data: [] })),
-      api.getCatalog(1, 6).catch(() => ({ data: { items: [] } }))
+      api.getCatalog(1, 6).catch(() => ({ data: { items: [] } })),
+      api.getStats().catch(() => null)
     ]);
 
     const categories = categoryRes.data || [];
     const tags = (tagRes.data || []).slice(0, 8);
     const featured = (catalogRes.data && catalogRes.data.items) || [];
 
-    let totalComponents = 0;
-    let subcategoryCount = 0;
+    // The summary figures come from the API, which counts the rows it serves.
+    // If the counts call fails the page still works: components and categories
+    // fall back to what the category tree already reports, and any figure that
+    // cannot be counted (the diagram total) is left out rather than invented.
+    const stats = (statsRes && statsRes.data) || null;
+    const counted = (value, fallback) =>
+      Number.isFinite(Number(value)) && value !== null && value !== undefined
+        ? Number(value)
+        : fallback;
+
+    let treeComponents = 0;
+    let treeSubfamilies = 0;
     categories.forEach(cat => {
-      totalComponents += Number(cat.componentCount || 0);
+      treeComponents += Number(cat.componentCount || 0);
       (cat.children || []).forEach(child => {
-        totalComponents += Number(child.component_count || 0);
-        subcategoryCount += 1;
+        treeComponents += Number(child.component_count || 0);
+        treeSubfamilies += 1;
       });
     });
+
+    const componentCount = counted(stats && stats.components, treeComponents);
+    const categoryCount = counted(stats && stats.categories, categories.length + treeSubfamilies);
+    const subfamilyCount = counted(stats && stats.subfamilies, treeSubfamilies);
+
+    // Only rendered when it was counted; there is no fallback number.
+    const diagramCount = stats && Number.isFinite(Number(stats.diagrams))
+      ? Number(stats.diagrams)
+      : null;
+
+    const heroStats = [
+      { value: componentCount, label: 'Components' },
+      { value: categoryCount, label: 'Categories' },
+      { value: subfamilyCount, label: 'Subfamilies' }
+    ];
+    if (diagramCount !== null) heroStats.push({ value: diagramCount, label: 'SVG diagrams' });
 
     const categoryTags = categories
       .map(cat => `<a class="tag" href="#/categories/${encodeURIComponent(cat.category_id)}">${this.escapeHtml(cat.name)}</a>`)
@@ -529,7 +556,7 @@ const app = {
             </p>
 
             <form class="hero-search" id="hero-search-form" role="search" data-form="hero-search">
-              <input type="search" name="q" placeholder="Search ${totalComponents} components, categories, and tags…" aria-label="Search components">
+              <input type="search" name="q" placeholder="Search ${componentCount} components, categories, and tags…" aria-label="Search components">
               <button type="submit">Search</button>
             </form>
 
@@ -541,22 +568,11 @@ const app = {
             </div>
 
             <div class="hero-stats">
-              <div class="hero-stat">
-                <strong>${totalComponents}</strong>
-                <span>Components</span>
-              </div>
-              <div class="hero-stat">
-                <strong>${categories.length}</strong>
-                <span>Categories</span>
-              </div>
-              <div class="hero-stat">
-                <strong>${subcategoryCount}</strong>
-                <span>Subfamilies</span>
-              </div>
-              <div class="hero-stat">
-                <strong>192</strong>
-                <span>SVG diagrams</span>
-              </div>
+              ${heroStats.map(stat => `
+                <div class="hero-stat">
+                  <strong>${stat.value}</strong>
+                  <span>${stat.label}</span>
+                </div>`).join('')}
             </div>
           </div>
         </section>
@@ -1382,6 +1398,16 @@ const app = {
   async renderLabConsole() {
     this.setTitle('Lab Console');
 
+    // The benchmark note names the dataset it was measured on; the size comes
+    // from the API so it cannot drift from the seeded catalogue.
+    const labStats = await api.getStats().catch(() => null);
+    const labComponentCount = labStats && labStats.data && Number.isFinite(Number(labStats.data.components))
+      ? Number(labStats.data.components)
+      : null;
+    const datasetLabel = labComponentCount === null
+      ? 'the seeded dataset'
+      : `${labComponentCount}-component seed dataset`;
+
     this.contentEl.innerHTML = `
       <div class="page">
         <header class="lab-header">
@@ -1483,7 +1509,7 @@ const app = {
             <div class="lab-card-head">
               <div>
                 <h2 class="lab-card-title">Index Timing Benchmarks &amp; Analysis</h2>
-                <p class="lab-card-desc">Execution times measured before and after candidate secondary indexes were applied to the 147-component seed dataset.</p>
+                <p class="lab-card-desc">Execution times measured before and after candidate secondary indexes were applied to the ${datasetLabel}.</p>
               </div>
               <div class="lab-actions">
                 <button class="btn btn-primary btn-sm" type="button" data-action="load-timing-report">Refresh report</button>

@@ -318,7 +318,8 @@ Diagrams
 - Preset and clear keep their own colours in every generated box symbol (amber `#e8b455` /
   violet `#b48cf0`), including their dashed stubs, bubbles and labels; ordinary control pins
   such as `LOAD` stay grey. The two supplied reference drawings remain byte-for-byte as
-  delivered, so `flipflops/jk.svg` still shows the grey dashed stubs of the original file.
+  delivered (`electrodb-frontend/img/`, archived in public as `flipflops/jk.svg`); the page
+  shows the recoloured copy described in §29 instead of the delivered file.
 - All 147 symbols (and the pinouts, circuits, state and timing drawings) were regenerated.
 
 Tables and equations
@@ -412,6 +413,9 @@ How it is built, and why that matters:
   (`.page-arrow`) - share one block, so there is a single definition to change. Where
   `background-clip: text` is unavailable the fallback is a plain colour change.
 - `prefers-reduced-motion` collapses the 380 ms sweep to nothing and leaves the arrow lit.
+- **Superseded for the small arrows in §30.** The sweep only ever worked at tile size; section
+  links, the back link and the pagination arrows now step instead, and only the category tiles
+  keep a lit arrow.
 
 ## 22. The tile arrow is a tube that gets struck
 
@@ -443,7 +447,7 @@ Why this one is different from the three before it:
   `prefers-reduced-motion` collapses the delays as well as the durations, so the arrow simply
   appears drawn and lit.
 
-The inline arrows keep the charge from section 21.
+The inline arrows keep the charge from section 21 (until §30, which gives them back a plain step).
 
 ## 23. The tube powers down as deliberately as it lights up
 
@@ -575,3 +579,72 @@ the page and the API disagreed about who the visitor was.
 
 Spacing on the component page: the back link sits a little further below the breadcrumb path, and
 the tag pills have real space beneath them before the description.
+
+## 27. The summary figures are counted, not typed in
+
+The home page carried its own totals: "192 SVG diagrams" was a literal in the template, and the
+benchmark note named the "147-component seed dataset" by hand. Both were descriptions of the data
+written at a moment when they happened to be right, and both would quietly become wrong as soon as
+the catalogue changed.
+
+- `GET /api/stats` counts the catalogue in one round-trip — published components, components in
+  total, categories, subfamilies, tags, diagram rows, specification definitions and content
+  sections — and the hero band renders whatever it returns. Nothing in the client holds a total.
+- The diagram tile is only rendered when the count actually arrived; there is no fallback number. If
+  the request fails the page still renders, with components, categories and subfamilies taken from
+  the category tree it already loaded, and the search placeholder uses the same figure.
+- The lab benchmark note now reads its dataset size from the same endpoint.
+- The preview server computes the same figures from the seed it serves (`catalogueStats()`), and its
+  lab dashboard no longer reports invented row counts (`components × 3`, `specifications: 18`). Its
+  seed parser also stopped dropping the last row of every `INSERT … VALUES` block, which had been
+  misfiling two components as unpublished and under-reporting the catalogue by two.
+
+## 28. A quiet sign-out
+
+The profile page ended with a "Session" panel that explained, in a sentence, that the sign-in lives in
+an HttpOnly cookie and that signing out deletes it server-side. The button underneath needed none of
+that: the label already says what it does, and the explanation was the only prose on the page that
+described the plumbing rather than the person's own data.
+
+- The panel is now a slim bar at the end of the page holding the **Sign out** button alone,
+  right-aligned against the card edge. No heading, no note.
+- The header search styles are untouched: an earlier attempt at retuning them was reverted.
+
+## 29. The delivered JK drawing stays delivered; the page shows its copy
+
+`jk-flip-flop.svg` is the visual reference the whole diagram set is modelled on, and it is the one
+drawing nothing may edit. It was also the file the JK Flip-Flop page displayed, which meant the
+preset/clear colour rule of §19 stopped at the front door: the hero symbol kept the grey dashed
+stubs of the original Illustrator export.
+
+- `public/assets/svg/flipflops/jk-flip-flop.svg` is a copy of the reference, built by
+  `scripts/build-diagrams.js` (`referenceCopySymbol`) rather than drawn by hand. Canvas, geometry
+  and every label are carried over; only the preset/clear pins change — PRE's stub, inversion bubble
+  and label take the amber `#e8b455`, CLR's take the violet `#b48cf0`, using the same dashed stub and
+  hollow bubble the generated symbols use.
+- The build fails loudly if an expected anchor is missing from the reference, so an edited reference
+  cannot silently ship an unstyled copy. The reference itself is still never written: it stays
+  byte-for-byte as delivered (`md5 0464952732b79015f510079b71f1e6e8`), and so does its archived copy
+  at `flipflops/jk.svg`, which the build and restyle scripts both skip.
+- The seed (`electrodb.sql`, `database/07_seed_data.sql`) and therefore `GET /api/components/:slug`
+  now serve the copy as the symbol diagram. The filename follows the rest of the artwork
+  (`<slug>.svg`) and there is nothing new under `electrodb-frontend/`.
+- `npm run test:offline` checks the invariant: reference digest unchanged, reference free of the two
+  pin colours, copy free of extra geometry, and the seed pointing at the copy.
+
+## 30. Small arrows just point
+
+The arrow treatment that shipped for the category tiles - light running inside the glyph, then a
+glow in the head - was applied to every decorative arrow. On a one-line link it never lands: "Back
+to category", "All tags ->" and the pagination chevrons are set at 0.78rem, so the travelling band
+is a few pixels of gradient crossing a 12px glyph, and the glow reads as a smudge.
+
+- Section links, the back link and the pagination arrows now step: the arrow slides 0.28em along its
+  own axis while the pointer is on it, and eases back when the pointer leaves. Left-pointing arrows
+  step left, right-pointing arrows step right, and disabled pagination arrows do not move at all.
+- The charge rules were removed rather than hidden - `background-clip`, the parked
+  `background-position` bands and the `drop-shadow` glow are gone from the stylesheet, along with the
+  `--arrow-angle` and `--arrow-glow` custom properties that only fed them.
+- The category and subcategory tiles keep their drawn arrow (`.subcategory-arrow`): the plotter pen,
+  the filament and the strike. That one is 24px wide with a whole tile behind it, so it has room to
+  be seen, and it is the only arrow that still carries the effect.
