@@ -140,6 +140,7 @@ async function getComponentDetail(idOrSlug) {
   const rawContent = await repo.getComponentContent(component.component_id);
   const rawDiagrams = await repo.getComponentDiagrams(component.component_id);
   const rawSpecs = await repo.getComponentSpecifications(component.component_id);
+  const tags = await repo.getComponentTags(component.component_id);
 
   // Format content sections
   const content = rawContent.map(sec => ({
@@ -158,6 +159,7 @@ async function getComponentDetail(idOrSlug) {
   const diagrams = rawDiagrams.map(d => ({
     diagramId: d.diagram_id,
     title: d.title,
+    kind: d.diagram_kind || 'OTHER',
     imagePath: d.image_path,
     altText: d.alt_text,
     caption: d.caption,
@@ -188,7 +190,82 @@ async function getComponentDetail(idOrSlug) {
     updatedAt: component.updated_at,
     content,
     diagrams,
-    specifications
+    specifications,
+    tags
+  };
+}
+
+/**
+ * Paginated list of published components for the public catalog
+ */
+async function getCatalog({ page = 1, pageSize = 24, categoryId = null } = {}) {
+  const currentPage = Math.max(1, Number.parseInt(page, 10) || 1);
+  const size = Math.min(Math.max(Number.parseInt(pageSize, 10) || 24, 1), 100);
+  const offset = (currentPage - 1) * size;
+
+  const [items, total] = await Promise.all([
+    repo.getPublishedComponents({ limit: size, offset, categoryId }),
+    repo.countPublishedComponents({ categoryId })
+  ]);
+
+  return {
+    items,
+    pagination: {
+      page: currentPage,
+      pageSize: size,
+      total,
+      totalPages: Math.ceil(total / size) || 1
+    }
+  };
+}
+
+/**
+ * All tags with published component counts
+ */
+async function getTags() {
+  const tags = await repo.getTagsWithCounts();
+  return tags.map(tag => ({
+    tagId: tag.tag_id,
+    name: tag.name,
+    slug: tag.slug,
+    component_count: Number(tag.component_count)
+  }));
+}
+
+/**
+ * Tag detail with its published components
+ */
+async function getTagDetail(idOrSlug, { page = 1, pageSize = 24 } = {}) {
+  const tag = await repo.getTagByIdOrSlug(idOrSlug);
+
+  if (!tag) {
+    const error = new Error(`Tag not found: ${idOrSlug}`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const currentPage = Math.max(1, Number.parseInt(page, 10) || 1);
+  const size = Math.min(Math.max(Number.parseInt(pageSize, 10) || 24, 1), 100);
+  const offset = (currentPage - 1) * size;
+
+  const [components, total] = await Promise.all([
+    repo.getComponentsByTag(tag.tag_id, { limit: size, offset }),
+    repo.countComponentsByTag(tag.tag_id)
+  ]);
+
+  return {
+    tag: {
+      tagId: tag.tag_id,
+      name: tag.name,
+      slug: tag.slug
+    },
+    components,
+    pagination: {
+      page: currentPage,
+      pageSize: size,
+      total,
+      totalPages: Math.ceil(total / size) || 1
+    }
   };
 }
 
@@ -226,5 +303,8 @@ module.exports = {
   getCategoryDetail,
   getCategoryTemplate,
   getComponentDetail,
+  getCatalog,
+  getTags,
+  getTagDetail,
   search
 };

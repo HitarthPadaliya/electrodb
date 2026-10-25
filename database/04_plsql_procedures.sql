@@ -1,6 +1,6 @@
 -- ================================================================
 -- ElectroDB - 04_plsql_procedures.sql
--- MySQL stored procedures implementing Assignment 10 requirements
+-- MySQL stored procedures implementing the stored-program requirements
 -- Target: MySQL 8.0+ / MariaDB 10.4+
 -- ================================================================
 
@@ -74,7 +74,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 2. Explicit cursor procedures (Assignment 10)
+-- 2. Explicit cursor procedures
 -- ----------------------------------------------------------------
 
 -- 2A. Unbounded explicit cursor: iterates through all qualifying rows
@@ -205,7 +205,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 4. Grouped sum procedure (Assignment 10)
+-- 4. Grouped sum procedure
 -- ----------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_sum_component_ids_by_category$$
 CREATE PROCEDURE sp_sum_component_ids_by_category()
@@ -221,7 +221,7 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------------
--- 5. Application user login CRUD procedures (Assignment 10)
+-- 5. Application user login CRUD procedures
 -- ----------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_insert_app_user$$
 CREATE PROCEDURE sp_insert_app_user(

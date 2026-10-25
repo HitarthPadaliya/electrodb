@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="N-Channel Enhancement MOSFET circuit diagram">
+  <title>N-Channel Enhancement MOSFET circuit diagram</title>
+  <path d="M480,160 v120" stroke="#00a7da" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M508,166 v108" stroke="#c5c7c9" stroke-width="2"/>
+  <path d="M508,186 h42 v-32 M508,220 h42 M508,254 h42 v32" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round"/>
+  <path d="M90,220 L480,220" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M550,154 L820,154" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M550,286 L820,286" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="40" y="228" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">VIN</text>
+  <text x="832" y="162" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">VOUT</text>
+  <text x="832" y="294" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">GND</text>
+</svg>

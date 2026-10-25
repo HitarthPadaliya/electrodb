@@ -7,8 +7,17 @@ const errorHandler = require('./middleware/errorHandler');
 
 const catalogueRoutes = require('./routes/catalogueRoutes');
 const labRoutes = require('./routes/labRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const contentRoutes = require('./routes/contentRoutes');
+const { attachUser } = require('./middleware/auth');
 
 const app = express();
+
+// Behind a reverse proxy the client address lives in X-Forwarded-For; only
+// trust it when the deployment says so (rate limiting keys on req.ip).
+if (config.trustProxy) app.set('trust proxy', 1);
 
 // Security middleware with relaxed CSP for local development and KaTeX CDN
 app.use(
@@ -16,9 +25,9 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-        fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
+        scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"]
       }
@@ -28,15 +37,26 @@ app.use(
 );
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// A JSON body larger than this is not a legitimate request to this API.
+app.use(express.json({ limit: '64kb' }));
+app.use(express.urlencoded({ extended: false, limit: '64kb' }));
 
 // Serve frontend static assets from public/
 const publicDir = path.resolve(__dirname, '../../public');
 app.use(express.static(publicDir));
 
-// Mount API routes
+// Resolve the session once per API request. Public routes simply carry a null
+// user when no valid cookie is present.
+app.use('/api', attachUser);
+
+// Account, personalization and administration routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Public catalogue routes, then the guarded content-management routes
 app.use('/api', catalogueRoutes);
+app.use('/api', contentRoutes);
 
 if (config.enableLabConsole) {
   app.use('/api/lab', labRoutes);

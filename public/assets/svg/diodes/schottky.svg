@@ -1,22 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="100%" height="100%">
-  <title>Schottky Diode</title>
-  <defs>
-    <style>
-      .wire { stroke: #2563eb; stroke-width: 2.5; fill: none; }
-      .body { stroke: #1e293b; stroke-width: 2.5; fill: #3b82f6; }
-      .bar { stroke: #1e293b; stroke-width: 3; stroke-linecap: round; }
-      .lbl { font-family: system-ui, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
-    </style>
-  </defs>
-  <!-- Leads -->
-  <line x1="20" y1="50" x2="80" y2="50" class="wire" />
-  <line x1="120" y1="50" x2="180" y2="50" class="wire" />
-  <!-- Anode Triangle -->
-  <polygon points="80,30 80,70 120,50" class="body" />
-  <!-- Cathode Bar -->
-  <path d="M 115,30 L 120,30 L 120,70 L 115,70" class="bar" fill="none" />
-  
-  <text x="50" y="42" class="lbl">A</text>
-  <text x="150" y="42" class="lbl">K</text>
-  <text x="100" y="90" class="lbl">Schottky Diode</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 180" role="img" aria-label="SCHOTTKY DIODE symbol">
+  <title>SCHOTTKY DIODE symbol</title>
+  <g transform="translate(120,90)"><path d="M0,-14 v28 l24,-14 z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/><path d="M24,-14 v28 M24,-14 h-6 v6 M24,14 h6 v-6" stroke="#00a7da" stroke-width="2.2"/></g>
+  <line x1="60" y1="90" x2="104" y2="90" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="50" y="95.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
+  <line x1="136" y1="90" x2="180" y2="90" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="190" y="95.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">K</text>
 </svg>

@@ -1,6 +1,6 @@
 -- ================================================================
 -- ElectroDB - 08_assignment10_demo.sql
--- Demonstration script for SVNIT CS203 Practical Assignment 10
+-- Demonstration script for the ElectroDB stored-program layer
 -- Demonstrates:
 --   1. Component CRUD stored procedures
 --   2. Database accounts and roles
@@ -26,7 +26,7 @@ USE electrodb;
 SELECT '--- DEMO 1: Component CRUD Stored Procedures ---' AS section;
 
 -- 1A: Insert a new component
-CALL sp_insert_component(8, 'Assignment 10 Demo Gate', 'a10-demo-gate', 'Temporary gate created for stored procedure demonstration');
+CALL sp_insert_component(8, 'Demo Gate', 'a10-demo-gate', 'Temporary gate created for stored procedure demonstration');
 
 -- Verify insertion and automatic uppercase trigger normalization
 SELECT component_id, name, slug, short_description, created_at
@@ -35,7 +35,7 @@ WHERE slug = 'a10-demo-gate';
 
 -- 1B: Update the component
 SET @demo_id = (SELECT component_id FROM components WHERE slug = 'a10-demo-gate' LIMIT 1);
-CALL sp_update_component(@demo_id, 8, 'Assignment 10 Updated Gate', 'Updated description verifying sp_update_component');
+CALL sp_update_component(@demo_id, 8, 'Updated Demo Gate', 'Updated description verifying sp_update_component');
 
 -- Verify update
 SELECT component_id, name, short_description, updated_at

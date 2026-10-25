@@ -63,6 +63,50 @@ async function getCategoryTemplate(req, res, next) {
   }
 }
 
+async function getCatalog(req, res, next) {
+  try {
+    const page = parseInt(req.query.page || '1', 10);
+    const pageSize = parseInt(req.query.pageSize || '24', 10);
+
+    let categoryId = null;
+    if (req.query.categoryId !== undefined && req.query.categoryId !== '') {
+      categoryId = parseInt(req.query.categoryId, 10);
+      if (!Number.isInteger(categoryId) || categoryId < 1) {
+        const error = new Error('categoryId must be a positive integer');
+        error.statusCode = 400;
+        throw error;
+      }
+    }
+
+    const catalog = await catalogueService.getCatalog({ page, pageSize, categoryId });
+    res.json({ data: catalog });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getTags(req, res, next) {
+  try {
+    const tags = await catalogueService.getTags();
+    res.json({ data: tags });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getTag(req, res, next) {
+  try {
+    const { tagId } = req.params;
+    const page = parseInt(req.query.page || '1', 10);
+    const pageSize = parseInt(req.query.pageSize || '24', 10);
+
+    const tag = await catalogueService.getTagDetail(tagId, { page, pageSize });
+    res.json({ data: tag });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getComponent(req, res, next) {
   try {
     const { componentId } = req.params;
@@ -92,6 +136,9 @@ module.exports = {
   getCategory,
   getCategoryComponents,
   getCategoryTemplate,
+  getCatalog,
+  getTags,
+  getTag,
   getComponent,
   search
 };

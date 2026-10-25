@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="SR Flip-Flop circuit diagram">
+  <title>SR Flip-Flop circuit diagram</title>
+  <path d="M360,110 H396.8 A40,40 0 0 1 396.8,190 H360 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="448" cy="150" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M360,290 H396.8 A40,40 0 0 1 396.8,370 H360 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="448" cy="330" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,126 L360,126" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,306 L360,306" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="134" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">S</text>
+  <text x="34" y="314" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">R</text>
+  <path d="M454,330 L600,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="600" cy="330" r="4.5" fill="#c5c7c9"/>
+  <path d="M600,330 L600,60 L300,60 L300,174 L360,174" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M454,150 L660,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="660" cy="150" r="4.5" fill="#c5c7c9"/>
+  <path d="M660,150 L660,440 L300,440 L300,354 L360,354" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M600,330 L1000,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M660,150 L1000,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="158" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+</svg>

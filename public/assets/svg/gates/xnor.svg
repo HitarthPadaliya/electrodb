@@ -1,19 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="100%" height="100%">
-  <title>XNOR Gate</title>
-  <defs>
-    <style>
-      .wire { stroke: #2563eb; stroke-width: 3; fill: none; stroke-linecap: round; }
-      .body { stroke: #1e293b; stroke-width: 3; fill: #eff6ff; }
-      .label { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #1e293b; font-weight: 600; }
-    </style>
-  </defs>
-  <line x1="20" y1="35" x2="65" y2="35" class="wire" />
-  <line x1="20" y1="65" x2="65" y2="65" class="wire" />
-  <text x="10" y="40" class="label">A</text>
-  <text x="10" y="70" class="label">B</text>
-  <path d="M 45,20 Q 70,50 45,80" class="wire" />
-  <path d="M 55,20 Q 80,50 55,80 Q 110,80 135,50 Q 110,20 55,20 Z" class="body" />
-  <circle cx="141" cy="50" r="6" class="body" />
-  <line x1="147" y1="50" x2="175" y2="50" class="wire" />
-  <text x="180" y="55" class="label">Y = (A⊕B)'</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 172" role="img" aria-label="XNOR GATE symbol">
+  <title>XNOR GATE symbol</title>
+  <line x1="50" y1="84" x2="96" y2="84" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="89.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
+  <line x1="50" y1="108" x2="96" y2="108" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
+  <text x="40" y="113.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">B</text>
+  <path d="M106,60 Q123.16,99 106,138 Q145,138 168.4,99 Q145,60 106,60 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="179" cy="96" r="5" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <line x1="184" y1="96" x2="224" y2="96" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="234" y="101.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">Y</text>
 </svg>

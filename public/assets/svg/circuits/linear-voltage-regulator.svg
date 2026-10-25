@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Linear Voltage Regulator circuit diagram">
+  <title>Linear Voltage Regulator circuit diagram</title>
+  <rect x="430" y="150" width="220" height="150" rx="12" fill="#0d1117" stroke="#21262d" stroke-width="2"/>
+  <path d="M110,200 L430,200" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M650,200 L960,200" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M110,260 L430,260" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="50" y="208" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">VIN</text>
+  <text x="50" y="268" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">GND</text>
+  <text x="972" y="208" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">VOUT</text>
+</svg>

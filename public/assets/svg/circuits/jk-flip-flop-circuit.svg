@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 480">
+  <!-- Generator: Adobe Illustrator 30.3.0, SVG Export Plug-In . SVG Version: 2.1.3 Build 182)  -->
+  <defs>
+    <style>
+      .st0, .st1, .st2 {
+        stroke: #c5c7c9;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+
+      .st0, .st1, .st2, .st3, .st4 {
+        fill: none;
+      }
+
+      .st5, .st6 {
+        font-family: Consolas, Consolas;
+        font-size: 24px;
+      }
+
+      .st5, .st7 {
+        fill: #168fe5;
+      }
+
+      .st8 {
+        stroke: #e8eaed;
+        stroke-width: 1.5px;
+      }
+
+      .st8, .st1, .st3, .st4 {
+        stroke-linecap: round;
+      }
+
+      .st6, .st9 {
+        fill: #00dfdf;
+      }
+
+      .st10, .st11 {
+        fill: #101f38;
+      }
+
+      .st12, .st11, .st3 {
+        stroke: #168fe5;
+      }
+
+      .st12, .st11, .st3, .st4 {
+        stroke-width: 1.6px;
+      }
+
+      .st12, .st13 {
+        fill: #0d1117;
+      }
+
+      .st9, .st4 {
+        stroke: #00dfdf;
+      }
+
+      .st14 {
+        font-family: ArialMT, Arial;
+        font-size: 10px;
+      }
+
+      .st14, .st15 {
+        fill: #c5c7c9;
+      }
+
+      .st14, .st16 {
+        isolation: isolate;
+      }
+
+      .st11, .st4 {
+        stroke-linejoin: round;
+      }
+
+      .st17 {
+        display: none;
+      }
+
+      .st2 {
+        stroke-linecap: square;
+      }
+
+      .st16 {
+        fill: #e8eaed;
+        font-family: Arial-BoldMT, Arial;
+        font-size: 16px;
+        font-weight: 700;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1" class="st17">
+    <rect class="st13" x="156" width="768" height="480"/>
+    <path class="st4" d="M764,168v-90c0-6.67-3.33-10-10-10h-418c-6.67,0-10,3.33-10,10v22c0,5.33,2.67,8,8,8h24"/>
+    <path class="st4" d="M788,258v138c0,6.67-3.33,10-10,10h-442c-6.67,0-10-3.33-10-10v-22c0-5.33,2.67-8,8-8h24"/>
+    <path class="st4" d="M684,168v26c0,5.33-2.67,9.33-8,12l-126,58c-6.67,3.33-10,8.67-10,16v12c0,5.33,3.33,8,10,8h24"/>
+    <path class="st4" d="M684,258v-30c0-5.33-2.67-9.33-8-12l-126-58c-6.67-3.33-10-8.67-10-16v-12c0-5.33,3.33-8,10-8h24"/>
+    <text class="st16" transform="translate(188 155)"><tspan x="0" y="0">J</tspan></text>
+    <circle class="st12" cx="214" cy="150" r="3.5"/>
+    <path class="st3" d="M217.5,150h140.5"/>
+    <path class="st3" d="M230,248h6v-8h6v8h8"/>
+    <text class="st14" transform="translate(220.27 265)"><tspan x="0" y="0">CLK</tspan></text>
+    <path class="st4" d="M250,248h76V108"/>
+    <path class="st4" d="M326,248v118"/>
+    <circle class="st9" cx="326" cy="248" r="2.5"/>
+    <text class="st16" transform="translate(188 345)"><tspan x="0" y="0">K</tspan></text>
+    <circle class="st12" cx="214" cy="340" r="3.5"/>
+    <path class="st3" d="M217.5,340h140.5"/>
+    <path class="st11" d="M358,96h23.16c.55,0,1.1.13,1.58.4,12.7,7.05,17.59,22.97,10.89,35.97-2.57,4.99-6.64,9.06-11.63,11.63h-24v-48Z"/>
+    <circle class="st12" cx="412" cy="120" r="4"/>
+    <path class="st4" d="M416,120h158"/>
+    <path class="st11" d="M358,316h24c13.25,6.83,18.46,23.11,11.63,36.37-2.57,4.99-6.64,9.06-11.63,11.63h-24v-48Z"/>
+    <circle class="st12" cx="412" cy="340" r="4"/>
+    <path class="st4" d="M416,340h158"/>
+    <path class="st11" d="M574,108h24c13.25,6.83,18.46,23.11,11.63,36.37-2.57,4.99-6.64,9.06-11.63,11.63h-24v-48Z"/>
+    <circle class="st12" cx="628" cy="132" r="4"/>
+    <path class="st4" d="M632,132h216"/>
+    <path class="st11" d="M574,234h24c13.25,6.83,18.46,23.11,11.63,36.37-2.57,4.99-6.64,9.06-11.63,11.63h-24v-48Z"/>
+    <circle class="st12" cx="628" cy="258" r="4"/>
+    <path class="st4" d="M632,258h216"/>
+    <circle class="st12" cx="848" cy="132" r="4"/>
+    <text class="st16" transform="translate(864 138)"><tspan x="0" y="0">Q</tspan></text>
+    <circle class="st12" cx="848" cy="258" r="4"/>
+    <text class="st16" transform="translate(864 264)"><tspan x="0" y="0">Q</tspan></text>
+    <path class="st8" d="M863,247h18"/>
+    <circle class="st9" cx="684" cy="132" r="3"/>
+    <circle class="st9" cx="764" cy="132" r="3"/>
+    <circle class="st9" cx="684" cy="258" r="3"/>
+    <circle class="st9" cx="788" cy="258" r="3"/>
+  </g>
+  <g id="Layer_2">
+    <line class="st0" x1="423" y1="120" x2="608" y2="120"/>
+    <line class="st0" x1="423" y1="360" x2="608" y2="360"/>
+    <line class="st0" x1="664" y1="135" x2="840" y2="135"/>
+    <line class="st0" x1="664" y1="345" x2="840" y2="345"/>
+    <line class="st0" x1="608" y1="150" x2="540" y2="150"/>
+    <line class="st0" x1="608" y1="330" x2="540" y2="330"/>
+    <line class="st1" x1="540" y1="330" x2="540" y2="300"/>
+    <line class="st1" x1="540" y1="150" x2="540" y2="180"/>
+    <line class="st1" x1="720" y1="345" x2="720" y2="300"/>
+    <line class="st1" x1="720" y1="180" x2="720" y2="135"/>
+    <line class="st1" x1="540" y1="180" x2="720" y2="300"/>
+    <line class="st1" x1="720" y1="180" x2="540" y2="300"/>
+    <line class="st1" x1="750" y1="345" x2="750" y2="60"/>
+    <line class="st0" x1="368" y1="120" x2="240" y2="120"/>
+    <line class="st0" x1="368" y1="360" x2="240" y2="360"/>
+    <line class="st1" x1="750" y1="60" x2="320" y2="60"/>
+    <line class="st1" x1="320" y1="60" x2="320" y2="105"/>
+    <line class="st0" x1="368" y1="105" x2="320" y2="105"/>
+    <line class="st0" x1="368" y1="375" x2="320" y2="375"/>
+    <line class="st0" x1="368" y1="135" x2="320" y2="135"/>
+    <line class="st0" x1="368" y1="345" x2="320" y2="345"/>
+    <line class="st1" x1="320" y1="135" x2="320" y2="345"/>
+    <line class="st1" x1="320" y1="375" x2="320" y2="420"/>
+    <line class="st1" x1="780" y1="420" x2="320" y2="420"/>
+    <line class="st1" x1="780" y1="135" x2="780" y2="420"/>
+    <g>
+      <path class="st10" d="M367,145v-50h25c13.79,0,25,11.21,25,25s-11.21,25-25,25h-25Z"/>
+      <path class="st7" d="M392,96c13.25,0,24,10.75,24,24h0c0,13.25-10.75,24-24,24h-24v-48h24M392,94h-26v52h26c14.34,0,26-11.66,26-26s-11.66-26-26-26h0Z"/>
+    </g>
+    <path class="st7" d="M420,118c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2M420,116c-2.21,0-4,1.79-4,4s1.79,4,4,4,4-1.79,4-4-1.79-4-4-4h0Z"/>
+    <g>
+      <path class="st10" d="M367,385v-50h25c13.79,0,25,11.21,25,25s-11.21,25-25,25h-25Z"/>
+      <path class="st7" d="M392,336c13.25,0,24,10.75,24,24h0c0,13.25-10.75,24-24,24h-24v-48h24M392,334h-26v52h26c14.34,0,26-11.66,26-26s-11.66-26-26-26h0Z"/>
+    </g>
+    <path class="st7" d="M420,358c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2M420,356c-2.21,0-4,1.79-4,4s1.79,4,4,4,4-1.79,4-4-1.79-4-4-4h0Z"/>
+    <g>
+      <path class="st10" d="M607,160v-50h25c13.79,0,25,11.21,25,25s-11.21,25-25,25h-25Z"/>
+      <path class="st7" d="M632,111c13.25,0,24,10.75,24,24h0c0,13.25-10.75,24-24,24h-24v-48h24M632,109h-26v52h26c14.34,0,26-11.66,26-26s-11.66-26-26-26h0Z"/>
+    </g>
+    <path class="st7" d="M660,133c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2M660,131c-2.21,0-4,1.79-4,4s1.79,4,4,4,4-1.79,4-4-1.79-4-4-4h0Z"/>
+    <g>
+      <path class="st10" d="M607,370v-50h25c13.79,0,25,11.21,25,25s-11.21,25-25,25h-25Z"/>
+      <path class="st7" d="M632,321c13.25,0,24,10.75,24,24h0c0,13.25-10.75,24-24,24h-24v-48h24M632,319h-26v52h26c14.34,0,26-11.66,26-26s-11.66-26-26-26h0Z"/>
+    </g>
+    <path class="st7" d="M660,343c1.1,0,2,.9,2,2s-.9,2-2,2-2-.9-2-2,.9-2,2-2M660,341c-2.21,0-4,1.79-4,4s1.79,4,4,4,4-1.79,4-4-1.79-4-4-4h0Z"/>
+    <circle class="st15" cx="720" cy="135" r="4"/>
+    <circle class="st15" cx="720" cy="345" r="4"/>
+    <circle class="st15" cx="750" cy="345" r="4"/>
+    <circle class="st15" cx="780" cy="135" r="4"/>
+    <line class="st0" x1="320" y1="240" x2="264" y2="240"/>
+    <line class="st2" x1="264" y1="240" x2="264" y2="224"/>
+    <line class="st2" x1="264" y1="224" x2="252" y2="224"/>
+    <line class="st2" x1="252" y1="224" x2="252" y2="240"/>
+    <line class="st0" x1="252" y1="240" x2="240" y2="240"/>
+    <text class="st5" transform="translate(206.8 126.2)"><tspan x="0" y="0">J</tspan></text>
+    <text class="st5" transform="translate(180.41 247.25)"><tspan x="0" y="0">CLK</tspan></text>
+    <text class="st5" transform="translate(206.8 366.2)"><tspan x="0" y="0">K</tspan></text>
+    <text class="st6" transform="translate(860 141.2)"><tspan x="0" y="0">Q</tspan></text>
+    <text class="st6" transform="translate(860 351.2)"><tspan x="0" y="0">Q&apos;</tspan></text>
+  </g>
+</svg>

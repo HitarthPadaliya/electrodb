@@ -54,7 +54,7 @@ INSERT INTO categories (category_id, parent_category_id, name, slug, description
 INSERT INTO tags (name, slug) VALUES
 ('digital','digital'),('sequential-logic','sequential-logic'),('combinational-logic','combinational-logic'),
 ('semiconductor','semiconductor'),('analog','analog'),('power','power'),('sensor','sensor'),
-('memory','memory'),('electromechanical','electromechanical'),('educational-example','educational-example'),
+('memory','memory'),('electromechanical','electromechanical'),
 ('timing','timing'),('state-machine','state-machine'),('la-te-x','latex');
 
 -- ------------------------------
@@ -262,8 +262,7 @@ JOIN tags t ON (
   (c.category_id IN (17,18) AND t.slug IN ('analog','power')) OR
   (c.category_id IN (19,20) AND t.slug IN ('sensor')) OR
   (c.category_id = 21 AND t.slug IN ('memory')) OR
-  (c.category_id IN (22,23) AND t.slug IN ('electromechanical')) OR
-  (c.is_illustrative = 1 AND t.slug = 'educational-example')
+  (c.category_id IN (22,23) AND t.slug IN ('electromechanical'))
 );
 
 -- ------------------------------
@@ -326,32 +325,34 @@ WHERE c.category_id=6;
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)','Operation'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0,0,'Hold'),JSON_ARRAY(0,0,1,1,'Hold'),JSON_ARRAY(0,1,0,0,'Reset'),JSON_ARRAY(0,1,1,0,'Reset'),
-           JSON_ARRAY(1,0,0,1,'Set'),JSON_ARRAY(1,0,1,1,'Set'),JSON_ARRAY(1,1,0,1,'Toggle'),JSON_ARRAY(1,1,1,0,'Toggle')))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'\\(\\overline{Q_n}\\)','Toggle')))
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'\\(Q_n\\)','Hold'),JSON_ARRAY(0,1,0,'Reset'),JSON_ARRAY(1,0,1,'Set'),JSON_ARRAY(1,1,'X','Invalid')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,'\\(Q_n\\)','Hold'),JSON_ARRAY(1,'\\(\\overline{Q_n}\\)','Toggle')))
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_{n+1}\\)','Operation'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,'Reset'),JSON_ARRAY(1,1,'Set')))
        END,
-       NULL,'Q(next) is the output after the active clock edge. X means don''t care where applicable.',3
+       NULL,'Qn is the stored state; Qn+1 is the state after the active clock edge.',3
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'characteristic_table', 'Characteristic Table',
-       CASE c.slug
-         WHEN 'jk-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('J','K','Q','Q(next)'),'rows',JSON_ARRAY(
+       CASE
+         WHEN c.slug LIKE '%jk%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(J\\)','\\(K\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
            JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,1),JSON_ARRAY(1,1,1,0)))
-         WHEN 'd-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('D','Q','Q(next)'),'rows',JSON_ARRAY(
-           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
-         WHEN 't-flip-flop' THEN JSON_OBJECT('columns',JSON_ARRAY('T','Q','Q(next)'),'rows',JSON_ARRAY(
+         WHEN c.slug LIKE '%sr%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(S\\)','\\(R\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0,0),JSON_ARRAY(0,0,1,1),JSON_ARRAY(0,1,0,0),JSON_ARRAY(0,1,1,0),
+           JSON_ARRAY(1,0,0,1),JSON_ARRAY(1,0,1,1),JSON_ARRAY(1,1,0,'X'),JSON_ARRAY(1,1,1,'X')))
+         WHEN c.slug LIKE '%toggle%' THEN JSON_OBJECT('columns',JSON_ARRAY('\\(T\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
            JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,1),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,0)))
-         ELSE JSON_OBJECT('columns',JSON_ARRAY('Inputs','Q','Q(next)'),'rows',JSON_ARRAY())
+         ELSE JSON_OBJECT('columns',JSON_ARRAY('\\(D\\)','\\(Q_n\\)','\\(Q_{n+1}\\)'),'rows',JSON_ARRAY(
+           JSON_ARRAY(0,0,0),JSON_ARRAY(0,1,0),JSON_ARRAY(1,0,1),JSON_ARRAY(1,1,1)))
        END,
        NULL,NULL,4
 FROM components c JOIN content_types ct ON ct.code='TABLE'
@@ -389,16 +390,28 @@ WHERE c.category_id=7;
 
 -- All visual assets use one generic diagram model. Titles describe the
 -- diagram to people; the database does not store a diagram subtype.
+-- SYMBOL is the pin-level block shown in the hero; CIRCUIT is the
+-- gate/transistor-level schematic shown immediately below it.
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'Circuit / Symbol Diagram',
-       c.circuit_symbol_path, CONCAT('Diagram for ',c.name), NULL, 10
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
+       c.circuit_symbol_path, CONCAT('Pin-level symbol for ',c.name), 'Pin-level block symbol.', 10
 FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'State Diagram',
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
+       CASE c.slug
+         WHEN 'jk-flip-flop' THEN '/assets/svg/circuits/jk-flip-flop-circuit.svg'
+         ELSE CONCAT('/assets/svg/circuits/',c.slug,'.svg')
+       END,
+       CONCAT('Circuit diagram for ',c.name), 'Gate- and device-level circuit.', 20
+FROM components c;
+
+INSERT INTO component_diagrams
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'State Diagram', 'STATE',
        CASE c.slug
          WHEN 'decade-counter' THEN '/assets/svg/counters/decade-counter-state.svg'
          WHEN 'mod8-up-counter' THEN '/assets/svg/counters/mod8-up-counter-state.svg'
@@ -407,15 +420,15 @@ SELECT c.component_id, 'State Diagram',
          WHEN 'd-flip-flop' THEN '/assets/svg/flipflops/d-flip-flop-state.svg'
          WHEN 't-flip-flop' THEN '/assets/svg/flipflops/t-flip-flop-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END, CONCAT('State transitions for ',c.name), NULL, 11
+       END, CONCAT('State transitions for ',c.name), 'State transitions between stored values.', 30
 FROM components c
 WHERE c.category_id IN (6,7);
 
 INSERT INTO component_diagrams
-(component_id, title, image_path, alt_text, caption, display_order)
-SELECT c.component_id, 'Timing Diagram',
+(component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
+SELECT c.component_id, 'Timing Diagram', 'TIMING',
        CONCAT('/assets/svg/counters/',c.slug,'-timing.svg'),
-       CONCAT('Timing diagram for ',c.name), NULL, 12
+       CONCAT('Timing diagram for ',c.name), 'Signal levels over successive clock cycles.', 40
 FROM components c
 WHERE c.category_id=6;
 

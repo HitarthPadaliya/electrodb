@@ -1,78 +1,63 @@
 /**
- * Centralized error handler middleware
+ * Centralized error handler middleware.
+ *
+ * The response shape is always `{ error: { code, message } }`. Internal detail
+ * (SQL text, stack traces, driver errors, credentials) never reaches the
+ * client - it is logged server-side instead.
  */
+const DEFAULT_CODES = {
+  400: 'BAD_REQUEST',
+  401: 'UNAUTHENTICATED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  409: 'CONFLICT',
+  422: 'VALIDATION_FAILED',
+  429: 'RATE_LIMITED'
+};
+
 function errorHandler(err, req, res, next) {
-  // Log server-side for development diagnostics
   if (process.env.NODE_ENV !== 'test') {
     console.error(`[Error] ${req.method} ${req.originalUrl}:`, err.message || err);
   }
 
-  // Handle deliberate MySQL / MariaDB SIGNAL SQLSTATE '45000' errors
+  const send = (status, code, message, details) =>
+    res.status(status).json({
+      error: {
+        code: code || DEFAULT_CODES[status] || 'REQUEST_FAILED',
+        message,
+        ...(details ? { details } : {})
+      }
+    });
+
+  // Deliberate MySQL/MariaDB SIGNAL SQLSTATE '45000' errors from the stored
+  // programs are validation failures, not server faults.
   if (err.sqlState === '45000') {
-    return res.status(422).json({
-      error: {
-        code: 'VALIDATION_FAILED',
-        message: err.sqlMessage || err.message
-      }
-    });
+    return send(422, 'VALIDATION_FAILED', err.sqlMessage || err.message);
   }
 
-  // Handle unique constraint violations
   if (err.code === 'ER_DUP_ENTRY') {
-    return res.status(409).json({
-      error: {
-        code: 'DUPLICATE_ENTRY',
-        message: 'A record with this identifier or unique value already exists.'
-      }
-    });
+    return send(409, 'DUPLICATE_ENTRY', 'A record with this identifier or unique value already exists.');
   }
 
-  // Handle foreign key constraint violations
   if (err.code === 'ER_NO_REFERENCED_ROW_2' || err.code === 'ER_NO_REFERENCED_ROW') {
-    return res.status(400).json({
-      error: {
-        code: 'FOREIGN_KEY_VIOLATION',
-        message: 'The referenced parent record does not exist.'
-      }
-    });
+    return send(400, 'FOREIGN_KEY_VIOLATION', 'The referenced parent record does not exist.');
   }
 
   if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.code === 'ER_ROW_IS_REFERENCED') {
-    return res.status(409).json({
-      error: {
-        code: 'REFERENCED_ROW_DEPENDENCY',
-        message: 'Cannot delete or update row because other records depend on it.'
-      }
-    });
+    return send(409, 'REFERENCED_ROW_DEPENDENCY', 'Cannot delete or update row because other records depend on it.');
   }
 
-  // Handle validation or 400 Bad Request
-  if (err.statusCode === 400 || err.name === 'ValidationError') {
-    return res.status(400).json({
-      error: {
-        code: 'BAD_REQUEST',
-        message: err.message
-      }
-    });
-  }
-
-  // Handle 404 Not Found
-  if (err.statusCode === 404) {
-    return res.status(404).json({
-      error: {
-        code: 'NOT_FOUND',
-        message: err.message || 'Resource not found'
-      }
-    });
-  }
-
-  // Default internal server error (never leak raw SQL or stack traces)
-  res.status(500).json({
-    error: {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'An unexpected database or server error occurred.'
+  // Application errors (AppError, ValidationError) carry their own status.
+  const status = Number(err.statusCode) || (err.name === 'ValidationError' ? 400 : 500);
+  if (status >= 400 && status < 500) {
+    if (status === 429 && err.retryAfterSeconds) {
+      res.setHeader('Retry-After', String(err.retryAfterSeconds));
     }
-  });
+    return send(status, err.code, err.message, err.details);
+  }
+
+  // Anything else is a genuine server fault: log it, say nothing specific.
+  send(500, 'INTERNAL_SERVER_ERROR', 'An unexpected database or server error occurred.');
 }
 
 module.exports = errorHandler;

@@ -229,7 +229,7 @@ Give the assistant the system design, change log, frontend requirements, current
 
 ```text
 You are the senior developer for ElectroDB, an electronic-components
-reference catalogue and DBMS practical-assignment project.
+reference catalogue for electronic components.
 
 Follow the attached design guideline and change log as the project
 contract. Before changing files, inspect the existing code and SQL.

@@ -1,4 +1,4 @@
-# ElectroDB — Practical Assignment 11 Query Execution Timing Report
+# ElectroDB — Query Execution Timing Report
 
 **Generated At:** 2026-10-21T11:46:06.289Z  
 **Database Engine:** 10.4.32-MariaDB  

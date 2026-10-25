@@ -1,383 +1,1154 @@
 /**
  * ElectroDB Frontend Application
+ * Hash-based SPA router + catalog renderers + database lab console.
  */
+
+const ASSET_VERSION = (() => {
+  try {
+    const script =
+      document.currentScript ||
+      Array.from(document.scripts).find(tag => /\/app\.js(\?|$)/.test(tag.src));
+    const stamp = script ? new URL(script.src, window.location.href).searchParams.get('v') : null;
+    return stamp || '0';
+  } catch (err) {
+    return '0';
+  }
+})();
 
 const app = {
   contentEl: null,
+  currentXml: '',
 
-  init() {
+  /**
+   * Append the build stamp to an asset URL. Artwork is regenerated in place, so
+   * without this a browser or proxy can keep showing the previous drawing.
+   */
+  asset(path) {
+    if (!path) return path;
+    const value = String(path);
+    if (!value.startsWith('/')) return value;
+    const separator = value.includes('?') ? '&' : '?';
+    return `${value}${separator}v=${ASSET_VERSION}`;
+  },
+
+  // ----------------------------------------------------------------
+  // Bootstrapping
+  // ----------------------------------------------------------------
+  async init() {
     this.contentEl = document.getElementById('app-content');
+    this.initCursorGlow();
     this.bindEvents();
+    // The session has to be known before the first paint so the header and any
+    // bookmark control render in the right state.
+    await account.loadSession();
     this.handleRouting();
+  },
+
+  initCursorGlow() {
+    const glow = document.getElementById('glow');
+    if (!glow || !window.matchMedia) return;
+
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (!finePointer || this.prefersReducedMotion()) return;
+
+    // Follow the pointer with a lerp on a composited transform instead of
+    // writing left/top on every mousemove, which keeps the glow smooth.
+    const position = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+    const target = { ...position };
+    let frame = null;
+    let visible = false;
+
+    const render = () => {
+      position.x += (target.x - position.x) * 0.16;
+      position.y += (target.y - position.y) * 0.16;
+      glow.style.transform = `translate3d(${position.x.toFixed(2)}px, ${position.y.toFixed(2)}px, 0) translate(-50%, -50%)`;
+
+      const settled = Math.abs(target.x - position.x) < 0.4 && Math.abs(target.y - position.y) < 0.4;
+      frame = settled && !visible ? null : window.requestAnimationFrame(render);
+    };
+
+    const start = () => {
+      visible = true;
+      glow.classList.add('is-active');
+      if (frame === null) frame = window.requestAnimationFrame(render);
+    };
+
+    document.addEventListener('mousemove', e => {
+      target.x = e.clientX;
+      target.y = e.clientY;
+      start();
+    });
+
+    document.addEventListener('mouseleave', () => {
+      visible = false;
+      glow.classList.remove('is-active');
+      if (frame === null) frame = window.requestAnimationFrame(render);
+    });
   },
 
   bindEvents() {
     window.addEventListener('hashchange', () => this.handleRouting());
 
-    // Search input enter handler
+    // Header search → search route
     const searchInput = document.getElementById('global-search-input');
     if (searchInput) {
       searchInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
-          const q = searchInput.value.trim();
-          if (q) {
-            window.location.hash = `#/search?q=${encodeURIComponent(q)}`;
-          }
+          e.preventDefault();
+          this.goToSearch(searchInput.value.trim());
         }
       });
     }
 
-    // Modal close
+    // Delegated form submissions (all forms are rendered dynamically)
+    document.addEventListener('submit', e => {
+      const kind = e.target && e.target.getAttribute('data-form');
+
+      if (kind === 'hero-search') {
+        e.preventDefault();
+        const input = e.target.querySelector('input[type="search"], input');
+        this.goToSearch(input ? input.value.trim() : '');
+      } else if (kind === 'insert-component') {
+        this.handleInsertComponent(e);
+      } else if (kind === 'create-user') {
+        this.handleCreateUser(e);
+      } else if (['login', 'register', 'profile', 'password', 'collection'].includes(kind)) {
+        e.preventDefault();
+        account.handleForm(kind, e.target);
+      }
+    });
+
+    // Delegated select changes
+    document.addEventListener('change', e => {
+      const control = e.target.closest('[data-change]');
+      if (control && control.getAttribute('data-change') === 'catalog-filter') {
+        this.onCatalogFilterChange(control.value);
+      }
+
+      // Administration: a role change is applied through the API, which is the
+      // only place the decision is actually made.
+      const roleSelect = e.target.closest('[data-action="admin-set-role"]');
+      if (roleSelect) {
+        account.setUserRole(Number(roleSelect.getAttribute('data-arg')), roleSelect.value);
+      }
+    });
+
+    // Delegated range sliders: paint the filled part of the track and react.
+    const syncRange = input => {
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const value = Number(input.value);
+      const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+      input.style.setProperty('--range-progress', `${pct}%`);
+    };
+
+    document.addEventListener('input', e => {
+      const input = e.target;
+      if (!input || input.type !== 'range') return;
+      syncRange(input);
+      const output = input.parentElement && input.parentElement.querySelector('.range-row-value');
+      if (output) output.textContent = input.value;
+    });
+
+    // Paint any sliders that rendered with the markup.
+    const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(syncRange);
+    this.paintRanges = paintRanges;
+
+    // Hide images that fail to load (delegated error handler; CSP-safe)
+    document.addEventListener('error', e => {
+      const target = e.target;
+      if (target && target.tagName === 'IMG' && target.hasAttribute('data-hide-on-error')) {
+        target.classList.add('no-art');
+        target.removeAttribute('data-hide-on-error');
+      }
+    }, true);
+
+    // Delegated clicks: modal, image previews, mobile nav
     document.addEventListener('click', e => {
       if (e.target.matches('.modal-overlay') || e.target.closest('.modal-close-btn')) {
         this.closeModal();
+        return;
+      }
+
+      const actionTrigger = e.target.closest('[data-action]');
+      if (actionTrigger) {
+        this.handleAction(
+          actionTrigger.getAttribute('data-action'),
+          actionTrigger.getAttribute('data-arg'),
+          actionTrigger
+        );
+        return;
+      }
+
+      const imageTrigger = e.target.closest('[data-open-image]');
+      if (imageTrigger) {
+        this.openImageModal(
+          imageTrigger.getAttribute('data-open-image'),
+          imageTrigger.getAttribute('data-open-title') || 'Diagram'
+        );
+        return;
+      }
+
+      if (!e.target.closest('.navbar')) this.closeMobileNav();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        this.closeModal();
+        this.closeMobileNav();
+      }
+
+      // "/" focuses the header search when not already typing
+      if (e.key === '/' && !/^(input|textarea|select)$/i.test(document.activeElement.tagName)) {
+        const input = document.getElementById('global-search-input');
+        if (input) {
+          e.preventDefault();
+          input.focus();
+        }
       }
     });
+
+    const navToggle = document.getElementById('nav-toggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', () => {
+        const navbar = document.getElementById('site-navbar');
+        const open = navbar.classList.toggle('nav-open');
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    document.querySelectorAll('#nav-links a').forEach(link => {
+      link.addEventListener('click', () => this.closeMobileNav());
+    });
+  },
+
+  handleAction(action, arg, element) {
+    switch (action) {
+      case 'switch-lab-tab':
+        this.switchLabTab(arg, element);
+        break;
+      case 'show-add-user':
+        this.showAddUserModal();
+        break;
+      case 'load-app-users':
+        this.loadAppUsers();
+        break;
+      case 'load-audit-log':
+        this.loadAuditLog();
+        break;
+      case 'run-cursor-all':
+        this.runCursorAll();
+        break;
+      case 'run-cursor-limited':
+        this.runCursorLimited();
+        break;
+      case 'run-sum-routines':
+        this.runSumRoutines();
+        break;
+      case 'load-timing-report':
+        this.loadTimingReport();
+        break;
+      case 'load-dashboard':
+        this.loadDashboard();
+        break;
+      case 'delete-user':
+        this.handleDeleteUser(Number(arg));
+        break;
+      case 'download-xml':
+        this.downloadXml(this.currentXml, arg);
+        break;
+      case 'retry':
+        this.handleRouting();
+        break;
+      case 'sign-out':
+        account.signOut();
+        break;
+      case 'fill-demo-account':
+        account.fillDemoAccount(arg);
+        break;
+      case 'toggle-bookmark':
+        account.toggleBookmark(arg, element);
+        break;
+      case 'open-collection-picker':
+        this.openModal('Add to a collection', '<div id="collection-picker"><p class="modal-lead">Loading your collections…</p></div>');
+        account.collectionPicker(Number(arg), document.getElementById('collection-picker'));
+        break;
+      case 'add-to-collection':
+        account.addToCollection(Number(arg));
+        break;
+      case 'remove-from-collection':
+        account.removeFromCollection(Number(element.getAttribute('data-collection')), Number(arg));
+        break;
+      case 'delete-collection':
+        account.deleteCollection(Number(arg));
+        break;
+      case 'clear-recent':
+        account.clearRecent();
+        break;
+      case 'admin-refresh':
+        account.renderAdmin();
+        break;
+      default:
+        console.warn('Unknown action:', action);
+    }
+  },
+
+  closeMobileNav() {
+    const navbar = document.getElementById('site-navbar');
+    const navToggle = document.getElementById('nav-toggle');
+    if (navbar) navbar.classList.remove('nav-open');
+    if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+  },
+
+  goToSearch(query) {
+    if (!query) {
+      window.location.hash = '#/search';
+      return;
+    }
+    const target = `#/search?q=${encodeURIComponent(query)}`;
+    // Already showing this result set: re-rendering would replay the page
+    // animation for a click that changed nothing, which is exactly the kind of
+    // flicker worth avoiding.
+    if (window.location.hash === target) return;
+    window.location.hash = target;
   },
 
   // ----------------------------------------------------------------
   // Routing
   // ----------------------------------------------------------------
+  parseHash() {
+    const raw = window.location.hash || '#/';
+    const [rawPath, rawQuery = ''] = raw.replace(/^#/, '').split('?');
+    const segments = rawPath
+      .split('/')
+      .filter(Boolean)
+      .map(segment => {
+        try {
+          return decodeURIComponent(segment);
+        } catch (err) {
+          return segment;
+        }
+      });
+
+    return {
+      segments,
+      params: new URLSearchParams(rawQuery),
+      section: segments[0] || 'home'
+    };
+  },
+
   async handleRouting() {
-    const hash = window.location.hash || '#/';
-    this.updateActiveNav(hash);
+    const route = this.parseHash();
+    const { section } = route;
 
-    try {
-      this.renderLoading();
+    this.updateActiveNav(section);
+    this.closeMobileNav();
 
-      if (hash === '#/' || hash === '#' || hash === '') {
-        await this.renderHome();
-      } else if (hash.startsWith('#/categories/')) {
-        const id = hash.replace('#/categories/', '').split('?')[0];
-        const params = new URLSearchParams(hash.split('?')[1] || '');
-        const page = parseInt(params.get('page') || '1', 10);
-        await this.renderCategory(id, page);
-      } else if (hash.startsWith('#/components/')) {
-        const id = hash.replace('#/components/', '').split('?')[0];
-        await this.renderComponentDetail(id);
-      } else if (hash.startsWith('#/search')) {
-        const params = new URLSearchParams(hash.split('?')[1] || '');
-        const q = params.get('q') || '';
-        const page = parseInt(params.get('page') || '1', 10);
-        await this.renderSearch(q, page);
-      } else if (hash.startsWith('#/lab')) {
-        await this.renderLabConsole();
-      } else {
-        this.renderNotFound();
+    const render = async () => {
+      const { segments, params } = route;
+      try {
+        if (section === 'home') {
+          await this.renderHome();
+        } else if (section === 'catalog') {
+          await this.renderCatalog(Number(params.get('page')) || 1, params.get('category') || '');
+        } else if (section === 'categories' && segments.length === 1) {
+          await this.renderCategoriesIndex();
+        } else if (section === 'categories' && segments.length >= 2) {
+          await this.renderCategory(segments[1], Number(params.get('page')) || 1);
+        } else if (section === 'tags' && segments.length === 1) {
+          await this.renderTagsIndex();
+        } else if (section === 'tags' && segments.length >= 2) {
+          await this.renderTagDetail(segments[1], Number(params.get('page')) || 1);
+        } else if (section === 'components' && segments.length >= 2) {
+          await this.renderComponentDetail(segments[1]);
+        } else if (section === 'search') {
+          await this.renderSearch(params.get('q') || '', Number(params.get('page')) || 1);
+        } else if (section === 'login') {
+          account.renderLogin(params);
+          await account.renderDemoAccounts();
+        } else if (section === 'register') {
+          if (account.isSignedIn()) {
+            window.location.hash = '#/dashboard';
+            return;
+          }
+          account.renderRegister();
+        } else if (section === 'profile') {
+          await account.renderProfile();
+        } else if (section === 'bookmarks') {
+          await account.renderBookmarks();
+        } else if (section === 'collections' && segments.length === 1) {
+          await account.renderCollections();
+        } else if (section === 'collections' && segments.length >= 2) {
+          await account.renderCollection(segments[1]);
+        } else if (section === 'dashboard') {
+          await account.renderDashboard();
+        } else if (section === 'admin') {
+          await account.renderAdmin();
+        } else if (section === 'lab') {
+          // The Lab Console is an internal tool. Hiding the link is a courtesy;
+          // the API refuses these routes to anyone who is not Developer or DBA.
+          if (account.canAuthor()) {
+            await this.renderLabConsole();
+          } else if (account.isSignedIn()) {
+            account.renderForbidden();
+          } else {
+            window.location.hash = `#/login?next=${encodeURIComponent('#/lab')}`;
+            return;
+          }
+        } else {
+          this.renderNotFound();
+        }
+      } catch (err) {
+        if (err && err.status === 404) {
+          this.renderNotFound(err.message);
+        } else {
+          this.renderError(err);
+        }
       }
+    };
+
+    await render();
+
+    // Reset the scroll position together with the new markup, in the same task
+    // as the render, so the reader never sees the old page jump first.
+    this.scrollToTop();
+  },
+
+  updateActiveNav(section) {
+    document.querySelectorAll('.navbar [data-route]').forEach(link => {
+      const active = link.getAttribute('data-route') === section;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+  },
+
+  scrollToTop() {
+    if (typeof window.scrollTo !== 'function') return;
+    try {
+      window.scrollTo({ top: 0, behavior: 'auto' });
     } catch (err) {
-      this.renderError(err);
+      window.scrollTo(0, 0);
     }
   },
 
-  updateActiveNav(hash) {
-    document.querySelectorAll('.nav-link').forEach(link => {
-      const href = link.getAttribute('href');
-      if (href === hash || (hash.startsWith('#/lab') && href === '#/lab') || (hash === '#/' && href === '#/')) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
+  setTitle(title) {
+    document.title = title ? `${title} - ElectroDB` : 'ElectroDB - Electronic Components Reference Catalog';
+  },
+
+  // ----------------------------------------------------------------
+  // Shared states
+  // ----------------------------------------------------------------
+  prefersReducedMotion() {
+    try {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (err) {
+      return false;
+    }
   },
 
   renderLoading() {
     this.contentEl.innerHTML = `
-      <div style="text-align: center; padding: 4rem 1rem;">
-        <div style="display: inline-block; width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-        <p style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">Loading catalogue data from database...</p>
+      <div class="loading-state" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Loading catalog data from the database…</p>
       </div>
-      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     `;
   },
 
   renderError(err) {
+    const message = this.escapeHtml((err && err.message) || 'Failed to load this page.');
     this.contentEl.innerHTML = `
-      <div class="alert alert-error" style="margin-top: 2rem;">
-        <strong>Error:</strong> ${this.escapeHtml(err.message || 'Failed to load page.')}
-      </div>
-      <div style="text-align: center; margin-top: 1.5rem;">
-        <a href="#/" class="btn btn-primary">Return to Catalogue Home</a>
+      <div class="page">
+        <div class="empty-state" style="margin-top: 3rem;">
+          <h3>Something went wrong</h3>
+          <p>${message}</p>
+          <button class="btn btn-primary" type="button" data-action="retry">Try again</button>
+          <a class="btn btn-secondary" href="#/">Back to home</a>
+        </div>
       </div>
     `;
   },
 
-  renderNotFound() {
+  renderNotFound(message) {
+    this.setTitle('Not found');
     this.contentEl.innerHTML = `
-      <div style="text-align: center; padding: 4rem 1rem;">
-        <h2 style="font-size: 3rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">404</h2>
-        <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 2rem;">The requested category or component could not be found.</p>
-        <a href="#/" class="btn btn-primary">Browse Catalogue</a>
+      <div class="page">
+        <div class="empty-state" style="margin-top: 4rem;">
+          <p class="page-eyebrow" style="color: var(--accent);">Error 404</p>
+          <h3 style="font-size: 2.4rem; letter-spacing: -0.02em;">Page not found</h3>
+          <p>${this.escapeHtml(message || 'The requested category, tag, or component could not be found.')}</p>
+          <a href="#/catalog" class="btn btn-primary">Browse the catalog</a>
+          <a href="#/" class="btn btn-secondary">Return home</a>
+        </div>
       </div>
     `;
   },
 
   // ----------------------------------------------------------------
-  // Home View
+  // Home
   // ----------------------------------------------------------------
   async renderHome() {
-    const categoriesRes = await api.getCategories();
-    const categories = categoriesRes.data;
+    this.setTitle();
 
-    let html = `
-      <div class="hero-banner">
-        <h2 class="hero-title">Electronic Components Reference Catalogue</h2>
-        <p class="hero-subtitle">
-          Comprehensive reference for digital logic, semiconductors, analog circuits, and sensors with truth tables, state machine diagrams, timing waveforms, and LaTeX equations.
-        </p>
-        <div class="hero-badges">
-          <span class="hero-badge"><span>⚡</span> SVNIT CS203 DBMS Project</span>
-          <span class="hero-badge"><span>📚</span> 147 Components Seeded</span>
-          <span class="hero-badge"><span>📐</span> 192 SVG Vector Diagrams</span>
-          <span class="hero-badge"><span>🧪</span> Academic Lab Console</span>
-        </div>
-      </div>
+    const [categoryRes, tagRes, catalogRes] = await Promise.all([
+      api.getCategories(),
+      api.getTags().catch(() => ({ data: [] })),
+      api.getCatalog(1, 6).catch(() => ({ data: { items: [] } }))
+    ]);
 
-      <div class="section-header">
-        <h3 class="section-title">Component Categories</h3>
-        <span style="font-size: 0.85rem; color: #64748b;">${categories.length} Primary Families</span>
-      </div>
+    const categories = categoryRes.data || [];
+    const tags = (tagRes.data || []).slice(0, 8);
+    const featured = (catalogRes.data && catalogRes.data.items) || [];
 
-      <div class="categories-grid">
-    `;
-
+    let totalComponents = 0;
+    let subcategoryCount = 0;
     categories.forEach(cat => {
-      html += `
-        <a href="#/categories/${cat.category_id}" class="category-card">
-          <div>
-            <div class="category-header">
-              <span class="category-title">${this.escapeHtml(cat.name)}</span>
-              <span class="count-pill">${cat.componentCount} items</span>
-            </div>
-            <p class="category-desc">${this.escapeHtml(cat.description || '')}</p>
-          </div>
-          <div class="subcategories-list">
-            ${cat.children.map(ch => `
-              <span class="subcat-pill">${this.escapeHtml(ch.name)} (${ch.component_count})</span>
-            `).join('')}
-          </div>
-        </a>
-      `;
+      totalComponents += Number(cat.componentCount || 0);
+      (cat.children || []).forEach(child => {
+        totalComponents += Number(child.component_count || 0);
+        subcategoryCount += 1;
+      });
     });
 
-    html += `</div>`;
-    this.contentEl.innerHTML = html;
-  },
+    const categoryTags = categories
+      .map(cat => `<a class="tag" href="#/categories/${encodeURIComponent(cat.category_id)}">${this.escapeHtml(cat.name)}</a>`)
+      .join('');
 
-  // ----------------------------------------------------------------
-  // Category View
-  // ----------------------------------------------------------------
-  async renderCategory(idOrSlug, page = 1) {
-    const res = await api.getCategory(idOrSlug, page, 24);
-    const { category, breadcrumbs, children, components, pagination } = res.data;
+    const categoryCards = categories.map(cat => this.categoryCard(cat)).join('');
 
     let html = `
-      <nav class="breadcrumbs">
-        <a href="#/">Home</a>
-        ${breadcrumbs.map(b => `
-          <span class="breadcrumb-sep">/</span>
-          <a href="#/categories/${b.category_id}">${this.escapeHtml(b.name)}</a>
-        `).join('')}
-      </nav>
+      <div class="page">
+        <section class="hero">
+          <div class="hero-text">
+            <h1>Electronic<br><span>Components</span></h1>
+            <p class="hero-lead">
+              A data-driven reference for digital logic, semiconductors, analog circuits, sensors,
+              and electromechanical parts - complete with truth tables, state diagrams, timing
+              waveforms, LaTeX equations, and normalized specifications.
+            </p>
 
-      <div style="margin-bottom: 2rem;">
-        <h2 style="font-size: 1.85rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">
-          ${this.escapeHtml(category.name)}
-        </h2>
-        <p style="color: #64748b; font-size: 1rem; max-width: 800px;">
-          ${this.escapeHtml(category.description || 'Reference catalogue collection.')}
-        </p>
-      </div>
-    `;
+            <form class="hero-search" id="hero-search-form" role="search" data-form="hero-search">
+              <input type="search" name="q" placeholder="Search ${totalComponents} components, categories, and tags…" aria-label="Search components">
+              <button type="submit">Search</button>
+            </form>
 
-    // Subcategories (if any)
-    if (children && children.length > 0) {
-      html += `
-        <div class="section-header">
-          <h3 class="section-title">Subcategories</h3>
-          <span style="font-size: 0.85rem; color: #64748b;">${children.length} subfamilies</span>
-        </div>
-        <div class="categories-grid" style="margin-bottom: 2.5rem;">
-          ${children.map(ch => `
-            <a href="#/categories/${ch.category_id}" class="category-card">
-              <div class="category-header">
-                <span class="category-title">${this.escapeHtml(ch.name)}</span>
-                <span class="count-pill">${ch.component_count} items</span>
-              </div>
-              <p class="category-desc">${this.escapeHtml(ch.description || '')}</p>
-            </a>
-          `).join('')}
-        </div>
-      `;
-    }
+            <div class="hero-tags">${categoryTags}</div>
 
-    // Components in this category
-    html += `
-      <div class="section-header">
-        <h3 class="section-title">Components (${pagination.total})</h3>
-        <span style="font-size: 0.85rem; color: #64748b;">Page ${pagination.page} of ${pagination.totalPages}</span>
-      </div>
-    `;
-
-    if (!components || components.length === 0) {
-      html += `
-        <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 2.5rem; text-align: center; color: #64748b;">
-          <p>No direct components registered in this category level.</p>
-          ${children.length > 0 ? '<p style="margin-top: 0.5rem; font-size: 0.85rem;">Select one of the subcategories above to explore specific components.</p>' : ''}
-        </div>
-      `;
-    } else {
-      html += `<div class="components-grid">`;
-      components.forEach(comp => {
-        html += `
-          <a href="#/components/${comp.slug || comp.component_id}" class="component-card">
-            <span class="component-card-title">${this.escapeHtml(comp.name)}</span>
-            ${comp.is_illustrative ? '<span class="component-card-badge" style="color: #d97706;">Illustrative Model</span>' : ''}
-            <p class="component-card-desc">${this.escapeHtml(comp.short_description || '')}</p>
-          </a>
-        `;
-      });
-      html += `</div>`;
-
-      // Pagination
-      if (pagination.totalPages > 1) {
-        html += this.renderPagination(pagination, `#/categories/${idOrSlug}`);
-      }
-    }
-
-    this.contentEl.innerHTML = html;
-  },
-
-  // ----------------------------------------------------------------
-  // Component Detail View
-  // ----------------------------------------------------------------
-  async renderComponentDetail(idOrSlug) {
-    const res = await api.getComponent(idOrSlug);
-    const comp = res.data;
-
-    let html = `
-      <nav class="breadcrumbs">
-        <a href="#/">Home</a>
-        ${comp.breadcrumbs.map(b => `
-          <span class="breadcrumb-sep">/</span>
-          <a href="#/categories/${b.category_id}">${this.escapeHtml(b.name)}</a>
-        `).join('')}
-        <span class="breadcrumb-sep">/</span>
-        <span>${this.escapeHtml(comp.name)}</span>
-      </nav>
-
-      <!-- Hero Header -->
-      <div class="component-hero">
-        <div>
-          <h2 class="component-hero-title">${this.escapeHtml(comp.name)}</h2>
-          <div class="component-meta-tags">
-            <span class="badge-tag primary">${this.escapeHtml(comp.category.name)}</span>
-            ${comp.isIllustrative ? '<span class="badge-tag illustrative">Illustrative Model</span>' : ''}
-            ${comp.isPublished ? '<span class="badge-tag published">Published</span>' : ''}
-          </div>
-          <p class="component-hero-desc">${this.escapeHtml(comp.description || comp.shortDescription || '')}</p>
-          
-          ${comp.datasheetUrl ? `
-            <div style="margin-top: 1.25rem;">
-              <a href="${this.escapeHtml(comp.datasheetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
-                📄 View Manufacturer Datasheet
-              </a>
+            <div class="hero-actions">
+              <a href="#/catalog" class="btn btn-primary">Browse the catalog</a>
+              <a href="#/lab" class="btn btn-secondary">Open lab console</a>
             </div>
-          ` : ''}
-        </div>
 
-        <!-- Circuit Symbol Card -->
-        <div class="symbol-preview-card">
-          ${comp.circuitSymbolPath ? `
-            <img src="${this.escapeHtml(comp.circuitSymbolPath)}" alt="${this.escapeHtml(comp.name)} Symbol" class="symbol-preview-img" onerror="this.style.display='none'" />
-            <span class="symbol-label">Circuit Symbol</span>
-          ` : `
-            <div style="font-size: 2rem; color: #94a3b8;">⚡</div>
-            <span class="symbol-label">${this.escapeHtml(comp.name)}</span>
-          `}
-        </div>
-      </div>
+            <div class="hero-stats">
+              <div class="hero-stat">
+                <strong>${totalComponents}</strong>
+                <span>Components</span>
+              </div>
+              <div class="hero-stat">
+                <strong>${categories.length}</strong>
+                <span>Categories</span>
+              </div>
+              <div class="hero-stat">
+                <strong>${subcategoryCount}</strong>
+                <span>Subfamilies</span>
+              </div>
+              <div class="hero-stat">
+                <strong>192</strong>
+                <span>SVG diagrams</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Component Categories</h2>
+            <a href="#/categories" class="section-link">All categories <span class="link-arrow" aria-hidden="true">→</span></a>
+          </div>
+          <div class="categories-grid">${categoryCards}</div>
+        </section>
     `;
 
-    // Educational Content Sections (Structured Tables, LaTeX Equations, Prose)
-    if (comp.content && comp.content.length > 0) {
-      comp.content.forEach(sec => {
-        if (sec.sectionKey === 'overview') return; // already in hero
-
-        html += `
-          <section class="detail-section">
-            <h3 class="detail-section-title">${this.escapeHtml(sec.title)}</h3>
-        `;
-
-        if (sec.type === 'TABLE' && sec.content) {
-          html += this.renderTableContent(sec.content);
-        } else if (sec.type === 'EQUATION' && sec.content) {
-          html += this.renderEquationContent(sec.content);
-        } else if (sec.type === 'TEXT') {
-          html += `<p style="line-height: 1.7; color: #334155;">${this.escapeHtml(sec.content)}</p>`;
-        } else if (sec.type === 'DOCUMENT') {
-          html += `<p><a href="${this.escapeHtml(sec.content)}" target="_blank" class="btn btn-secondary">Open Document</a></p>`;
-        } else {
-          html += `<p>${this.escapeHtml(typeof sec.content === 'string' ? sec.content : JSON.stringify(sec.content))}</p>`;
-        }
-
-        if (sec.caption) {
-          html += `<p class="table-caption">${this.escapeHtml(sec.caption)}</p>`;
-        }
-
-        html += `</section>`;
-      });
-    }
-
-    // Component Diagrams (State diagrams, timing diagrams, circuit diagrams)
-    if (comp.diagrams && comp.diagrams.length > 0) {
+    if (featured.length) {
       html += `
-        <section class="detail-section">
-          <h3 class="detail-section-title">Diagrams & Visual Assets</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
-            ${comp.diagrams.map(diag => `
-              <div class="diagram-container">
-                <div class="diagram-svg-wrapper">
-                  <img src="${this.escapeHtml(diag.imagePath)}" alt="${this.escapeHtml(diag.altText || diag.title)}" style="max-height: 260px;" />
-                </div>
-                <strong style="margin-top: 0.75rem; color: #0f172a; font-size: 0.95rem;">${this.escapeHtml(diag.title)}</strong>
-                ${diag.caption ? `<p class="diagram-caption">${this.escapeHtml(diag.caption)}</p>` : ''}
-                <button class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;" onclick="app.openImageModal('${this.escapeHtml(diag.imagePath)}', '${this.escapeHtml(diag.title)}')">
-                  🔍 View Fullscreen
-                </button>
-              </div>
-            `).join('')}
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">From the Catalog</h2>
+            <a href="#/catalog" class="section-link">View all components <span class="link-arrow" aria-hidden="true">→</span></a>
+          </div>
+          <div class="components-grid">
+            ${featured.map(comp => this.componentCard(comp)).join('')}
           </div>
         </section>
       `;
     }
 
-    // Normalized Specifications Table
-    if (comp.specifications && comp.specifications.length > 0) {
+    if (tags.length) {
+      html += `
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Browse by Tag</h2>
+            <a href="#/tags" class="section-link">All tags <span class="link-arrow" aria-hidden="true">→</span></a>
+          </div>
+          <div class="tag-cloud">
+            ${tags
+              .map(
+                tag => `
+                  <a class="tag-pill" href="#/tags/${encodeURIComponent(tag.slug)}">
+                    #${this.escapeHtml(tag.name)}
+                    <span>${Number(tag.component_count || 0)}</span>
+                  </a>
+                `
+              )
+              .join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    html += '</div>';
+    this.contentEl.innerHTML = html;
+  },
+
+  // ----------------------------------------------------------------
+  // Category index
+  // ----------------------------------------------------------------
+  async renderCategoriesIndex() {
+    this.setTitle('Categories');
+
+    const res = await api.getCategories();
+    const categories = res.data || [];
+
+    let subcategoryCount = 0;
+    let componentCount = 0;
+    categories.forEach(cat => {
+      subcategoryCount += (cat.children || []).length;
+      componentCount += Number(cat.componentCount || 0);
+      (cat.children || []).forEach(child => {
+        componentCount += Number(child.component_count || 0);
+      });
+    });
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        ${this.breadcrumbs([{ label: 'Home', href: '#/' }, { label: 'Categories' }])}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Catalog hierarchy</p>
+          <h1 class="page-title">Component Categories</h1>
+          <p class="page-lead">
+            ${categories.length} primary families, ${subcategoryCount} subfamilies, and
+            ${componentCount} published components. Every category page is generated from the
+            database hierarchy rather than hard-coded records.
+          </p>
+        </header>
+
+        <div class="categories-grid">
+          ${categories.map(cat => this.categoryCard(cat)).join('')}
+        </div>
+      </div>
+    `;
+  },
+
+  // ----------------------------------------------------------------
+  // Category detail
+  // ----------------------------------------------------------------
+  async renderCategory(idOrSlug, page = 1) {
+    const res = await api.getCategory(idOrSlug, page, 24);
+    const { category, breadcrumbs = [], children = [], components = [], pagination } = res.data;
+
+    this.setTitle(category.name);
+
+    const lastIndex = breadcrumbs.length - 1;
+    const crumbs = [
+      { label: 'Home', href: '#/' },
+      ...breadcrumbs.map((crumb, index) => ({
+        label: crumb.name,
+        href: index === lastIndex ? undefined : `#/categories/${crumb.category_id}`
+      }))
+    ];
+    if (!breadcrumbs.length) crumbs.push({ label: category.name });
+    if (crumbs[crumbs.length - 1].label !== category.name) crumbs.push({ label: category.name });
+
+    let html = `
+      <div class="page">
+        ${this.breadcrumbs(crumbs)}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Category</p>
+          <h1 class="page-title">${this.escapeHtml(category.name)}</h1>
+          <p class="page-lead">${this.escapeHtml(category.description || 'Reference catalog collection.')}</p>
+        </header>
+    `;
+
+    if (children.length) {
+      html += `
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Subcategories</h2>
+            <span class="section-meta">${children.length} subfamilies</span>
+          </div>
+          <div class="subcategory-grid">
+            ${children.map((child, index) => this.subcategoryCard(child, index)).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    // A branch category holds components only inside its subcategories, so the
+    // "Components" heading is not printed when there is nothing under it. The
+    // section only appears when there is something to read - either components,
+    // or an empty leaf that deserves an explanation.
+    if (components.length || !children.length) {
+      html += `
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">Components</h2>
+            <span class="section-meta">${pagination ? pagination.total : 0} items</span>
+          </div>
+      `;
+
+      if (!components.length) {
+        html += `
+          <div class="empty-state">
+            <h3>No components registered at this level</h3>
+            <p>This category does not have any published components yet.</p>
+          </div>
+        `;
+      } else {
+        html += `<div class="components-grid">${components
+          .map(comp => this.componentCard(comp))
+          .join('')}</div>`;
+        if (pagination && pagination.totalPages > 1) {
+          html += this.renderPagination(pagination, `#/categories/${encodeURIComponent(idOrSlug)}`);
+        }
+      }
+
+      html += '</section>';
+    }
+
+    html += '</div>';
+    this.contentEl.innerHTML = html;
+  },
+
+  // ----------------------------------------------------------------
+  // Catalog
+  // ----------------------------------------------------------------
+  async renderCatalog(page = 1, categoryFilter = '') {
+    this.setTitle('Catalog');
+
+    const [categoryRes, catalogRes] = await Promise.all([
+      api.getCategories(),
+      api.getCatalog(page, 24, categoryFilter || undefined)
+    ]);
+
+    const categories = categoryRes.data || [];
+    const items = (catalogRes.data && catalogRes.data.items) || [];
+    const pagination = (catalogRes.data && catalogRes.data.pagination) || { page: 1, totalPages: 1, total: 0 };
+
+    const options = [`<option value="">All categories</option>`];
+    categories.forEach(cat => {
+      options.push(`<option value="${cat.category_id}" ${String(categoryFilter) === String(cat.category_id) ? 'selected' : ''}>${this.escapeHtml(cat.name)}</option>`);
+      (cat.children || []).forEach(child => {
+        options.push(`<option value="${child.category_id}" ${String(categoryFilter) === String(child.category_id) ? 'selected' : ''}>&nbsp;&nbsp;${this.escapeHtml(child.name)}</option>`);
+      });
+    });
+
+    const baseUrl = categoryFilter
+      ? `#/catalog?category=${encodeURIComponent(categoryFilter)}`
+      : '#/catalog';
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        ${this.breadcrumbs([{ label: 'Home', href: '#/' }, { label: 'Catalog' }])}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Full reference</p>
+          <h1 class="page-title">Component Catalog</h1>
+          <p class="page-lead">
+            Browse every published component in the database. Filter by category or jump straight
+            to a detail page for tables, equations, diagrams, and specifications.
+          </p>
+        </header>
+
+        <div class="filter-bar">
+          <label class="filter-field">
+            <span class="filter-label">Filter by category</span>
+            <select class="filter-select" data-change="catalog-filter">
+              ${options.join('')}
+            </select>
+          </label>
+          <span class="filter-note">${pagination.total} component${pagination.total === 1 ? '' : 's'} found</span>
+        </div>
+
+        ${
+          items.length
+            ? `<div class="components-grid">${items.map(comp => this.componentCard(comp)).join('')}</div>`
+            : `<div class="empty-state">
+                 <h3>No components in this view</h3>
+                 <p>Try clearing the category filter or pick another family.</p>
+                 <a class="btn btn-secondary" href="#/catalog">Clear filter</a>
+               </div>`
+        }
+
+        ${items.length ? this.renderPagination(pagination, baseUrl) : ''}
+      </div>
+    `;
+  },
+
+  onCatalogFilterChange(value) {
+    const target = value ? `#/catalog?category=${encodeURIComponent(value)}` : '#/catalog';
+    if (window.location.hash === target) this.handleRouting();
+    else window.location.hash = target;
+  },
+
+  // ----------------------------------------------------------------
+  // Tags
+  // ----------------------------------------------------------------
+  async renderTagsIndex() {
+    this.setTitle('Tags');
+
+    const res = await api.getTags();
+    const tags = res.data || [];
+    const totalRelationships = tags.reduce((sum, tag) => sum + Number(tag.component_count || 0), 0);
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        ${this.breadcrumbs([{ label: 'Home', href: '#/' }, { label: 'Tags' }])}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Cross-cutting topics</p>
+          <h1 class="page-title">Component Tags</h1>
+          <p class="page-lead">
+            ${tags.length} reusable tags connect ${totalRelationships} component assignments across
+            technology families, logic styles, and application areas.
+          </p>
+        </header>
+
+        ${
+          tags.length
+            ? `<div class="tags-grid">
+                 ${tags
+                   .map(
+                     tag => `
+                       <a class="tag-card" href="#/tags/${encodeURIComponent(tag.slug)}">
+                         <span class="tag-card-name">${this.escapeHtml(tag.name)}</span>
+                         <span class="tag-card-meta">${Number(tag.component_count || 0)} components</span>
+                       </a>
+                     `
+                   )
+                   .join('')}
+               </div>`
+            : `<div class="empty-state"><h3>No tags yet</h3><p>Tag definitions will appear here once seeded.</p></div>`
+        }
+      </div>
+    `;
+  },
+
+  async renderTagDetail(idOrSlug, page = 1) {
+    const res = await api.getTag(idOrSlug, page, 24);
+    const { tag, components = [], pagination } = res.data;
+
+    this.setTitle(`#${tag.name}`);
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        ${this.breadcrumbs([
+          { label: 'Home', href: '#/' },
+          { label: 'Tags', href: '#/tags' },
+          { label: `#${tag.name}` }
+        ])}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Tag</p>
+          <h1 class="page-title">#${this.escapeHtml(tag.name)}</h1>
+          <p class="page-lead">
+            ${pagination ? pagination.total : components.length} component${(pagination ? pagination.total : components.length) === 1 ? '' : 's'} tagged
+            <code>${this.escapeHtml(tag.slug)}</code>.
+          </p>
+        </header>
+
+        ${
+          components.length
+            ? `<div class="components-grid">${components.map(comp => this.componentCard(comp)).join('')}</div>
+               ${this.renderPagination(pagination, `#/tags/${encodeURIComponent(idOrSlug)}`)}`
+            : `<div class="empty-state">
+                 <h3>Nothing tagged yet</h3>
+                 <p>No published components currently carry this tag.</p>
+                 <a class="btn btn-secondary" href="#/tags">Browse all tags</a>
+               </div>`
+        }
+      </div>
+    `;
+  },
+
+  // ----------------------------------------------------------------
+  // Search
+  // ----------------------------------------------------------------
+  async renderSearch(query, page = 1) {
+    this.setTitle(query ? `Search: ${query}` : 'Search');
+
+    const headerInput = document.getElementById('global-search-input');
+    if (headerInput) headerInput.value = query;
+
+    if (!query) {
+      this.contentEl.innerHTML = `
+        <div class="page">
+          ${this.breadcrumbs([{ label: 'Home', href: '#/' }, { label: 'Search' }])}
+          <header class="page-header">
+            <p class="page-eyebrow">Search</p>
+            <h1 class="page-title">Find a Component</h1>
+            <p class="page-lead">Search by component name or summary. Try “counter”, “flip-flop”, “diode”, “gate”, or “amplifier”.</p>
+          </header>
+          <form class="hero-search" id="hero-search-form" role="search" data-form="hero-search" style="max-width: 560px;">
+            <input type="search" name="q" placeholder="Search components…" aria-label="Search components" autofocus>
+            <button type="submit">Search</button>
+          </form>
+        </div>
+      `;
+      return;
+    }
+
+    const res = await api.search(query, page, 20);
+    const { items = [], pagination } = res.data;
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        ${this.breadcrumbs([
+          { label: 'Home', href: '#/' },
+          { label: 'Search', href: '#/search' },
+          { label: `“${query}”` }
+        ])}
+
+        <header class="page-header">
+          <p class="page-eyebrow">Search results</p>
+          <h1 class="page-title">“${this.escapeHtml(query)}”</h1>
+          <p class="page-lead">${pagination ? pagination.total : 0} matching component${(pagination ? pagination.total : 0) === 1 ? '' : 's'} found.</p>
+        </header>
+
+        ${
+          items.length
+            ? `<div class="components-grid">${items.map(comp => this.componentCard(comp)).join('')}</div>
+               ${this.renderPagination(pagination, `#/search?q=${encodeURIComponent(query)}`)}`
+            : `<div class="empty-state">
+                 <h3>No components matched your search</h3>
+                 <p>Try a broader term such as “counter”, “diode”, or “regulator”.</p>
+                 <a class="btn btn-secondary" href="#/catalog">Browse the full catalog</a>
+               </div>`
+        }
+      </div>
+    `;
+  },
+
+  // ----------------------------------------------------------------
+  // Component detail
+  // ----------------------------------------------------------------
+  async renderComponentDetail(idOrSlug) {
+    const res = await api.getComponent(idOrSlug);
+    const comp = res.data;
+    const compId = comp.componentId !== undefined ? comp.componentId : comp.component_id;
+
+    this.setTitle(comp.name);
+
+    // Recently viewed is the signed-in user's own history, so it is recorded
+    // here and only here; the API decides whose history that is.
+    if (account.isSignedIn() && compId) {
+      api.auth.recordView(compId).catch(() => {});
+    }
+
+    const categoryId = comp.category ? comp.category.categoryId || comp.category.id : null;
+    const categoryName = comp.category ? comp.category.name : 'Catalog';
+    const tags = comp.tags || [];
+
+    const crumbs = [
+      { label: 'Home', href: '#/' },
+      ...(comp.breadcrumbs || []).map(crumb => ({
+        label: crumb.name,
+        href: `#/categories/${crumb.category_id || crumb.categoryId}`
+      })),
+      { label: comp.name }
+    ];
+
+    // The description lives in the hero, directly beneath the title.
+    const heroLead =
+      comp.description || comp.shortDescription || '';
+
+    // Tags carry the classification; the category itself is already in the
+    // breadcrumb, so it is not repeated as a pill here.
+    const tagPills = tags
+      .filter(tag => tag && tag.slug && tag.slug !== 'educational-example')
+      .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
+      .join('');
+
+    const diagrams = comp.diagrams || [];
+    const byKind = kind => diagrams.filter(diagram => (diagram.kind || 'OTHER') === kind);
+    const symbolDiagram = byKind('SYMBOL')[0];
+    const circuitDiagrams = byKind('CIRCUIT');
+    const extraDiagrams = diagrams.filter(
+      diagram => !['SYMBOL', 'CIRCUIT', 'PINOUT'].includes(diagram.kind || 'OTHER')
+    );
+    const symbolPath = (symbolDiagram && symbolDiagram.imagePath) || comp.circuitSymbolPath;
+
+    let html = `
+      <div class="page">
+        ${this.breadcrumbs(crumbs)}
+
+        ${
+          categoryId
+            ? `<div class="crumbs-back">
+                 <a class="back-link" href="#/categories/${encodeURIComponent(categoryId)}">
+                   <span class="back-link-arrow" aria-hidden="true">←</span>
+                   Back to ${this.escapeHtml(categoryName)}
+                 </a>
+               </div>`
+            : ''
+        }
+
+        <section class="component-hero">
+          <div class="component-hero-main">
+            <h1 class="component-title">${this.escapeHtml(comp.name)}</h1>
+            ${tagPills ? `<div class="hero-tags">${tagPills}</div>` : ''}
+            <p class="component-hero-desc">${this.escapeHtml(heroLead)}</p>
+
+            <div class="component-actions">
+              ${compId ? account.bookmarkButton(compId, { labelled: true }) : ''}
+              ${
+                compId
+                  ? `<button class="btn btn-secondary btn-compact" type="button" data-action="open-collection-picker" data-arg="${compId}">Add to collection</button>`
+                  : ''
+              }
+              ${
+                comp.datasheetUrl
+                  ? `<a class="btn btn-primary" href="${this.escapeHtml(comp.datasheetUrl)}" target="_blank" rel="noopener noreferrer">Manufacturer datasheet</a>`
+                  : ''
+              }
+            </div>
+          </div>
+
+          ${
+            symbolPath
+              ? `<figure class="component-art">
+                   <img src="${this.escapeHtml(this.asset(symbolPath))}" alt="${this.escapeHtml(comp.name)} symbol" loading="lazy" data-hide-on-error>
+                 </figure>`
+              : `<div class="component-art component-art--empty" aria-hidden="true"><span>⚡</span></div>`
+          }
+        </section>
+    `;
+
+    // Circuit diagram, immediately after the hero. Logic gates are excluded:
+    // their implementation is the IC pinout shown with the specifications.
+    circuitDiagrams.forEach(diagram => {
       html += `
         <section class="detail-section">
-          <h3 class="detail-section-title">Technical Specifications</h3>
-          <div class="table-responsive">
+          <h2 class="section-title">Circuit Diagram</h2>
+          <figure class="diagram-body">
+            <img src="${this.escapeHtml(this.asset(diagram.imagePath))}" alt="${this.escapeHtml(
+              diagram.altText || `Circuit diagram for ${comp.name}`
+            )}" loading="lazy">
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(diagram.imagePath)}"
+                data-open-title="${this.escapeHtml(diagram.title || 'Circuit diagram')}"
+              >View fullscreen</button>
+            </div>
+          </figure>
+        </section>
+      `;
+    });
+
+    // Structured educational sections
+    (comp.content || []).forEach(section => {
+      if (section.sectionKey === 'overview') return;
+
+      html += `
+        <section class="detail-section">
+          <h2 class="section-title">${this.escapeHtml(section.title || 'Details')}</h2>
+          ${this.renderSectionBody(section)}
+        </section>
+      `;
+    });
+
+    // Supporting artwork. Each drawing becomes its own titled section, exactly
+    // like Truth Table or Equation - no grid of cards, no asset counter, no
+    // footnotes.
+    extraDiagrams.forEach(diagram => {
+      const kind = diagram.kind || 'OTHER';
+      const isState = kind === 'STATE';
+      const isTiming = kind === 'TIMING';
+      const heading =
+        kind === 'STATE' ? 'State Machine' : kind === 'TIMING' ? 'Timing Diagram' : diagram.title || 'Diagram';
+      const sizing = isState ? ' diagram-body--compact' : isTiming ? ' diagram-body--timing' : '';
+      html += `
+        <section class="detail-section">
+          <h2 class="section-title">${this.escapeHtml(heading)}</h2>
+          <figure class="diagram-body${sizing}">
+            <img src="${this.escapeHtml(this.asset(diagram.imagePath))}" alt="${this.escapeHtml(
+              diagram.altText || diagram.title
+            )}" loading="lazy">
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(diagram.imagePath)}"
+                data-open-title="${this.escapeHtml(diagram.title)}"
+              >View fullscreen</button>
+            </div>
+          </figure>
+        </section>
+      `;
+    });
+
+    // The IC pinout is a drawing, so it is its own section rather than being
+    // folded into the specifications table.
+    const pinout = byKind('PINOUT')[0];
+    if (pinout) {
+      html += `
+        <section class="detail-section">
+          <h2 class="section-title">IC Pinout</h2>
+          <figure class="diagram-body diagram-body--pinout">
+            <img src="${this.escapeHtml(this.asset(pinout.imagePath))}" alt="${this.escapeHtml(
+              pinout.altText || `Pinout for ${comp.name}`
+            )}" loading="lazy">
+            <div class="diagram-actions">
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                data-open-image="${this.escapeHtml(pinout.imagePath)}"
+                data-open-title="${this.escapeHtml(pinout.title || 'Pinout diagram')}"
+              >View fullscreen</button>
+            </div>
+          </figure>
+        </section>
+      `;
+    }
+
+    // Technical specifications, on their own.
+    if (comp.specifications && comp.specifications.length) {
+      html += `
+        <section class="detail-section">
+          <h2 class="section-title">Technical Specifications</h2>
+          <div class="table-responsive spec-table-wrap">
             <table class="edu-table spec-table">
               <thead>
                 <tr>
                   <th>Specification</th>
                   <th>Value</th>
-                  <th>Unit</th>
-                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
-                ${comp.specifications.map(sp => `
-                  <tr>
-                    <td><strong>${this.escapeHtml(sp.name)}</strong></td>
-                    <td>${this.escapeHtml(sp.value || '—')}</td>
-                    <td>${this.escapeHtml(sp.unit || '—')}</td>
-                    <td>
-                      ${sp.sourceNote ? `<span class="spec-source-note">${this.escapeHtml(sp.sourceNote)}</span>` : '—'}
-                    </td>
-                  </tr>
-                `).join('')}
+                ${comp.specifications
+                  .map(
+                    spec => `
+                      <tr>
+                        <td>${this.formatCell(spec.name)}</td>
+                        <td>${this.escapeHtml(spec.value || '-')}${spec.unit && !String(spec.value || '').includes(spec.unit) ? ` ${this.escapeHtml(spec.unit)}` : ''}</td>
+                      </tr>
+                    `
+                  )
+                  .join('')}
               </tbody>
             </table>
           </div>
@@ -385,440 +1156,438 @@ const app = {
       `;
     }
 
+    html += '</div>';
     this.contentEl.innerHTML = html;
 
-    // Trigger math rendering
+    // Typeset the table signals and equations once the markup exists.
     this.renderMath();
   },
 
   // ----------------------------------------------------------------
-  // Search View
+  // Educational content renderers
   // ----------------------------------------------------------------
-  async renderSearch(queryStr, page = 1) {
-    const res = await api.search(queryStr, page, 20);
-    const { query, items, pagination } = res.data;
 
-    let html = `
-      <div style="margin-bottom: 2rem;">
-        <h2 style="font-size: 1.75rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">
-          Search Results for "${this.escapeHtml(query)}"
-        </h2>
-        <p style="color: #64748b; font-size: 0.95rem;">
-          Found ${pagination.total} matching components
-        </p>
-      </div>
-    `;
+  renderSectionBody(section) {
+    const content = section.content;
 
-    if (items.length === 0) {
-      html += `
-        <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 3rem; text-align: center; color: #64748b;">
-          <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No components matched your search query.</p>
-          <p style="font-size: 0.85rem;">Try searching for generic terms like "counter", "flip-flop", "diode", "gate", or "amplifier".</p>
-        </div>
-      `;
-    } else {
-      html += `<div class="components-grid">`;
-      items.forEach(comp => {
-        html += `
-          <a href="#/components/${comp.slug || comp.component_id}" class="component-card">
-            <span class="component-card-title">${this.escapeHtml(comp.name)}</span>
-            <span class="component-card-badge">${this.escapeHtml(comp.category_name)}</span>
-            <p class="component-card-desc">${this.escapeHtml(comp.short_description || '')}</p>
-          </a>
+    switch ((section.type || '').toUpperCase()) {
+      case 'TABLE':
+        return this.renderTableContent(content);
+
+      case 'EQUATION':
+        return this.renderEquationContent(typeof content === 'string' ? content : JSON.stringify(content));
+
+      case 'TEXT':
+        return `<p class="prose">${this.escapeHtml(typeof content === 'string' ? content : JSON.stringify(content))}</p>`;
+
+      case 'IMAGE':
+      case 'DIAGRAM':
+      case 'GRAPH': {
+        const src = typeof content === 'string' ? content : content && (content.path || content.url);
+        if (!src) return `<p class="result-text">No visual asset attached to this section.</p>`;
+        return `
+          <figure class="diagram-body">
+            <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(section.altText || section.title || 'Diagram')}" loading="lazy">
+          </figure>
         `;
-      });
-      html += `</div>`;
-
-      if (pagination.totalPages > 1) {
-        html += this.renderPagination(pagination, `#/search?q=${encodeURIComponent(query)}`);
       }
-    }
 
-    this.contentEl.innerHTML = html;
+      case 'DOCUMENT': {
+        const href = typeof content === 'string' ? content : content && content.url;
+        return href
+          ? `<p style="margin-top: 1rem;"><a class="btn btn-secondary" href="${this.escapeHtml(href)}" target="_blank" rel="noopener noreferrer">Open document</a></p>`
+          : `<p class="result-text">No document attached to this section.</p>`;
+      }
+
+      default:
+        return `<p class="prose">${this.escapeHtml(
+          typeof content === 'string' ? content : JSON.stringify(content, null, 2)
+        )}</p>`;
+    }
   },
 
   // ----------------------------------------------------------------
-  // Educational Content Renderers
+  // Educational content renderers
   // ----------------------------------------------------------------
   renderTableContent(tableJson) {
-    if (!tableJson || !tableJson.columns || !tableJson.rows) {
-      return `<p style="color: #64748b;">No table data available.</p>`;
+    if (!tableJson || !Array.isArray(tableJson.columns) || !Array.isArray(tableJson.rows)) {
+      return `<p class="result-text">No table data available for this section.</p>`;
     }
 
-    let html = `
+    return `
       <div class="table-responsive">
         <table class="edu-table">
           <thead>
-            <tr>
-              ${tableJson.columns.map(col => `<th>${this.escapeHtml(String(col))}</th>`).join('')}
-            </tr>
+            <tr>${tableJson.columns.map(col => `<th>${this.formatCell(col, { header: true })}</th>`).join('')}</tr>
           </thead>
           <tbody>
-    `;
-
-    tableJson.rows.forEach(row => {
-      html += `<tr>`;
-      row.forEach(cell => {
-        const val = cell === null || cell === undefined ? '—' : String(cell);
-        const isHighlight = val === 'X' || val === 'Toggle' || val === 'Reset' || val === 'Set';
-        html += `<td>${isHighlight ? `<span style="font-weight: 700; color: #2563eb;">${this.escapeHtml(val)}</span>` : this.escapeHtml(val)}</td>`;
-      });
-      html += `</tr>`;
-    });
-
-    html += `
+            ${tableJson.rows
+              .map(row => `<tr>${row.map(cell => `<td>${this.formatCell(cell)}</td>`).join('')}</tr>`)
+              .join('')}
           </tbody>
         </table>
       </div>
     `;
-    return html;
+  },
+
+  /**
+   * Signal symbols (J, K, Q, Q(next), S0, Q3Q2Q1Q0 ...) are typeset as maths so
+   * subscripts and overbars read correctly. Words, numbers and binary strings
+   * stay as plain text.
+   */
+  symbolToLatex(raw) {
+    let tex = String(raw).trim();
+
+    // Q' / Q' with overbar -> \overline{Q}
+    const primed = tex.match(/^([A-Z][A-Za-z0-9]*)\s*['\u2032\u0305]$/);
+    if (primed) return `\\overline{${primed[1]}}`;
+
+    // Q(next) -> Q_{next}
+    tex = tex.replace(/\(next\)/gi, '_{next}');
+
+    // letter followed by one or more digits -> subscript
+    tex = tex.replace(/([A-Za-z])(\d+)/g, '$1_{$2}');
+
+    // unicode subscripts used by the seed data
+    tex = tex.replace(/[\u2080-\u2089]/g, ch => `_{${ch.charCodeAt(0) - 0x2080}}`);
+
+    return tex;
+  },
+
+  looksLikeSymbol(raw) {
+    const trimmed = String(raw).trim();
+    if (!trimmed || trimmed.length > 14) return false;
+    if (!/[A-Za-z]/.test(trimmed)) return false;
+    // Signal names only: a capitalised token, optionally carrying digits,
+    // primes, "(next)" or unicode subscripts. Plain English words such as
+    // "Decimal" or "Modulus" are left as text.
+    if (/^[A-Z]\(next\)$/i.test(trimmed)) return true;
+    if (!/^[A-Z][A-Z0-9()'\u2032\u0305\u2080-\u2089 ]*$/.test(trimmed)) return false;
+    const hasDecoration = /[0-9()'\u2032\u0305\u2080-\u2089]/.test(trimmed);
+    if (!hasDecoration && trimmed.length > 3) return false;
+    return true;
+  },
+
+  formatCell(value, { header = false } = {}) {
+    if (value === null || value === undefined) return '-';
+
+    const raw = String(value);
+    const latexMatch = raw.match(/^\\\(([\s\S]+?)\\\)$/);
+    let tex = null;
+
+    if (latexMatch) {
+      tex = latexMatch[1];
+    } else if (this.looksLikeSymbol(raw) && !/^(Hold|Toggle|Set|Reset|Operation)$/i.test(raw)) {
+      tex = this.symbolToLatex(raw);
+    }
+
+    if (tex) {
+      // Headers are set in bold maths (\boldsymbol); cells keep the normal
+      // weight so the two never read as the same emphasis.
+      const body = header ? `\\boldsymbol{${tex}}` : tex;
+      return `<span data-katex-inline="${this.escapeHtml(body)}"${
+        header ? ' class="th-math"' : ''
+      }>${this.escapeHtml(raw.replace(/^\\\(|\\\)$/g, ''))}</span>`;
+    }
+
+    const highlight = ['X', 'Toggle', 'Reset', 'Set', 'Hold'].includes(raw);
+    return highlight
+      ? `<span class="cell-highlight">${this.escapeHtml(raw)}</span>`
+      : this.escapeHtml(raw);
   },
 
   renderEquationContent(latex) {
+    // Rendered maths only - the source LaTeX used to be printed underneath as a
+    // footnote and is now dropped.
     return `
-      <div class="equation-card">
+      <div class="equation-block">
         <div class="equation-rendered" data-latex="${this.escapeHtml(latex)}">
           <code>${this.escapeHtml(latex)}</code>
         </div>
-        <div class="equation-raw">LaTeX: ${this.escapeHtml(latex)}</div>
       </div>
     `;
   },
 
   renderMath() {
-    if (typeof window.katex !== 'undefined') {
-      document.querySelectorAll('.equation-rendered').forEach(el => {
-        const latex = el.getAttribute('data-latex');
-        if (latex) {
-          try {
-            el.innerHTML = window.katex.renderToString(latex, { throwOnError: false, displayMode: true });
-          } catch (e) {
-            console.warn('KaTeX render error:', e);
-          }
-        }
-      });
-    }
+    if (typeof window.katex === 'undefined') return;
+
+    document.querySelectorAll('.equation-rendered[data-latex]').forEach(el => {
+      const latex = el.getAttribute('data-latex');
+      if (!latex) return;
+      try {
+        el.innerHTML = window.katex.renderToString(latex, { throwOnError: false, displayMode: true });
+      } catch (err) {
+        console.warn('KaTeX render error:', err);
+      }
+    });
+
+    this.fitEquations();
+
+    document.querySelectorAll('[data-katex-inline]').forEach(el => {
+      const latex = el.getAttribute('data-katex-inline');
+      if (!latex) return;
+      try {
+        el.innerHTML = window.katex.renderToString(latex, { throwOnError: false, displayMode: false });
+      } catch (err) {
+        console.warn('KaTeX inline render error:', err);
+      }
+    });
+  },
+
+  /**
+   * Scale each rendered equation so it fills its column instead of being
+   * clipped into a horizontal scroller. Short equations grow up to a ceiling;
+   * an unusually long one is shrunk just enough to fit.
+   */
+  fitEquations() {
+    document.querySelectorAll('.equation-block').forEach(block => {
+      const katex = block.querySelector('.katex-display > .katex') || block.querySelector('.katex');
+      if (!katex) return;
+
+      katex.style.fontSize = '';
+      // The column width, minus the block's own horizontal padding: the
+      // equation is fitted to the space that actually exists, so the page
+      // never grows a horizontal scrollbar (no slider under the maths).
+      const styles = window.getComputedStyle(block);
+      const gutter = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+      const available = block.clientWidth - gutter;
+      if (!available) return; // no layout (e.g. headless DOM): keep the CSS size
+
+      const baseSize = parseFloat(window.getComputedStyle(katex).fontSize) || 24;
+      const natural = katex.getBoundingClientRect().width;
+      if (!natural) return;
+
+      // Fill ~94% of the column; short equations are allowed to grow well past
+      // their 1.5rem base size, long ones shrink until they fit.
+      const target = available * 0.94;
+      // Grow well past the 1.7rem base, but stop at a readable ceiling so a
+      // two-symbol equation does not become a poster.
+      const ceiling = 64 / baseSize;
+      let scale = target / natural;
+      scale = Math.min(3.4, ceiling, Math.max(0.6, scale));
+      katex.style.fontSize = `${(baseSize * scale).toFixed(2)}px`;
+
+      // One correction pass in case rounding or font fallback changed the
+      // measured width. This is what guarantees "no slider".
+      const fitted = katex.getBoundingClientRect().width;
+      if (fitted > available && fitted > 0) {
+        katex.style.fontSize = `${(baseSize * scale * (available / fitted) * 0.99).toFixed(2)}px`;
+      }
+    });
   },
 
   // ----------------------------------------------------------------
-  // Lab Console View
+  // Lab console
   // ----------------------------------------------------------------
   async renderLabConsole() {
-    let html = `
-      <div class="lab-banner">
-        <div>
-          <h2>Academic DBMS Lab Console</h2>
-          <p>Practical Assignment 10 & 11 Demonstration Suite (SVNIT CS203 - Database Management Systems)</p>
+    this.setTitle('Lab Console');
+
+    this.contentEl.innerHTML = `
+      <div class="page">
+        <header class="lab-header">
+          <h1 class="lab-title">Lab Console</h1>
+        </header>
+
+        <div class="lab-tabs" role="tablist" aria-label="Lab console sections">
+          <button class="lab-tab-btn active" type="button" role="tab" aria-selected="true" data-action="switch-lab-tab" data-arg="tab-a10">Stored Programs</button>
+          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-benchmarks">Index Benchmarks</button>
+          <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-dashboard">Dashboard</button>
         </div>
-        <span class="count-pill" style="background: rgba(255,255,255,0.2); color: white; border: none;">Demo Mode</span>
-      </div>
 
-      <div class="lab-tabs">
-        <button class="lab-tab-btn active" onclick="app.switchLabTab('tab-a10')">Assignment 10: Stored Programs</button>
-        <button class="lab-tab-btn" onclick="app.switchLabTab('tab-a11')">Assignment 11: SQL Demonstrations</button>
-        <button class="lab-tab-btn" onclick="app.switchLabTab('tab-views')">Views</button>
-        <button class="lab-tab-btn" onclick="app.switchLabTab('tab-benchmarks')">Index Timing Benchmarks</button>
-        <button class="lab-tab-btn" onclick="app.switchLabTab('tab-dashboard')">Database Dashboard</button>
-      </div>
-
-      <!-- Tab 1: Assignment 10 Stored Programs -->
-      <div id="tab-a10" class="lab-panel active">
-        <div class="lab-card">
-          <h4 class="lab-card-title">1. Component CRUD Stored Procedures</h4>
-          <p class="lab-card-desc">Execute <code>sp_insert_component</code>, <code>sp_update_component</code>, and <code>sp_delete_component</code>.</p>
-          
-          <form id="sp-component-form" onsubmit="app.handleInsertComponent(event)">
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Category</label>
-                <select id="sp-cat-id" class="form-control" required>
-                  <option value="6">Counters (ID 6)</option>
-                  <option value="7">Flip-Flops (ID 7)</option>
-                  <option value="8" selected>Logic Gates (ID 8)</option>
-                  <option value="9">Multiplexers (ID 9)</option>
-                  <option value="11">Rectifier Diodes (ID 11)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Component Name</label>
-                <input type="text" id="sp-comp-name" class="form-control" placeholder="e.g. Quad OR Gate" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Slug</label>
-                <input type="text" id="sp-comp-slug" class="form-control" placeholder="e.g. quad-or-gate" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Short Description</label>
-                <input type="text" id="sp-comp-desc" class="form-control" placeholder="Brief summary" />
+        <!-- Tab 1: stored programs -->
+        <div id="tab-a10" class="lab-panel active" role="tabpanel">
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">1. Component CRUD Stored Procedures</h2>
+                <p class="lab-card-desc">Execute <code>sp_insert_component</code> through the API, then review the audit trail written by the database triggers.</p>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary">Execute sp_insert_component</button>
-          </form>
-          <div id="sp-crud-result" style="margin-top: 1rem;"></div>
-        </div>
 
-        <div class="lab-card">
-          <h4 class="lab-card-title">2. Explicit Cursors & Sum Numeric Functions</h4>
-          <p class="lab-card-desc">Execute cursor procedures and numeric aggregation routines.</p>
-          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
-            <button class="btn btn-secondary" onclick="app.runCursorAll()">Run Cursor All (sp_cursor_components_all)</button>
-            <button class="btn btn-secondary" onclick="app.runCursorLimited()">Run Cursor Limited (sp_cursor_components_limited)</button>
-            <button class="btn btn-secondary" onclick="app.runSumRoutines()">Run Sum Functions (fn_sum & sp_sum)</button>
+            <form id="sp-component-form" data-form="insert-component">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label" for="sp-cat-id">Category</label>
+                  <select id="sp-cat-id" class="form-control" required>
+                    <option value="6">Counters (ID 6)</option>
+                    <option value="7">Flip-Flops (ID 7)</option>
+                    <option value="8" selected>Logic Gates (ID 8)</option>
+                    <option value="9">Multiplexers (ID 9)</option>
+                    <option value="11">Rectifier Diodes (ID 11)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sp-comp-name">Component name</label>
+                  <input type="text" id="sp-comp-name" class="form-control" placeholder="e.g. Quad OR Gate" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sp-comp-slug">Slug</label>
+                  <input type="text" id="sp-comp-slug" class="form-control" placeholder="e.g. quad-or-gate" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="sp-comp-desc">Short description</label>
+                  <input type="text" id="sp-comp-desc" class="form-control" placeholder="Brief summary" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Execute sp_insert_component</button>
+            </form>
+            <div id="sp-crud-result"></div>
           </div>
-          <div id="cursor-result"></div>
-        </div>
 
-        <div class="lab-card">
-          <h4 class="lab-card-title">3. Application User Login-Data CRUD</h4>
-          <p class="lab-card-desc">Demonstrates application user management via <code>sp_insert_app_user</code>, <code>sp_update_app_user</code>, and <code>sp_delete_app_user</code> without adding public login to the catalogue.</p>
-          <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
-            <button class="btn btn-primary" onclick="app.showAddUserModal()">+ Add New App User</button>
-            <button class="btn btn-secondary" onclick="app.loadAppUsers()">Refresh Users List</button>
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">2. Explicit Cursors &amp; Sum Numeric Functions</h2>
+                <p class="lab-card-desc">Run cursor procedures with and without a limit, plus grouped and ungrouped numeric aggregation routines.</p>
+              </div>
+            </div>
+            <div class="lab-actions" style="margin-bottom: 1rem;">
+              <button class="btn btn-secondary" type="button" data-action="run-cursor-all">Run cursor (all rows)</button>
+              <button class="btn btn-secondary" type="button" data-action="run-cursor-limited">Run cursor (limit 5)</button>
+              <button class="btn btn-secondary" type="button" data-action="run-sum-routines">Run sum functions</button>
+            </div>
+            <div id="cursor-result"></div>
           </div>
-          <div id="users-table-container">Loading users...</div>
-        </div>
 
-        <div class="lab-card">
-          <h4 class="lab-card-title">4. Triggers Verification & Audit Log</h4>
-          <p class="lab-card-desc">View recent row-level changes automatically recorded by <code>trg_components_audit_ai/au/ad</code> in <code>application_audit_log</code>.</p>
-          <button class="btn btn-secondary btn-sm" onclick="app.loadAuditLog()" style="margin-bottom: 1rem;">Refresh Audit Log</button>
-          <div id="audit-log-container">Loading audit logs...</div>
-        </div>
-      </div>
-
-      <!-- Tab 2: Assignment 11 SQL Demonstrations -->
-      <div id="tab-a11" class="lab-panel">
-        <!-- Query 1 -->
-        <div class="lab-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <h4 class="lab-card-title">Query 1: Full-Table Display (with XML output)</h4>
-            <div>
-              <button class="btn btn-secondary btn-sm" onclick="app.loadQuery1(false)">View HTML Table</button>
-              <button class="btn btn-primary btn-sm" onclick="app.loadQuery1Xml()">View XML Output</button>
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">3. Application User Login-Data CRUD</h2>
+                <p class="lab-card-desc">Demonstrates application-user management through <code>sp_insert_app_user</code>, <code>sp_update_app_user</code>, and <code>sp_delete_app_user</code> without exposing a public login.</p>
+              </div>
             </div>
+            <div class="lab-actions" style="margin-bottom: 1rem;">
+              <button class="btn btn-primary" type="button" data-action="show-add-user">+ Add application user</button>
+              <button class="btn btn-secondary" type="button" data-action="load-app-users">Refresh users</button>
+            </div>
+            <div id="users-table-container" class="result-text">Loading users…</div>
           </div>
-          <p class="lab-card-desc">Displays all rows from the primary <code>components</code> table.</p>
-          <div id="query1-container"></div>
-        </div>
 
-        <!-- Query 3 -->
-        <div class="lab-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <h4 class="lab-card-title">Query 3: Aggregate Query (with XML output)</h4>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-secondary btn-sm" onclick="app.runQuery3(false)">Run Aggregate</button>
-              <button class="btn btn-primary btn-sm" onclick="app.runQuery3(true)">View XML Output</button>
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">4. Trigger Verification &amp; Audit Log</h2>
+                <p class="lab-card-desc">Review recent row-level changes recorded by <code>trg_components_audit_ai/au/ad</code> in <code>application_audit_log</code>.</p>
+              </div>
+              <div class="lab-actions">
+                <button class="btn btn-secondary btn-sm" type="button" data-action="load-audit-log">Refresh audit log</button>
+              </div>
             </div>
+            <div id="audit-log-container" class="result-text">Loading audit logs…</div>
           </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Function</label>
-              <select id="q3-fn" class="form-control">
-                <option value="COUNT" selected>COUNT</option>
-                <option value="SUM">SUM</option>
-                <option value="AVG">AVG</option>
-                <option value="MIN">MIN</option>
-                <option value="MAX">MAX</option>
-              </select>
+        </div>
+
+        <!-- Tab 2: Benchmarks -->
+        <div id="tab-benchmarks" class="lab-panel" role="tabpanel">
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">Index Timing Benchmarks &amp; Analysis</h2>
+                <p class="lab-card-desc">Execution times measured before and after candidate secondary indexes were applied to the 147-component seed dataset.</p>
+              </div>
+              <div class="lab-actions">
+                <button class="btn btn-primary btn-sm" type="button" data-action="load-timing-report">Refresh report</button>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Field</label>
-              <select id="q3-field" class="form-control">
-                <option value="component_id" selected>component_id</option>
-                <option value="category_id">category_id</option>
-              </select>
-            </div>
+            <div id="timing-report-container" class="result-text">Loading benchmark tables…</div>
           </div>
-          <div id="query3-container"></div>
         </div>
 
-        <!-- Query 4 -->
-        <div class="lab-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <h4 class="lab-card-title">Query 4: Conditional Query (with XML output)</h4>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-secondary btn-sm" onclick="app.runQuery4(false)">Filter Table</button>
-              <button class="btn btn-primary btn-sm" onclick="app.runQuery4(true)">View XML Output</button>
+        <!-- Tab 3: Dashboard -->
+        <div id="tab-dashboard" class="lab-panel" role="tabpanel">
+          <div class="lab-card">
+            <div class="lab-card-head">
+              <div>
+                <h2 class="lab-card-title">Live Database Table Statistics</h2>
+                <p class="lab-card-desc">Row counts for every catalog and assignment table, plus component publication metrics.</p>
+              </div>
+              <div class="lab-actions">
+                <button class="btn btn-primary btn-sm" type="button" data-action="load-dashboard">Refresh statistics</button>
+              </div>
             </div>
+            <div id="dashboard-container" class="result-text">Loading statistics…</div>
           </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Field</label>
-              <select id="q4-field" class="form-control">
-                <option value="category_id" selected>category_id</option>
-                <option value="is_published">is_published</option>
-                <option value="is_illustrative">is_illustrative</option>
-                <option value="name">name</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Operator</label>
-              <select id="q4-op" class="form-control">
-                <option value="eq" selected>= (Equals)</option>
-                <option value="neq">!= (Not Equals)</option>
-                <option value="gt">&gt; (Greater Than)</option>
-                <option value="lt">&lt; (Less Than)</option>
-                <option value="like">LIKE (Contains)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Value</label>
-              <input type="text" id="q4-val" class="form-control" value="6" />
-            </div>
-          </div>
-          <div id="query4-container"></div>
-        </div>
-
-        <!-- Query 5: Join -->
-        <div class="lab-card">
-          <h4 class="lab-card-title">Query 5: Two-Table Join Query</h4>
-          <p class="lab-card-desc">Select two tables and join type to view relational data.</p>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Left Table</label>
-              <select id="q5-left" class="form-control">
-                <option value="components" selected>components</option>
-                <option value="categories">categories</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Right Table</label>
-              <select id="q5-right" class="form-control">
-                <option value="categories" selected>categories</option>
-                <option value="component_diagrams">component_diagrams</option>
-                <option value="component_specifications">component_specifications</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Join Type</label>
-              <select id="q5-type" class="form-control">
-                <option value="inner" selected>INNER JOIN</option>
-                <option value="left">LEFT JOIN</option>
-                <option value="right">RIGHT JOIN</option>
-              </select>
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="app.runQuery5()">Execute Join Query</button>
-          <div id="query5-container" style="margin-top: 1rem;"></div>
-        </div>
-
-        <!-- Query 6 & 7: Subqueries -->
-        <div class="lab-card">
-          <h4 class="lab-card-title">Query 6 & 7: Subquery and Correlated Subquery</h4>
-          <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
-            <button class="btn btn-secondary" onclick="app.runSubquery()">Execute Subquery (Query 6)</button>
-            <button class="btn btn-secondary" onclick="app.runCorrelatedQuery()">Execute Correlated Subquery (Query 7)</button>
-          </div>
-          <div id="subquery-container"></div>
-        </div>
-      </div>
-
-      <!-- Tab 3: Views -->
-      <div id="tab-views" class="lab-panel">
-        <div class="lab-card">
-          <h4 class="lab-card-title">View: v_component_catalogue</h4>
-          <p class="lab-card-desc">Joins <code>components</code>, <code>categories</code>, and parent categories.</p>
-          <button class="btn btn-secondary btn-sm" onclick="app.loadViewCatalogue()" style="margin-bottom: 1rem;">Load Catalogue View</button>
-          <div id="view-catalogue-container"></div>
-        </div>
-
-        <div class="lab-card">
-          <h4 class="lab-card-title">View: v_category_component_counts</h4>
-          <p class="lab-card-desc">Aggregated view displaying component counts per category.</p>
-          <button class="btn btn-secondary btn-sm" onclick="app.loadViewCounts()" style="margin-bottom: 1rem;">Load Counts View</button>
-          <div id="view-counts-container"></div>
-        </div>
-      </div>
-
-      <!-- Tab 4: Benchmarks -->
-      <div id="tab-benchmarks" class="lab-panel">
-        <div class="lab-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-              <h4 class="lab-card-title">Index Timing Benchmarks & Analysis</h4>
-              <p class="lab-card-desc">Execution times measured before and after candidate secondary indexes on 147 components.</p>
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="app.loadTimingReport()">Refresh Timing Report</button>
-          </div>
-          <div id="timing-report-container" style="line-height: 1.7;">Loading report...</div>
-        </div>
-      </div>
-
-      <!-- Tab 5: Dashboard -->
-      <div id="tab-dashboard" class="lab-panel">
-        <div class="lab-card">
-          <h4 class="lab-card-title">Live Database Table Statistics</h4>
-          <div id="dashboard-container">Loading statistics...</div>
         </div>
       </div>
     `;
 
-    this.contentEl.innerHTML = html;
-
-    // Load initial tab data
     this.loadAppUsers();
     this.loadAuditLog();
     this.loadTimingReport();
     this.loadDashboard();
+    if (this.paintRanges) this.paintRanges();
   },
 
-  switchLabTab(tabId) {
-    document.querySelectorAll('.lab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.lab-tab-btn').forEach(b => b.classList.remove('active'));
+  switchLabTab(tabId, button) {
+    const panel = document.getElementById(tabId);
+    if (!panel) return;
 
-    const target = document.getElementById(tabId);
-    if (target) target.classList.add('active');
+    document.querySelectorAll('.lab-panel').forEach(item => {
+      item.classList.toggle('active', item.id === tabId);
+    });
 
-    if (window.event && window.event.target) {
-      window.event.target.classList.add('active');
-    }
+    document.querySelectorAll('.lab-tab-btn').forEach(btn => {
+      const active = btn === button;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
   },
 
   // ----------------------------------------------------------------
-  // Lab Actions
+  // Lab actions
   // ----------------------------------------------------------------
-  async handleInsertComponent(e) {
-    e.preventDefault();
-    const catId = document.getElementById('sp-cat-id').value;
+  async handleInsertComponent(event) {
+    event.preventDefault();
+
+    const categoryId = document.getElementById('sp-cat-id').value;
     const name = document.getElementById('sp-comp-name').value.trim();
     const slug = document.getElementById('sp-comp-slug').value.trim();
-    const desc = document.getElementById('sp-comp-desc').value.trim();
+    const description = document.getElementById('sp-comp-desc').value.trim();
+    const container = document.getElementById('sp-crud-result');
 
-    const resContainer = document.getElementById('sp-crud-result');
-    resContainer.innerHTML = '<p style="color: #64748b;">Executing sp_insert_component...</p>';
+    container.innerHTML = '<p class="result-text">Executing sp_insert_component…</p>';
 
     try {
-      const res = await api.lab.createComponent({ categoryId: catId, name, slug, shortDescription: desc });
-      resContainer.innerHTML = `
+      const res = await api.lab.createComponent({
+        categoryId,
+        name,
+        slug,
+        shortDescription: description
+      });
+      container.innerHTML = `
         <div class="alert alert-success">
-          ✓ Stored procedure executed successfully! New Component ID: <strong>${res.data.componentId}</strong>
+          Stored procedure executed successfully. New component ID: <strong>${this.escapeHtml(res.data.componentId)}</strong>
         </div>
       `;
       document.getElementById('sp-comp-name').value = '';
+      document.getElementById('sp-comp-slug').value = '';
+      document.getElementById('sp-comp-desc').value = '';
+      this.toast('Component inserted through sp_insert_component.', 'success');
       this.loadAuditLog();
     } catch (err) {
-      resContainer.innerHTML = `
-        <div class="alert alert-error">
-          ✕ Procedure Error: ${this.escapeHtml(err.message)}
-        </div>
-      `;
+      container.innerHTML = `<div class="alert alert-error">Procedure error: ${this.escapeHtml(err.message)}</div>`;
     }
   },
 
   async runCursorAll() {
     const el = document.getElementById('cursor-result');
-    el.innerHTML = '<p>Executing sp_cursor_components_all...</p>';
+    el.innerHTML = '<p class="result-text">Executing sp_cursor_components_all…</p>';
+
     try {
       const res = await api.lab.getCursorsAll();
+      const rows = res.data.rows || [];
       el.innerHTML = `
         <div class="alert alert-success">
-          ✓ Unbounded cursor iterated across ${res.data.rowCount} rows. Displaying first 10 rows:
+          Unbounded cursor iterated across <strong>${res.data.rowCount}</strong> rows. Showing the first 10.
         </div>
         <div class="table-responsive">
           <table class="edu-table">
             <thead><tr><th>Component ID</th><th>Name</th></tr></thead>
             <tbody>
-              ${res.data.rows.slice(0, 10).map(r => `<tr><td>${r.component_id}</td><td>${this.escapeHtml(r.name)}</td></tr>`).join('')}
+              ${rows
+                .slice(0, 10)
+                .map(row => `<tr><td>${this.escapeHtml(row.component_id)}</td><td>${this.escapeHtml(row.name)}</td></tr>`)
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -830,18 +1599,19 @@ const app = {
 
   async runCursorLimited() {
     const el = document.getElementById('cursor-result');
-    el.innerHTML = '<p>Executing sp_cursor_components_limited(5)...</p>';
+    el.innerHTML = '<p class="result-text">Executing sp_cursor_components_limited(5)…</p>';
+
     try {
       const res = await api.lab.getCursorsLimited(5);
       el.innerHTML = `
-        <div class="alert alert-success">
-          ✓ Bounded cursor stopped exactly at limit = 5 rows:
-        </div>
+        <div class="alert alert-success">Bounded cursor stopped exactly at the limit of <strong>5</strong> rows.</div>
         <div class="table-responsive">
           <table class="edu-table">
             <thead><tr><th>Component ID</th><th>Name</th></tr></thead>
             <tbody>
-              ${res.data.rows.map(r => `<tr><td>${r.component_id}</td><td>${this.escapeHtml(r.name)}</td></tr>`).join('')}
+              ${(res.data.rows || [])
+                .map(row => `<tr><td>${this.escapeHtml(row.component_id)}</td><td>${this.escapeHtml(row.name)}</td></tr>`)
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -853,25 +1623,32 @@ const app = {
 
   async runSumRoutines() {
     const el = document.getElementById('cursor-result');
-    el.innerHTML = '<p>Executing sum functions...</p>';
+    el.innerHTML = '<p class="result-text">Executing sum functions…</p>';
+
     try {
       const res = await api.lab.getSum();
       el.innerHTML = `
         <div class="alert alert-success">
-          ✓ <strong>Ungrouped Sum (fn_sum_component_ids):</strong> ${res.data.ungrouped.totalSum}
+          <strong>Ungrouped sum (fn_sum_component_ids):</strong>&nbsp;${this.escapeHtml(res.data.ungrouped.totalSum)}
         </div>
         <div class="table-responsive">
           <table class="edu-table">
-            <thead><tr><th>Category ID</th><th>Category Name</th><th>Component Count</th><th>Sum Component IDs</th></tr></thead>
+            <thead>
+              <tr><th>Category ID</th><th>Category</th><th>Components</th><th>Sum of component IDs</th></tr>
+            </thead>
             <tbody>
-              ${res.data.grouped.items.map(r => `
-                <tr>
-                  <td>${r.category_id}</td>
-                  <td>${this.escapeHtml(r.category_name)}</td>
-                  <td>${r.component_count}</td>
-                  <td>${r.sum_component_ids}</td>
-                </tr>
-              `).join('')}
+              ${res.data.grouped.items
+                .map(
+                  row => `
+                    <tr>
+                      <td>${this.escapeHtml(row.category_id)}</td>
+                      <td>${this.escapeHtml(row.category_name)}</td>
+                      <td>${this.escapeHtml(row.component_count)}</td>
+                      <td>${this.escapeHtml(row.sum_component_ids)}</td>
+                    </tr>
+                  `
+                )
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -887,29 +1664,34 @@ const app = {
 
     try {
       const res = await api.lab.getAppUsers();
-      if (!res.data || res.data.length === 0) {
-        container.innerHTML = '<p style="color: #64748b;">No application users registered yet. Click "Add New App User" to create one.</p>';
+      if (!res.data || !res.data.length) {
+        container.innerHTML = '<p class="result-text">No application users registered yet. Use “Add application user” to create one.</p>';
         return;
       }
+
       container.innerHTML = `
         <div class="table-responsive">
           <table class="edu-table">
             <thead>
-              <tr><th>User ID</th><th>Username</th><th>Role</th><th>Active</th><th>Created At</th><th>Action</th></tr>
+              <tr><th>User ID</th><th>Username</th><th>Role</th><th>Active</th><th>Created</th><th>Action</th></tr>
             </thead>
             <tbody>
-              ${res.data.map(u => `
-                <tr>
-                  <td>${u.user_id}</td>
-                  <td><strong>${this.escapeHtml(u.username)}</strong></td>
-                  <td><span class="count-pill">${this.escapeHtml(u.role_code)}</span></td>
-                  <td>${u.is_active ? 'Yes' : 'No'}</td>
-                  <td>${u.created_at}</td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" onclick="app.handleDeleteUser(${u.user_id})">Delete</button>
-                  </td>
-                </tr>
-              `).join('')}
+              ${res.data
+                .map(
+                  user => `
+                    <tr>
+                      <td>${this.escapeHtml(user.user_id)}</td>
+                      <td><strong>${this.escapeHtml(user.username)}</strong></td>
+                      <td><span class="count-pill">${this.escapeHtml(user.role_code)}</span></td>
+                      <td>${user.is_active ? 'Yes' : 'No'}</td>
+                      <td>${this.escapeHtml(user.created_at)}</td>
+                      <td>
+                        <button class="btn btn-danger btn-sm" type="button" data-action="delete-user" data-arg="${Number(user.user_id)}">Delete</button>
+                      </td>
+                    </tr>
+                  `
+                )
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -921,32 +1703,33 @@ const app = {
 
   showAddUserModal() {
     const body = `
-      <form id="create-user-modal-form" onsubmit="app.handleCreateUser(event)">
+      <form id="create-user-modal-form" data-form="create-user">
         <div class="form-group" style="margin-bottom: 1rem;">
-          <label class="form-label">Username</label>
+          <label class="form-label" for="new-user-name">Username</label>
           <input type="text" id="new-user-name" class="form-control" required placeholder="e.g. lab_student" />
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
-          <label class="form-label">Role</label>
+          <label class="form-label" for="new-user-role">Role</label>
           <select id="new-user-role" class="form-control">
-            <option value="NAIVE_USER">NAIVE_USER (End-user read-only)</option>
-            <option value="APP_DEVELOPER" selected>APP_DEVELOPER (Application developer)</option>
-            <option value="DBA">DBA (Database administrator)</option>
+            <option value="NAIVE_USER">NAIVE_USER - read-only end user</option>
+            <option value="APP_DEVELOPER" selected>APP_DEVELOPER - application developer</option>
+            <option value="DBA">DBA - database administrator</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <label class="form-label">Password Hash (Simulated application bcrypt hash)</label>
+          <label class="form-label" for="new-user-hash">Password hash (simulated bcrypt)</label>
           <input type="text" id="new-user-hash" class="form-control" readonly value="$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQmG6W565n8.y0fXm3wye" />
-          <span style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Stored procedures strictly reject plaintext passwords.</span>
+          <span class="form-hint">Stored procedures reject plaintext passwords.</span>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Create App User via sp_insert_app_user</button>
+        <button type="submit" class="btn btn-primary btn-block">Create app user</button>
       </form>
     `;
-    this.openModal('Add New Application User (Assignment 10)', body);
+    this.openModal('Add Application User', body);
   },
 
-  async handleCreateUser(e) {
-    e.preventDefault();
+  async handleCreateUser(event) {
+    event.preventDefault();
+
     const username = document.getElementById('new-user-name').value.trim();
     const roleCode = document.getElementById('new-user-role').value;
     const passwordHash = document.getElementById('new-user-hash').value;
@@ -954,19 +1737,22 @@ const app = {
     try {
       await api.lab.createAppUser({ username, roleCode, passwordHash });
       this.closeModal();
+      this.toast(`Application user “${username}” created.`, 'success');
       this.loadAppUsers();
     } catch (err) {
-      alert('Error creating user: ' + err.message);
+      this.toast(`Could not create user: ${err.message}`, 'error');
     }
   },
 
   async handleDeleteUser(id) {
-    if (!confirm(`Delete application user ID ${id}?`)) return;
+    if (!window.confirm(`Delete application user ID ${id}?`)) return;
+
     try {
       await api.lab.deleteAppUser(id);
+      this.toast(`Application user ${id} deleted.`, 'success');
       this.loadAppUsers();
     } catch (err) {
-      alert('Error deleting user: ' + err.message);
+      this.toast(`Could not delete user: ${err.message}`, 'error');
     }
   },
 
@@ -976,247 +1762,38 @@ const app = {
 
     try {
       const res = await api.lab.getAuditLogs(10);
-      if (!res.data || res.data.length === 0) {
-        container.innerHTML = '<p style="color: #64748b;">Audit log is currently empty.</p>';
+      if (!res.data || !res.data.length) {
+        container.innerHTML = '<p class="result-text">The audit log is currently empty.</p>';
         return;
       }
+
       container.innerHTML = `
         <div class="table-responsive">
           <table class="edu-table">
             <thead>
-              <tr><th>Audit ID</th><th>Table</th><th>Operation</th><th>Row Key</th><th>DB User</th><th>Changed At</th><th>Values</th></tr>
+              <tr><th>Audit ID</th><th>Table</th><th>Operation</th><th>Row key</th><th>DB user</th><th>Changed at</th><th>Values</th></tr>
             </thead>
             <tbody>
-              ${res.data.map(l => `
-                <tr>
-                  <td>${l.audit_id}</td>
-                  <td><code>${this.escapeHtml(l.table_name)}</code></td>
-                  <td><span class="count-pill" style="color: ${l.operation_type === 'DELETE' ? '#dc2626' : l.operation_type === 'INSERT' ? '#16a34a' : '#d97706'}">${l.operation_type}</span></td>
-                  <td>${this.escapeHtml(l.row_key)}</td>
-                  <td>${this.escapeHtml(l.db_user)}</td>
-                  <td>${l.changed_at}</td>
-                  <td><pre style="font-size: 0.75rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(JSON.stringify(l.new_values || l.old_values || ''))}</pre></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async loadQuery1(isXml = false) {
-    const container = document.getElementById('query1-container');
-    container.innerHTML = '<p>Loading full-table components...</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getComponentsXml(1, 10);
-        container.innerHTML = `
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="app.downloadXml(app.currentXml, 'query1_components.xml')">💾 Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-        this.currentXml = xml;
-      } else {
-        const res = await api.lab.getComponents(1, 10);
-        container.innerHTML = `
-          <div class="table-responsive">
-            <table class="edu-table">
-              <thead><tr><th>ID</th><th>Category ID</th><th>Name</th><th>Slug</th><th>Short Description</th></tr></thead>
-              <tbody>
-                ${res.data.items.map(c => `<tr><td>${c.component_id}</td><td>${c.category_id}</td><td><strong>${this.escapeHtml(c.name)}</strong></td><td>${this.escapeHtml(c.slug)}</td><td>${this.escapeHtml(c.short_description || '')}</td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  loadQuery1Xml() {
-    this.loadQuery1(true);
-  },
-
-  async runQuery3(isXml = false) {
-    const fn = document.getElementById('q3-fn').value;
-    const field = document.getElementById('q3-field').value;
-    const container = document.getElementById('query3-container');
-    container.innerHTML = '<p>Executing aggregate...</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getAggregateXml(fn, field);
-        container.innerHTML = `
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="app.downloadXml(app.currentXml, 'query3_aggregate.xml')">💾 Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-        this.currentXml = xml;
-      } else {
-        const res = await api.lab.getAggregate(fn, field);
-        container.innerHTML = `
-          <div class="alert alert-success">
-            <strong>Aggregate Result:</strong> ${res.data.function}(${res.data.field}) = <span style="font-size: 1.25rem; font-weight: bold;">${res.data.value}</span>
-            <span style="margin-left: 1rem; color: #64748b;">(Evaluated across ${res.data.rowCount} rows)</span>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runQuery4(isXml = false) {
-    const field = document.getElementById('q4-field').value;
-    const op = document.getElementById('q4-op').value;
-    const val = document.getElementById('q4-val').value.trim();
-    const container = document.getElementById('query4-container');
-    container.innerHTML = '<p>Executing conditional query...</p>';
-
-    try {
-      if (isXml) {
-        const xml = await api.lab.getFilterXml(field, op, val);
-        container.innerHTML = `
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
-            <button class="btn btn-secondary btn-sm" onclick="app.downloadXml(app.currentXml, 'query4_conditional.xml')">💾 Download XML</button>
-          </div>
-          <div class="code-viewer">${this.escapeHtml(xml)}</div>
-        `;
-        this.currentXml = xml;
-      } else {
-        const res = await api.lab.getFilter(field, op, val, 1, 10);
-        container.innerHTML = `
-          <div class="alert alert-success">
-            Matched <strong>${res.data.total}</strong> components where <code>${res.data.filter.field} ${res.data.filter.operator} ${res.data.filter.value}</code>
-          </div>
-          <div class="table-responsive">
-            <table class="edu-table">
-              <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Slug</th></tr></thead>
-              <tbody>
-                ${res.data.items.map(r => `<tr><td>${r.component_id}</td><td><strong>${this.escapeHtml(r.name)}</strong></td><td>${r.category_id}</td><td>${this.escapeHtml(r.slug)}</td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
-        `;
-      }
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runQuery5() {
-    const left = document.getElementById('q5-left').value;
-    const right = document.getElementById('q5-right').value;
-    const type = document.getElementById('q5-type').value;
-    const container = document.getElementById('query5-container');
-    container.innerHTML = '<p>Executing join query...</p>';
-
-    try {
-      const res = await api.lab.getJoin(left, right, type, 1, 10);
-      container.innerHTML = `
-        <div class="alert alert-info">
-          Condition: <code>${this.escapeHtml(res.data.joinCondition)}</code> (${res.data.joinType})
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>ID</th><th>Name</th><th>Joined Resource</th></tr></thead>
-            <tbody>
-              ${res.data.rows.map(r => `<tr><td>${r.component_id || r.category_id}</td><td><strong>${this.escapeHtml(r.name || '')}</strong></td><td>${this.escapeHtml(r.joined_name || r.title || '')}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runSubquery() {
-    const container = document.getElementById('subquery-container');
-    container.innerHTML = '<p>Executing subquery across tables...</p>';
-    try {
-      const res = await api.lab.getSubquery('categories_in_digital');
-      container.innerHTML = `
-        <div class="alert alert-info">
-          <strong>${this.escapeHtml(res.data.description)}</strong>
-          <pre style="margin-top: 0.5rem; font-size: 0.8rem;">${this.escapeHtml(res.data.sql)}</pre>
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Component ID</th><th>Name</th><th>Category ID</th><th>Slug</th></tr></thead>
-            <tbody>
-              ${res.data.rows.slice(0, 10).map(r => `<tr><td>${r.component_id}</td><td>${this.escapeHtml(r.name)}</td><td>${r.category_id}</td><td>${this.escapeHtml(r.slug)}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async runCorrelatedQuery() {
-    const container = document.getElementById('subquery-container');
-    container.innerHTML = '<p>Executing correlated subquery across tables...</p>';
-    try {
-      const res = await api.lab.getCorrelated('categories_with_components');
-      container.innerHTML = `
-        <div class="alert alert-info">
-          <strong>${this.escapeHtml(res.data.description)}</strong>
-          <pre style="margin-top: 0.5rem; font-size: 0.8rem;">${this.escapeHtml(res.data.sql)}</pre>
-        </div>
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Category ID</th><th>Name</th><th>Slug</th></tr></thead>
-            <tbody>
-              ${res.data.rows.map(r => `<tr><td>${r.category_id}</td><td>${this.escapeHtml(r.name)}</td><td>${this.escapeHtml(r.slug)}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async loadViewCatalogue() {
-    const container = document.getElementById('view-catalogue-container');
-    container.innerHTML = '<p>Loading v_component_catalogue...</p>';
-    try {
-      const res = await api.lab.getViewCatalogue(1, 10);
-      container.innerHTML = `
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>ID</th><th>Component</th><th>Category</th><th>Parent Category</th></tr></thead>
-            <tbody>
-              ${res.data.items.map(r => `<tr><td>${r.component_id}</td><td><strong>${this.escapeHtml(r.component_name)}</strong></td><td>${this.escapeHtml(r.category_name)}</td><td>${this.escapeHtml(r.parent_category_name || '—')}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
-    }
-  },
-
-  async loadViewCounts() {
-    const container = document.getElementById('view-counts-container');
-    container.innerHTML = '<p>Loading v_category_component_counts...</p>';
-    try {
-      const res = await api.lab.getViewCounts();
-      container.innerHTML = `
-        <div class="table-responsive">
-          <table class="edu-table">
-            <thead><tr><th>Category ID</th><th>Name</th><th>Slug</th><th>Component Count</th></tr></thead>
-            <tbody>
-              ${res.data.items.map(r => `<tr><td>${r.category_id}</td><td><strong>${this.escapeHtml(r.category_name)}</strong></td><td>${this.escapeHtml(r.category_slug)}</td><td>${r.component_count}</td></tr>`).join('')}
+              ${res.data
+                .map(log => {
+                  // Audit operations get their own badge classes; reusing the
+                  // component badge classes here was confusing and made the
+                  // removed "Illustrative"/"Published" styling look alive.
+                  const op = String(log.operation_type || '').toLowerCase();
+                  const badgeClass = `badge-op badge-op--${['insert', 'update', 'delete'].includes(op) ? op : 'other'}`;
+                  return `
+                    <tr>
+                      <td>${this.escapeHtml(log.audit_id)}</td>
+                      <td><code>${this.escapeHtml(log.table_name)}</code></td>
+                      <td><span class="${badgeClass}">${this.escapeHtml(log.operation_type)}</span></td>
+                      <td>${this.escapeHtml(log.row_key)}</td>
+                      <td>${this.escapeHtml(log.db_user)}</td>
+                      <td>${this.escapeHtml(log.changed_at)}</td>
+                      <td><pre class="cell-pre">${this.escapeHtml(JSON.stringify(log.new_values || log.old_values || ''))}</pre></td>
+                    </tr>
+                  `;
+                })
+                .join('')}
             </tbody>
           </table>
         </div>
@@ -1232,12 +1809,207 @@ const app = {
 
     try {
       const res = await api.lab.getTimingReport();
-      const reportMarkdown = res.data.report;
-      // Convert markdown to clean HTML
-      container.innerHTML = `<div style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.85rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 8px;">${this.escapeHtml(reportMarkdown)}</div>`;
+      const report = String(res.data.report || '');
+      if (!report.trim()) {
+        container.innerHTML = '<p class="result-text">No benchmark report available.</p>';
+        return;
+      }
+      container.innerHTML = this.renderBenchmarkReport(this.parseBenchmarkReport(report));
     } catch (err) {
       container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
     }
+  },
+
+  /* ----------------------------------------------------------------
+     Index benchmark report: markdown in, tables out.
+     ---------------------------------------------------------------- */
+
+  /** One `| a | b |` row -> trimmed cells with the markdown noise removed. */
+  splitMarkdownRow(line) {
+    return String(line)
+      .trim()
+      .replace(/^\|/, '')
+      .replace(/\|$/, '')
+      .split('|')
+      .map(cell => cell.trim().replace(/\*\*/g, '').replace(/`/g, ''));
+  },
+
+  /** Every GitHub-style table in a markdown document, in reading order. */
+  parseMarkdownTables(markdown) {
+    const lines = String(markdown).split('\n');
+    const tables = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const isRow = /^\s*\|/.test(lines[i]);
+      const isDivider = /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || '');
+      if (!isRow || !isDivider) {
+        i += 1;
+        continue;
+      }
+
+      const header = this.splitMarkdownRow(lines[i]);
+      const rows = [];
+      i += 2;
+      while (i < lines.length && /^\s*\|/.test(lines[i])) {
+        rows.push(this.splitMarkdownRow(lines[i]));
+        i += 1;
+      }
+      tables.push({ header, rows });
+    }
+
+    return tables;
+  },
+
+  /**
+   * Pull the report's header facts, the summary table and the per-query timing
+   * ranges out of the markdown.
+   *
+   * Only those three views are kept: the candidate-index list, the per-query
+   * execution plans and the closing methodology notes stay in the markdown
+   * source instead of being repeated on screen.
+   */
+  parseBenchmarkReport(markdown) {
+    const md = String(markdown);
+
+    // Header bullets: "**Database Engine:** ..." plus the dataset line items.
+    const meta = [];
+    const metaMatches = md.matchAll(/^\*\*([^*\n]+):\*\*\s*(.+)$/gm);
+    for (const match of metaMatches) {
+      const value = match[2].replace(/\s+/g, ' ').trim();
+      // "Dataset Size:" only introduces a list; the list items follow below.
+      if (!value || value.startsWith('-')) continue;
+      meta.push([match[1].trim(), value]);
+    }
+    const datasetMatches = md.matchAll(/^-\s*`?([^`:\n]+)`?\s*table:\s*([\d,]+)\s*rows/gm);
+    for (const match of datasetMatches) meta.push([`${match[1].trim()} (rows)`, match[2].trim()]);
+
+    // "### Q1: Full-table display query" sections. Each one contributes a row
+    // to the per-query table: name, rows returned, index used, and the min/max
+    // behind every average.
+    const queries = [];
+    const lines = md.split('\n');
+    lines.forEach((line, index) => {
+      const heading = line.match(/^###\s+(Q\d+):\s*(.+)$/);
+      if (!heading) return;
+
+      const block = [];
+      let cursor = index + 1;
+      while (cursor < lines.length && !/^#{2,3}\s/.test(lines[cursor])) {
+        block.push(lines[cursor]);
+        cursor += 1;
+      }
+      const text = block.join('\n');
+      const field = label => {
+        const match = text.match(new RegExp(`-\\s*\\*\\*${label}:\\*\\*\\s*(.+)`));
+        return match ? match[1].replace(/`/g, '').trim() : '';
+      };
+      const timings = text.match(
+        /Before Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)[\s\S]*?After Index:\s*Avg\s*([\d.]+)\s*ms\s*\(min:\s*([\d.]+)\s*ms,\s*max:\s*([\d.]+)\s*ms\)/
+      );
+
+      queries.push({
+        id: heading[1],
+        name: heading[2].trim(),
+        rows: field('Dataset / Result Rows'),
+        key: field('Optimizer Key Used'),
+        beforeMin: timings ? timings[2] : '',
+        beforeMax: timings ? timings[3] : '',
+        afterMin: timings ? timings[5] : '',
+        afterMax: timings ? timings[6] : ''
+      });
+    });
+
+    const tables = this.parseMarkdownTables(md);
+
+    return { meta, summary: tables[0] || null, queries };
+  },
+
+  /** Render the parsed report as three labelled tables. */
+  renderBenchmarkReport(report) {
+    const parts = [];
+
+    if (report.meta.length) {
+      parts.push('<h3 class="bench-heading">Report</h3>');
+      parts.push(
+        this.renderBenchmarkTable(['Field', 'Value'], report.meta, {
+          className: 'bench-table--meta',
+          cellClass: (cell, column) => (column === 0 ? 'bench-cell-key' : 'bench-cell-value')
+        })
+      );
+    }
+
+    if (report.summary) {
+      parts.push('<h3 class="bench-heading">Execution timing summary</h3>');
+      parts.push(
+        this.renderBenchmarkTable(report.summary.header, report.summary.rows, {
+          className: 'bench-table--summary',
+          cellClass: (cell, column) => {
+            if (column === 0) return 'bench-cell-id';
+            if (column === 1) return 'bench-cell-name';
+            if (column === report.summary.header.length - 1) {
+              return /^-/.test(cell) ? 'bench-cell-slower' : 'bench-cell-faster';
+            }
+            return /^-?[\d.]+( ms|%)?$/.test(cell) ? 'bench-cell-number' : '';
+          }
+        })
+      );
+    }
+
+    if (report.queries.length) {
+      parts.push('<h3 class="bench-heading">Per-query timings</h3>');
+      parts.push(
+        this.renderBenchmarkTable(
+          ['Query', 'Name', 'Rows', 'Before min–max (ms)', 'After min–max (ms)', 'Index used'],
+          report.queries.map(query => [
+            query.id,
+            query.name,
+            query.rows || '-',
+            query.beforeMin ? `${query.beforeMin} – ${query.beforeMax}` : '-',
+            query.afterMin ? `${query.afterMin} – ${query.afterMax}` : '-',
+            query.key || '-'
+          ]),
+          {
+            className: 'bench-table--timings',
+            cellClass: (cell, column) =>
+              column === 0
+                ? 'bench-cell-id'
+                : column === 1
+                  ? 'bench-cell-name'
+                  : column >= 2 && column <= 4
+                    ? 'bench-cell-number'
+                    : ''
+          }
+        )
+      );
+    }
+
+    return parts.length ? parts.join('\n') : '<p class="result-text">No benchmark report available.</p>';
+  },
+
+  renderBenchmarkTable(header, rows, { className = '', cellClass = () => '' } = {}) {
+    return `
+      <div class="table-responsive">
+        <table class="edu-table bench-table ${className}">
+          <thead>
+            <tr>${header.map(cell => `<th>${this.escapeHtml(cell)}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map(
+                row =>
+                  `<tr>${row
+                    .map((cell, column) => {
+                      const extra = cellClass(cell, column);
+                      return `<td${extra ? ` class="${extra}"` : ''}>${this.escapeHtml(cell)}</td>`;
+                    })
+                    .join('')}</tr>`
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
   },
 
   async loadDashboard() {
@@ -1246,98 +2018,258 @@ const app = {
 
     try {
       const res = await api.lab.getDashboard();
-      const tables = res.data.tables;
+      const tables = res.data.tables || [];
       const metrics = res.data.componentMetrics;
 
-      let html = `
+      container.innerHTML = `
         <div class="stats-grid">
-          ${tables.map(t => `
-            <div class="stat-card">
-              <div class="stat-value">${t.row_count}</div>
-              <div class="stat-label">${this.escapeHtml(t.table_name)}</div>
-            </div>
-          `).join('')}
+          ${tables
+            .map(
+              table => `
+                <div class="stat-card">
+                  <div class="stat-value">${this.escapeHtml(table.row_count)}</div>
+                  <div class="stat-label">${this.escapeHtml(table.table_name)}</div>
+                </div>
+              `
+            )
+            .join('')}
         </div>
+        ${
+          metrics
+            ? `
+              <div class="metrics-note">
+                <span><strong>Components:</strong> ${this.escapeHtml(metrics.published_components)}</span>
+                <span><strong>With reference artwork:</strong> ${this.escapeHtml(metrics.illustrative_components)}</span>
+              </div>
+            `
+            : ''
+        }
       `;
-
-      if (metrics) {
-        html += `
-          <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; font-size: 0.9rem;">
-            <strong>Component Classification:</strong> Published: ${metrics.published_components} | Illustrative Educational Models: ${metrics.illustrative_components}
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
     } catch (err) {
       container.innerHTML = `<div class="alert alert-error">${this.escapeHtml(err.message)}</div>`;
     }
   },
 
   // ----------------------------------------------------------------
-  // Modal & Utilities
+  // Shared markup helpers
   // ----------------------------------------------------------------
-  openModal(title, bodyHtml) {
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-body').innerHTML = bodyHtml;
-    document.getElementById('global-modal').classList.add('open');
+  categoryCard(category) {
+    // Parent categories use exactly the same tile as subcategories: name,
+    // summary, then "<n> components ->". The count includes nested children so
+    // a top-level category reports everything underneath it.
+    const children = category.children || [];
+    const directCount = Number(
+      category.componentCount !== undefined ? category.componentCount : category.component_count || 0
+    );
+    const childCount = children.reduce(
+      (sum, child) =>
+        sum + Number(child.component_count !== undefined ? child.component_count : child.componentCount || 0),
+      0
+    );
+
+    return this.subcategoryCard({
+      ...category,
+      description: category.description || '',
+      component_count: directCount + childCount
+    });
   },
 
-  closeModal() {
-    document.getElementById('global-modal').classList.remove('open');
-  },
+  componentCard(comp) {
+    const id = comp.componentId !== undefined ? comp.componentId : comp.component_id;
+    const slug = comp.slug || id;
+    const name = comp.name || 'Untitled component';
+    const description = comp.short_description || comp.shortDescription || '';
+    const symbol = comp.circuit_symbol_path || comp.circuitSymbolPath;
 
-  openImageModal(src, title) {
-    const body = `
-      <div style="text-align: center;">
-        <img src="${this.escapeHtml(src)}" alt="${this.escapeHtml(title)}" style="max-width: 100%; max-height: 70vh; object-fit: contain;" />
+    // Cards stay deliberately minimal: name, symbol, summary, and one quiet
+    // save control. Category and status badges only appear on the component's
+    // own page. The link and the button are siblings because a button inside a
+    // link is neither valid markup nor usable with a keyboard.
+    return `
+      <div class="component-card component-card--plain" data-component-id="${this.escapeHtml(id)}">
+        <a class="component-card-link" href="#/components/${encodeURIComponent(slug)}">
+          <div class="component-card-top">
+            <h3 class="component-card-title">${this.escapeHtml(name)}</h3>
+            ${
+              symbol
+                ? `<img class="component-card-symbol" src="${this.escapeHtml(this.asset(symbol))}" alt="" loading="lazy" data-hide-on-error>`
+                : ''
+            }
+          </div>
+          ${description ? `<p class="component-card-desc">${this.escapeHtml(description)}</p>` : '<p class="component-card-desc"></p>'}
+        </a>
+        <div class="component-card-foot">${account.bookmarkButton(id, { labelled: true })}</div>
       </div>
     `;
-    this.openModal(title, body);
   },
 
-  downloadXml(xmlContent, filename) {
-    const blob = new Blob([xmlContent], { type: 'application/xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'export.xml';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  /**
+   * Subcategory button: card-like (as before) but compact and distinct from
+   * both the parent category cards and the component cards.
+   */
+  subcategoryCard(category) {
+    const id = category.category_id !== undefined ? category.category_id : category.categoryId;
+    const count = Number(
+      category.component_count !== undefined ? category.component_count : category.componentCount || 0
+    );
+    const description = category.description || '';
+
+    // The count lives in the footer next to the arrow so both read as one
+    // sentence: "5 components ->". No ordinal, no floating chip.
+    return `
+      <a class="subcategory-card" href="#/categories/${encodeURIComponent(id)}">
+        <span class="subcategory-name">${this.escapeHtml(category.name)}</span>
+        ${description ? `<p class="subcategory-desc">${this.escapeHtml(description)}</p>` : ''}
+        <span class="subcategory-foot">
+          <span class="subcategory-foot-count"><b>${count}</b> component${count === 1 ? '' : 's'}</span>
+          <span class="subcategory-arrow" aria-hidden="true">
+            <svg class="subcategory-arrow-svg" viewBox="0 0 24 14" width="24" height="14" focusable="false">
+              <path class="arrow-rest" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-shaft" pathLength="1" d="M3 7H16.6" />
+              <path class="arrow-head" pathLength="1" d="M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-core" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <path class="arrow-strike" d="M3 7H16.6M11.4 2.4 16.6 7l-5.2 4.6" />
+              <g class="arrow-nib">
+                <circle class="arrow-nib-halo" cx="3" cy="7" r="2.5" />
+                <circle class="arrow-nib-tip" cx="3" cy="7" r="1.15" />
+              </g>
+            </svg>
+          </span>
+        </span>
+      </a>
+    `;
+  },
+
+  breadcrumbs(parts) {
+    return `
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        ${parts
+          .map((part, index) => {
+            const separator = index > 0 ? '<span class="breadcrumb-sep">&gt;</span>' : '';
+            const label = part.href
+              ? `<a href="${part.href}">${this.escapeHtml(part.label)}</a>`
+              : `<span aria-current="page">${this.escapeHtml(part.label)}</span>`;
+            return `${separator}${label}`;
+          })
+          .join('')}
+      </nav>
+    `;
   },
 
   renderPagination(pagination, baseUrl) {
-    const { page, totalPages } = pagination;
-    const prevPage = page > 1 ? page - 1 : null;
-    const nextPage = page < totalPages ? page + 1 : null;
-    const sep = baseUrl.includes('?') ? '&' : '?';
+    if (!pagination) return '';
 
-    let html = `<div class="pagination-bar">`;
-    if (prevPage) {
-      html += `<a href="${baseUrl}${sep}page=${prevPage}" class="page-btn">« Previous</a>`;
-    } else {
-      html += `<button class="page-btn" disabled>« Previous</button>`;
+    const page = Number(pagination.page) || 1;
+    const totalPages = Number(pagination.totalPages) || 0;
+    if (totalPages <= 1) return '';
+
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const href = target => `${baseUrl}${separator}page=${target}`;
+
+    const pages = [];
+    for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p += 1) {
+      pages.push(p);
     }
 
-    // Numbered pages (window around current)
-    for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) {
-      html += `<a href="${baseUrl}${sep}page=${p}" class="page-btn ${p === page ? 'active' : ''}">${p}</a>`;
+    let html = '<div class="pagination-bar">';
+    html +=
+      page > 1
+        ? `<a class="page-btn" href="${href(page - 1)}" rel="prev"><span class="page-arrow page-arrow--left" aria-hidden="true">«</span> Prev</a>`
+        : '<button class="page-btn" type="button" disabled><span class="page-arrow page-arrow--left" aria-hidden="true">«</span> Prev</button>';
+
+    if (pages[0] > 1) {
+      html += `<a class="page-btn" href="${href(1)}">1</a>`;
+      if (pages[0] > 2) html += '<span class="page-ellipsis">…</span>';
     }
 
-    if (nextPage) {
-      html += `<a href="${baseUrl}${sep}page=${nextPage}" class="page-btn">Next »</a>`;
-    } else {
-      html += `<button class="page-btn" disabled>Next »</button>`;
+    pages.forEach(target => {
+      html +=
+        target === page
+          ? `<span class="page-btn active" aria-current="page">${target}</span>`
+          : `<a class="page-btn" href="${href(target)}">${target}</a>`;
+    });
+
+    const lastRendered = pages[pages.length - 1];
+    if (lastRendered < totalPages) {
+      if (lastRendered < totalPages - 1) html += '<span class="page-ellipsis">…</span>';
+      html += `<a class="page-btn" href="${href(totalPages)}">${totalPages}</a>`;
     }
-    html += `</div>`;
+
+    html +=
+      page < totalPages
+        ? `<a class="page-btn" href="${href(page + 1)}" rel="next">Next <span class="page-arrow page-arrow--right" aria-hidden="true">»</span></a>`
+        : '<button class="page-btn" type="button" disabled>Next <span class="page-arrow page-arrow--right" aria-hidden="true">»</span></button>';
+
+    html += '</div>';
     return html;
   },
 
-  escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
+  // ----------------------------------------------------------------
+  // Modal, toasts, downloads, utilities
+  // ----------------------------------------------------------------
+  openModal(title, bodyHtml) {
+    const modal = document.getElementById('global-modal');
+    const titleEl = document.getElementById('modal-title');
+    const bodyEl = document.getElementById('modal-body');
+    if (!modal || !titleEl || !bodyEl) return;
+
+    titleEl.textContent = title;
+    bodyEl.innerHTML = bodyHtml;
+    modal.classList.add('open');
+  },
+
+  closeModal() {
+    const modal = document.getElementById('global-modal');
+    if (modal) modal.classList.remove('open');
+  },
+
+  openImageModal(src, title) {
+    if (!src) return;
+
+    const body = `
+      <div class="diagram-frame" style="min-height: 0;">
+        <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(title || 'Diagram')}" style="max-height: 70vh;">
+      </div>
+    `;
+    this.openModal(title || 'Diagram', body);
+  },
+
+  toast(message, type = 'info') {
+    const stack = document.getElementById('toast-stack');
+    if (!stack) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    stack.appendChild(toast);
+
+    window.setTimeout(() => {
+      toast.classList.add('is-leaving');
+      window.setTimeout(() => toast.remove(), 220);
+    }, 4200);
+  },
+
+  downloadXml(xmlContent, filename) {
+    if (!xmlContent) {
+      this.toast('No XML output to download yet.', 'error');
+      return;
+    }
+
+    const blob = new Blob([xmlContent], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename || 'export.xml';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    this.toast(`Downloaded ${filename || 'export.xml'}.`, 'success');
+  },
+
+  escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -1347,3 +2279,18 @@ const app = {
 };
 
 window.addEventListener('DOMContentLoaded', () => app.init());
+
+// Equations are sized to the column, so they must be re-fitted whenever the
+// column or the font metrics change - otherwise a late webfont can push a
+// scaled equation past the edge and bring back the horizontal scrollbar.
+let equationResizeTimer = null;
+const refitEquations = () => {
+  clearTimeout(equationResizeTimer);
+  equationResizeTimer = setTimeout(() => app.fitEquations(), 120);
+};
+
+window.addEventListener('resize', refitEquations);
+window.addEventListener('load', refitEquations);
+if (document.fonts && typeof document.fonts.ready === 'object') {
+  document.fonts.ready.then(refitEquations).catch(() => {});
+}

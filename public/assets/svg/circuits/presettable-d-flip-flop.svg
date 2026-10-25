@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Presettable D Flip-Flop circuit diagram">
+  <title>Presettable D Flip-Flop circuit diagram</title>
+  <path d="M250,366 H275.76 A28,28 0 0 1 275.76,422 H250 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="314" cy="394" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M450,94 H486.8 A40,40 0 0 1 486.8,174 H450 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="538" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M450,334 H486.8 A40,40 0 0 1 486.8,414 H450 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="538" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M760,118 H796.8 A40,40 0 0 1 796.8,198 H760 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="848" cy="158" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M760,358 H796.8 A40,40 0 0 1 796.8,438 H760 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="848" cy="398" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,110 L140,110 L450,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="140" cy="110" r="4.5" fill="#c5c7c9"/>
+  <path d="M140,110 L140,394 L250,394" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M320,394 L410,394 L410,350 L450,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D</text>
+  <path d="M60,240 L190,240" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M190,240 L190,158 L450,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="190" cy="240" r="4.5" fill="#c5c7c9"/>
+  <path d="M190,240 L190,398 L450,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="248" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
+  <path d="M544,134 L760,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M544,374 L760,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M854,398 L900,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="900" cy="398" r="4.5" fill="#c5c7c9"/>
+  <path d="M900,398 L900,40 L700,40 L700,182 L760,182" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M854,158 L940,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="940" cy="158" r="4.5" fill="#c5c7c9"/>
+  <path d="M940,158 L940,464 L700,464 L700,422 L760,422" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M940,158 L1000,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M900,398 L1000,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="166" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="406" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+</svg>

@@ -1,7 +1,7 @@
 {
   "name": "electrodb-server",
   "version": "1.0.0",
-  "description": "Backend API for ElectroDB - Electronic Components Reference Catalogue and DBMS Lab",
+  "description": "Backend API for ElectroDB - Electronic Components Reference Catalogue",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

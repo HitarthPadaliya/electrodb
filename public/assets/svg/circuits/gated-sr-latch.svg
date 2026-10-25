@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Gated SR Latch circuit diagram">
+  <title>Gated SR Latch circuit diagram</title>
+  <path d="M230,110 H266.8 A40,40 0 0 1 266.8,190 H230 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="318" cy="150" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M230,290 H266.8 A40,40 0 0 1 266.8,370 H230 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="318" cy="330" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M560,110 H596.8 A40,40 0 0 1 596.8,190 H560 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="648" cy="150" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M560,290 H596.8 A40,40 0 0 1 596.8,370 H560 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="648" cy="330" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
+  <path d="M60,126 L230,126" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60,306 L230,306" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="34" y="134" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">S</text>
+  <text x="34" y="314" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">R</text>
+  <path d="M60,400 L160,400" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M160,400 L160,174 L230,174" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M160,400 L160,354 L230,354" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="160" cy="400" r="4.5" fill="#c5c7c9"/>
+  <text x="34" y="408" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">EN</text>
+  <path d="M324,150 L500,150 L500,126 L560,126" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M324,330 L500,330 L500,306 L560,306" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M654,330 L800,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="800" cy="330" r="4.5" fill="#c5c7c9"/>
+  <path d="M800,330 L800,60 L520,60 L520,174 L560,174" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M654,150 L860,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="860" cy="150" r="4.5" fill="#c5c7c9"/>
+  <path d="M860,150 L860,440 L520,440 L520,354 L560,354" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M800,330 L1000,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M860,150 L1000,150" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1012" y="158" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
+  <text x="1012" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+</svg>

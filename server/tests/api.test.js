@@ -132,9 +132,48 @@ describe('ElectroDB Catalogue API Tests', () => {
     assert.ok(typeof charEq.content === 'string');
     assert.ok(charEq.content.includes('Q_{next}'));
 
-    // Verify diagram asset path
+    // Verify diagram asset path and kind
     assert.ok(comp.diagrams.length > 0);
     assert.ok(comp.diagrams[0].imagePath.endsWith('.svg'));
+
+    const kinds = comp.diagrams.map(d => d.kind);
+    assert.ok(kinds.includes('SYMBOL'), 'A pin-level symbol diagram must be present');
+    assert.ok(kinds.includes('CIRCUIT'), 'A gate/device-level circuit diagram must be present');
+
+    const circuit = comp.diagrams.find(d => d.kind === 'CIRCUIT');
+    assert.ok(
+      circuit.imagePath.startsWith('/assets/svg/circuits/'),
+      'Circuit diagrams live under /assets/svg/circuits/'
+    );
+
+    // The design reference drawing is shipped verbatim for the JK flip-flop.
+    assert.strictEqual(circuit.imagePath, '/assets/svg/circuits/jk-flip-flop-circuit.svg');
+
+    // The IC pinout is served alongside the specifications.
+    assert.ok(kinds.includes('PINOUT'), 'An IC pinout diagram must be present');
+    const pinout = comp.diagrams.find(d => d.kind === 'PINOUT');
+    assert.ok(
+      pinout.imagePath.startsWith('/assets/svg/pinouts/'),
+      'Pinouts live under /assets/svg/pinouts/'
+    );
+  });
+
+  it('GET /api/components/:id should pair every logic gate with its IC pinout instead of a circuit', async () => {
+    for (const slug of ['and-gate', 'nand-gate', 'xor-gate']) {
+      const res = await request(`/api/components/${slug}`);
+      assert.strictEqual(res.status, 200, `${slug} should resolve`);
+      const kinds = res.json.data.diagrams.map(d => d.kind);
+
+      assert.ok(!kinds.includes('CIRCUIT'), `${slug} must not ship a circuit diagram`);
+      assert.ok(kinds.includes('PINOUT'), `${slug} must show its IC pinout`);
+    }
+  });
+
+  it('GET /api/components/:id should not classify components with an educational tag', async () => {
+    const res = await request('/api/components/jk-flip-flop');
+    assert.strictEqual(res.status, 200);
+    const slugs = res.json.data.tags.map(t => t.slug);
+    assert.ok(!slugs.includes('educational-example'), 'The #educational-example tag was removed from the seed');
   });
 
   it('GET /api/components/non-existent-id should return 404 error envelope', async () => {
@@ -148,6 +187,64 @@ describe('ElectroDB Catalogue API Tests', () => {
     assert.strictEqual(res.status, 200);
     assert.ok(Array.isArray(res.json.data.items));
     assert.ok(res.json.data.items.length > 0);
+  });
+
+  it('GET /api/components should return the paginated public catalog', async () => {
+    const res = await request('/api/components?page=1&pageSize=5');
+    assert.strictEqual(res.status, 200);
+    const { items, pagination } = res.json.data;
+    assert.ok(Array.isArray(items));
+    assert.ok(items.length > 0);
+    assert.ok(items.length <= 5);
+    assert.strictEqual(pagination.page, 1);
+    assert.ok(pagination.total > 0);
+    assert.ok(items[0].category_name, 'Catalog rows should include the category name');
+  });
+
+  it('GET /api/components?categoryId=6 should only return that category', async () => {
+    const res = await request('/api/components?categoryId=6&pageSize=100');
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.json.data.items.length > 0);
+    assert.ok(res.json.data.items.every(item => item.category_id === 6));
+  });
+
+  it('GET /api/components?categoryId=abc should reject a malformed category filter', async () => {
+    const res = await request('/api/components?categoryId=abc');
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.json.error.code, 'BAD_REQUEST');
+  });
+
+  it('GET /api/tags should list tags with published component counts', async () => {
+    const res = await request('/api/tags');
+    assert.strictEqual(res.status, 200);
+    assert.ok(Array.isArray(res.json.data));
+    assert.ok(res.json.data.length > 0);
+    const digital = res.json.data.find(tag => tag.slug === 'digital');
+    assert.ok(digital, 'digital tag should exist');
+    assert.ok(digital.component_count > 0);
+  });
+
+  it('GET /api/tags/:slug should return tagged components and a pagination envelope', async () => {
+    const res = await request('/api/tags/digital?page=1&pageSize=5');
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.json.data.tag.slug, 'digital');
+    assert.ok(Array.isArray(res.json.data.components));
+    assert.ok(res.json.data.components.length <= 5);
+    assert.ok(res.json.data.pagination.total > 0);
+  });
+
+  it('GET /api/tags/non-existent-tag should return a 404 error envelope', async () => {
+    const res = await request('/api/tags/not-a-real-tag');
+    assert.strictEqual(res.status, 404);
+    assert.strictEqual(res.json.error.code, 'NOT_FOUND');
+  });
+
+  it('GET /api/components/:id should include tag pills data', async () => {
+    const res = await request('/api/components/jk-flip-flop');
+    assert.strictEqual(res.status, 200);
+    assert.ok(Array.isArray(res.json.data.tags));
+    assert.ok(res.json.data.tags.length > 0);
+    assert.ok(res.json.data.tags[0].slug);
   });
 });
 
