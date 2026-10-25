@@ -490,9 +490,7 @@ const account = {
           </section>
         </div>
 
-        <section class="account-panel account-panel--wide">
-          <h2 class="section-title">Session</h2>
-          <p class="account-note">Your sign-in is held in an HttpOnly cookie. Signing out deletes the session on the server, not just the cookie in this browser.</p>
+        <section class="account-panel account-panel--wide account-panel--actions">
           <button class="btn btn-secondary" type="button" data-action="sign-out">Sign out</button>
         </section>
       </div>

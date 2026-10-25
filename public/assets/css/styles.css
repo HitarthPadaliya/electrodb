@@ -341,6 +341,26 @@ select:focus-visible,
   width: clamp(190px, 22vw, 300px);
 }
 
+/* The focus halo is its own layer, faded in with opacity only. Transitioning a
+   box-shadow on the input repainted the pill on every frame, which is what made
+   focusing the header search feel quick and twitchy; an opacity fade on a
+   pre-rasterised ring is handled by the compositor. */
+.header-search::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 167, 218, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease-out);
+}
+
+.header-search:focus-within::after {
+  opacity: 1;
+}
+
 .header-search .search-icon {
   position: absolute;
   left: 0.9rem;
@@ -349,6 +369,11 @@ select:focus-visible,
   color: var(--muted);
   pointer-events: none;
   display: flex;
+  transition: color 300ms var(--ease-out);
+}
+
+.header-search:focus-within .search-icon {
+  color: var(--accent);
 }
 
 .search-input {
@@ -360,9 +385,12 @@ select:focus-visible,
   color: var(--fg);
   font-size: 0.85rem;
   transition:
-    border-color var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out);
+    border-color 300ms var(--ease-out),
+    background-color 300ms var(--ease-out);
+}
+
+.search-input:hover {
+  border-color: rgba(0, 167, 218, 0.45);
 }
 
 .search-input::placeholder {
@@ -373,7 +401,6 @@ select:focus-visible,
   outline: none;
   border-color: var(--accent);
   background-color: #050a12;
-  box-shadow: 0 0 0 3px rgba(0, 167, 218, 0.18);
 }
 
 .search-input::-webkit-search-cancel-button {
@@ -3272,6 +3299,21 @@ input[type='range']:focus-visible {
 
 .account-panel--wide {
   margin-bottom: 1.4rem;
+}
+
+/* A bar holding a single account action (sign out). It carries no heading and
+   no explanatory copy: the button says what it does. */
+.account-panel--actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.9rem 1.5rem;
+}
+
+/* Beats `.account-panel .btn { align-self: flex-start }`, which would pin the
+   button to the top edge of the bar. */
+.account-panel.account-panel--actions .btn {
+  align-self: center;
 }
 
 .account-note {

@@ -594,3 +594,19 @@ the catalogue changed.
   lab dashboard no longer reports invented row counts (`components × 3`, `specifications: 18`). Its
   seed parser also stopped dropping the last row of every `INSERT … VALUES` block, which had been
   misfiling two components as unpublished and under-reporting the catalogue by two.
+
+## 28. A quiet sign-out, and a header search that eases in
+
+The profile page ended with a "Session" panel that explained, in a sentence, that the sign-in lives in
+an HttpOnly cookie and that signing out deletes it server-side. The button underneath needed none of
+that: the label already says what it does, and the explanation was the only prose on the page that
+described the plumbing rather than the person's own data.
+
+- The panel is now a slim bar at the end of the page holding the **Sign out** button alone,
+  right-aligned against the card edge. No heading, no note.
+- The header search field's focus treatment was a 240 ms `box-shadow`/`border-color`/`background`
+  transition on the input itself, so the browser repainted the pill on every frame — quick and
+  slightly twitchy. The halo is now a separate ring layer that only fades in with opacity (300 ms),
+  which the compositor handles without repainting the input. The magnifier tints to the accent colour
+  on focus and the field picks up a hover border, both on the same 300 ms curve, so hover → focus →
+  typing reads as one continuous movement instead of a snap.
