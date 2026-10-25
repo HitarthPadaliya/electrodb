@@ -653,7 +653,7 @@ SELECT c.component_id, 'State Diagram', 'STATE',
          WHEN 'johnson-counter' THEN '/assets/svg/counters/johnson-counter-state.svg'
          WHEN 'mod10-synchronous-counter' THEN '/assets/svg/counters/mod10-synchronous-counter-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END, CONCAT('State machine for ',c.name), 'Moore and Mealy machines, side by side.', 30
+       END, CONCAT('State machine for ',c.name), 'MOORE and MEALY machines, side by side.', 30
 FROM components c
 WHERE c.category_id IN (6,7);
 
