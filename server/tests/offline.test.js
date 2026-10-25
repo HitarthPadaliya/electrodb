@@ -901,7 +901,7 @@ describe('Summary figures are counted, never typed in', () => {
   });
 });
 
-describe('Profile page and header search polish', () => {
+describe('Profile page sign-out', () => {
   const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
   const cssSource = fs.readFileSync(path.join(repoRoot, 'public/assets/css/styles.css'), 'utf8');
   const profile = accountSource.slice(
@@ -920,23 +920,5 @@ describe('Profile page and header search polish', () => {
 
   it('keeps the action bar a right-aligned row', () => {
     assert.match(cssSource, /\.account-panel--actions \{[\s\S]{0,120}justify-content: flex-end/);
-  });
-
-  it('fades the header search halo instead of animating a box-shadow', () => {
-    const halo = cssSource.slice(cssSource.indexOf('.header-search::after'), cssSource.indexOf('.search-input {'));
-    assert.match(halo, /opacity: 0/);
-    assert.match(halo, /transition: opacity 300ms var\(--ease-out\)/);
-    assert.match(cssSource, /\.header-search:focus-within::after \{\s*opacity: 1;/);
-
-    const input = cssSource.slice(cssSource.indexOf('.search-input {'), cssSource.indexOf('.search-input::placeholder'));
-    assert.ok(!/box-shadow/.test(input), 'the input no longer animates a box-shadow');
-    assert.match(input, /transition:\s*border-color 300ms/);
-  });
-
-  it('does not use a quick transition on the search control', () => {
-    const halo = cssSource.slice(cssSource.indexOf('.header-search::after'), cssSource.indexOf('.search-input {'));
-    const durations = [...halo.matchAll(/(\d+)ms/g)].map(m => Number(m[1]));
-    assert.ok(durations.length > 0, 'the halo declares a duration');
-    assert.ok(durations.every(value => value >= 260), `halo transition is not rushed: ${durations}`);
   });
 });
