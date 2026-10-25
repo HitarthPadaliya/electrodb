@@ -3341,7 +3341,7 @@ const app = {
     return html;
   },
 
-        openModal(title, bodyHtml) {
+        openModal(title, bodyHtml, { viewer = false } = {}) {
     const modal = document.getElementById('global-modal');
     const titleEl = document.getElementById('modal-title');
     const bodyEl = document.getElementById('modal-body');
@@ -3349,23 +3349,26 @@ const app = {
 
     titleEl.textContent = title;
     bodyEl.innerHTML = bodyHtml;
+    modal.classList.toggle('modal-overlay--viewer', viewer);
     modal.classList.add('open');
   },
 
   closeModal() {
     const modal = document.getElementById('global-modal');
-    if (modal) modal.classList.remove('open');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.classList.remove('modal-overlay--viewer');
   },
 
   openImageModal(src, title) {
     if (!src) return;
 
     const body = `
-      <div class="diagram-frame" style="min-height: 0;">
-        <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(title || 'Diagram')}" style="max-height: 70vh;">
+      <div class="diagram-frame">
+        <img src="${this.escapeHtml(this.asset(src))}" alt="${this.escapeHtml(title || 'Diagram')}">
       </div>
     `;
-    this.openModal(title || 'Diagram', body);
+    this.openModal(title || 'Diagram', body, { viewer: true });
   },
 
   toast(message, type = 'info') {
