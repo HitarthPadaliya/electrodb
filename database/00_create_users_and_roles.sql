@@ -1,15 +1,7 @@
--- ================================================================
--- ElectroDB - 00_create_users_and_roles.sql
--- Database roles and least-privilege accounts for the stored-program layer
--- Target: MySQL 8.0+ / MariaDB 10.4+
--- ================================================================
-
--- Create application roles (where supported)
 CREATE ROLE IF NOT EXISTS 'electrodb_role_naive';
 CREATE ROLE IF NOT EXISTS 'electrodb_role_application_developer';
 CREATE ROLE IF NOT EXISTS 'electrodb_role_dba';
 
--- Assign privileges to roles
 GRANT SELECT ON electrodb.categories TO 'electrodb_role_naive';
 GRANT SELECT ON electrodb.components TO 'electrodb_role_naive';
 GRANT SELECT ON electrodb.content_types TO 'electrodb_role_naive';
@@ -25,7 +17,6 @@ GRANT SELECT ON electrodb.v_category_component_counts TO 'electrodb_role_naive';
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON electrodb.* TO 'electrodb_role_application_developer';
 GRANT ALL PRIVILEGES ON electrodb.* TO 'electrodb_role_dba';
 
--- Create actual database accounts
 CREATE USER IF NOT EXISTS 'electrodb_naive'@'localhost' IDENTIFIED BY 'naive_user_pwd';
 CREATE USER IF NOT EXISTS 'electrodb_naive'@'127.0.0.1' IDENTIFIED BY 'naive_user_pwd';
 
@@ -38,7 +29,6 @@ CREATE USER IF NOT EXISTS 'electrodb_developer'@'127.0.0.1' IDENTIFIED BY 'devel
 CREATE USER IF NOT EXISTS 'electrodb_dba'@'localhost' IDENTIFIED BY 'dba_pwd';
 CREATE USER IF NOT EXISTS 'electrodb_dba'@'127.0.0.1' IDENTIFIED BY 'dba_pwd';
 
--- Grant roles/direct privileges to users
 GRANT 'electrodb_role_naive' TO 'electrodb_naive'@'localhost', 'electrodb_naive'@'127.0.0.1';
 GRANT SELECT ON electrodb.* TO 'electrodb_naive'@'localhost', 'electrodb_naive'@'127.0.0.1';
 

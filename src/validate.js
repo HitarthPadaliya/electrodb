@@ -1,9 +1,118 @@
-/**
- * Validation for everything account-shaped.
- *
- * Every rule here runs on the server. The forms in the browser repeat a few of
- * them for a nicer experience, but nothing in this file trusts the client.
- */
+const { passwords } = require('./security');
+
+const ALLOWED_TABLES = new Set([
+  'categories',
+  'components',
+  'tags',
+  'component_tags',
+  'content_types',
+  'category_content_types',
+  'component_content',
+  'component_diagrams',
+  'specifications',
+  'component_specifications',
+  'app_users',
+  'application_audit_log'
+]);
+
+const ALLOWED_AGGREGATE_FUNCTIONS = new Set(['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']);
+
+const ALLOWED_OPERATORS = {
+  eq: '=',
+  neq: '!=',
+  gt: '>',
+  gte: '>=',
+  lt: '<',
+  lte: '<=',
+  like: 'LIKE'
+};
+
+const ALLOWED_JOIN_TYPES = {
+  inner: 'INNER JOIN',
+  left: 'LEFT JOIN',
+  right: 'RIGHT JOIN'
+};
+
+const TABLE_COLUMNS = {
+  components: new Set([
+    'component_id', 'category_id', 'name', 'slug', 'short_description',
+    'description', 'main_image_path', 'circuit_symbol_path', 'datasheet_url',
+    'is_illustrative', 'is_published', 'created_at', 'updated_at'
+  ]),
+  categories: new Set([
+    'category_id', 'parent_category_id', 'name', 'slug', 'description',
+    'display_order', 'is_active', 'created_at', 'updated_at'
+  ]),
+  tags: new Set(['tag_id', 'name', 'slug']),
+  content_types: new Set(['content_type_id', 'code', 'label', 'render_kind', 'description']),
+  specifications: new Set(['specification_id', 'name', 'unit', 'value_kind', 'description']),
+  component_specifications: new Set([
+    'component_id', 'specification_id', 'numeric_value', 'text_value',
+    'range_min', 'range_max', 'unit_override', 'source_note'
+  ]),
+  component_diagrams: new Set([
+    'diagram_id', 'component_id', 'title', 'image_path', 'alt_text',
+    'caption', 'display_order', 'created_at', 'updated_at'
+  ]),
+  component_content: new Set([
+    'component_content_id', 'component_id', 'content_type_id', 'section_key',
+    'title', 'content', 'alt_text', 'caption', 'display_order'
+  ]),
+  app_users: new Set([
+    'user_id', 'username', 'role_code', 'is_active', 'created_at',
+    'updated_at', 'last_login_at'
+  ]),
+  application_audit_log: new Set([
+    'audit_id', 'table_name', 'operation_type', 'row_key', 'changed_at',
+    'db_user', 'application_user'
+  ])
+};
+
+function validateTable(tableName) {
+  if (!tableName || !ALLOWED_TABLES.has(tableName.toLowerCase())) {
+    throw new Error(`Invalid table name: '${tableName}'. Table must be one of: ${Array.from(ALLOWED_TABLES).join(', ')}`);
+  }
+  return tableName.toLowerCase();
+}
+
+function validateColumn(tableName, columnName) {
+  const table = validateTable(tableName);
+  const allowed = TABLE_COLUMNS[table];
+  if (!columnName || !allowed || !allowed.has(columnName.toLowerCase())) {
+    throw new Error(`Invalid column: '${columnName}' for table '${table}'`);
+  }
+  return columnName.toLowerCase();
+}
+
+function validateAggregateFunction(fnName) {
+  if (!fnName || !ALLOWED_AGGREGATE_FUNCTIONS.has(fnName.toUpperCase())) {
+    throw new Error(`Invalid aggregate function: '${fnName}'. Must be COUNT, SUM, AVG, MIN, or MAX.`);
+  }
+  return fnName.toUpperCase();
+}
+
+function validateOperator(op) {
+  const normalized = (op || 'eq').toLowerCase();
+  if (!ALLOWED_OPERATORS[normalized]) {
+    throw new Error(`Invalid operator: '${op}'. Must be one of: ${Object.keys(ALLOWED_OPERATORS).join(', ')}`);
+  }
+  return ALLOWED_OPERATORS[normalized];
+}
+
+function validateJoinType(joinType) {
+  const normalized = (joinType || 'inner').toLowerCase();
+  if (!ALLOWED_JOIN_TYPES[normalized]) {
+    throw new Error(`Invalid join type: '${joinType}'. Must be inner, left, or right.`);
+  }
+  return ALLOWED_JOIN_TYPES[normalized];
+}
+
+function validatePagination(page, pageSize, defaultPageSize = 20, maxPageSize = 100) {
+  const p = Math.max(1, parseInt(page || '1', 10) || 1);
+  const size = Math.min(maxPageSize, Math.max(1, parseInt(pageSize || defaultPageSize, 10) || defaultPageSize));
+  const offset = (p - 1) * size;
+  return { page: p, pageSize: size, offset };
+}
 
 class ValidationError extends Error {
   constructor(message, details = null) {
@@ -20,9 +129,7 @@ const USERNAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/;
 
 function normalizeEmail(value) {
   if (typeof value !== 'string') return '';
-  // Lower-casing the whole address is what makes the uniqueness constraint
-  // meaningful: Foo@Example.com and foo@example.com are the same mailbox.
-  return value.trim().toLowerCase();
+      return value.trim().toLowerCase();
 }
 
 function requireString(value, field, { min = 1, max = 255 } = {}) {
@@ -63,7 +170,7 @@ function validateRegistration(body = {}) {
         ? body.passwordConfirm
         : body.password_confirmation;
 
-  const strength = require('../security/passwords').validatePasswordStrength(password);
+  const strength = passwords.validatePasswordStrength(password);
   if (!strength.ok) throw new ValidationError(strength.message, { field: 'password' });
 
   if (confirm !== undefined && password !== confirm) {
@@ -88,9 +195,7 @@ function validateProfileUpdate(body = {}) {
   if (!Object.keys(patch).length) {
     throw new ValidationError('Nothing to update. Send a username or an email address.');
   }
-  // Anything else in the payload (role_code, is_active, password_hash, ...) is
-  // deliberately ignored: a profile update can never change privileges.
-  return patch;
+      return patch;
 }
 
 function validatePasswordChange(body = {}) {
@@ -98,7 +203,7 @@ function validatePasswordChange(body = {}) {
   const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
   if (!currentPassword) throw new ValidationError('Current password is required.', { field: 'currentPassword' });
 
-  const strength = require('../security/passwords').validatePasswordStrength(newPassword);
+  const strength = passwords.validatePasswordStrength(newPassword);
   if (!strength.ok) throw new ValidationError(strength.message, { field: 'newPassword' });
   if (currentPassword === newPassword) {
     throw new ValidationError('The new password must be different from the current one.', { field: 'newPassword' });
@@ -125,7 +230,6 @@ function validateCollectionInput(body = {}, { partial = false } = {}) {
   return out;
 }
 
-/** Route/query parameters are always strings; accept only positive integers. */
 function parseId(value, field = 'id') {
   const id = Number(value);
   if (!Number.isInteger(id) || id < 1) throw new ValidationError(`Invalid ${field}.`, { field });
@@ -139,12 +243,21 @@ function parsePagination(query = {}, { defaultPageSize = 20, maxPageSize = 100 }
 }
 
 function validateRegistrationAllowedRole() {
-  // Public registration can only ever create ordinary users. The role is not
-  // read from the request at all - this helper exists to document that.
-  return 'NAIVE_USER';
+      return 'NAIVE_USER';
 }
 
 module.exports = {
+  validateTable,
+  validateColumn,
+  validateAggregateFunction,
+  validateOperator,
+  validateJoinType,
+  validatePagination,
+  ALLOWED_TABLES,
+  ALLOWED_AGGREGATE_FUNCTIONS,
+  ALLOWED_OPERATORS,
+  ALLOWED_JOIN_TYPES,
+  TABLE_COLUMNS,
   ValidationError,
   normalizeEmail,
   validateEmail,

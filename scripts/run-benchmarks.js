@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const pool = require('../server/src/db/pool');
+const { pool } = require('../src/db');
 
 const TRIALS = 5;
 
@@ -69,8 +69,7 @@ async function measureQuery(sql, trials = TRIALS) {
     rowCount = Array.isArray(rows) ? rows.length : (rows.affectedRows || 0);
   }
 
-  // Calculate average, min, max
-  const avg = times.reduce((a, b) => a + b, 0) / times.length;
+    const avg = times.reduce((a, b) => a + b, 0) / times.length;
   const min = Math.min(...times);
   const max = Math.max(...times);
 
@@ -98,8 +97,7 @@ async function run() {
   console.log(` Running ${TRIALS} trials per query`);
   console.log('====================================================\n');
 
-  // Verify server version and dataset size
-  const [componentCount] = await pool.query('SELECT COUNT(*) AS total FROM components');
+    const [componentCount] = await pool.query('SELECT COUNT(*) AS total FROM components');
   const [categoryCount] = await pool.query('SELECT COUNT(*) AS total FROM categories');
   const [specCount] = await pool.query('SELECT COUNT(*) AS total FROM component_specifications');
   const [dbVer] = await pool.query('SELECT VERSION() AS ver');
@@ -113,9 +111,7 @@ async function run() {
 
   console.log('Dataset Info:', datasetInfo);
 
-  // Phase 1: Measure queries before creating additional indexes
-  // Drop candidate benchmark indexes if they already exist
-  console.log('\n[Phase 1] Dropping candidate indexes to establish baseline...');
+      console.log('\n[Phase 1] Dropping candidate indexes to establish baseline...');
   try { await pool.query('ALTER TABLE components DROP INDEX idx_bench_components_cat'); } catch (e) {}
   try { await pool.query('ALTER TABLE components DROP INDEX idx_bench_comp_pub_cat'); } catch (e) {}
 
@@ -130,16 +126,14 @@ async function run() {
     explainBefore.push({ id: q.id, explain });
   }
 
-  // Phase 2: Create Candidate Indexes
-  console.log('\n[Phase 2] Creating candidate indexes...');
+    console.log('\n[Phase 2] Creating candidate indexes...');
   console.log('  1. Creating INDEX idx_bench_components_cat ON components(category_id)...');
   await pool.query('ALTER TABLE components ADD INDEX idx_bench_components_cat (category_id)');
 
   console.log('  2. Creating INDEX idx_bench_comp_pub_cat ON components(is_published, category_id)...');
   await pool.query('ALTER TABLE components ADD INDEX idx_bench_comp_pub_cat (is_published, category_id)');
 
-  // Phase 3: Measure queries after creating indexes
-  console.log('\n[Phase 3] Measuring queries with indexes...');
+    console.log('\n[Phase 3] Measuring queries with indexes...');
   const resultsAfter = [];
   const explainAfter = [];
 
@@ -151,8 +145,7 @@ async function run() {
     explainAfter.push({ id: q.id, explain });
   }
 
-  // Generate Report
-  console.log('\n[Phase 4] Generating 10_query_timing_results.md...');
+    console.log('\n[Phase 4] Generating 10_query_timing_results.md...');
   let md = `# ElectroDB — Practical Assignment 11 Query Execution Timing Report\n\n`;
   md += `**Generated At:** ${new Date().toISOString()}  \n`;
   md += `**Database Engine:** ${datasetInfo.engine}  \n`;

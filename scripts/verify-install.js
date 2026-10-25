@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const pool = require('../server/src/db/pool');
-const app = require('../server/src/app');
+const { pool } = require('../src/db');
+const { app } = require('../src/server');
 
 async function testHttp(port, path) {
   return new Promise((resolve, reject) => {
@@ -21,8 +21,7 @@ async function verify() {
 
   let errors = 0;
 
-  // 1. Check database connectivity
-  process.stdout.write('1. Checking MySQL/MariaDB database connection... ');
+    process.stdout.write('1. Checking MySQL/MariaDB database connection... ');
   try {
     const health = await pool.checkHealth();
     console.log(`[PASS] (${health.db_version})`);
@@ -31,8 +30,7 @@ async function verify() {
     errors++;
   }
 
-  // 2. Check required tables and views
-  process.stdout.write('2. Checking database schema tables & views... ');
+    process.stdout.write('2. Checking database schema tables & views... ');
   const expectedTables = [
     'categories', 'tags', 'components', 'component_tags', 'content_types',
     'category_content_types', 'component_content', 'component_diagrams',
@@ -55,8 +53,7 @@ async function verify() {
     errors++;
   }
 
-  // 3. Check stored procedures
-  process.stdout.write('3. Checking stored procedures & functions... ');
+    process.stdout.write('3. Checking stored procedures & functions... ');
   const expectedProcedures = [
     'sp_insert_component', 'sp_update_component', 'sp_delete_component',
     'sp_cursor_components_all', 'sp_cursor_components_limited',
@@ -80,8 +77,7 @@ async function verify() {
     errors++;
   }
 
-  // 4. Check triggers
-  process.stdout.write('4. Checking database triggers... ');
+    process.stdout.write('4. Checking database triggers... ');
   try {
     const [trigs] = await pool.query("SHOW TRIGGERS FROM electrodb");
     if (trigs.length >= 7) {
@@ -94,12 +90,10 @@ async function verify() {
     errors++;
   }
 
-  // 5. Check static assets
-  process.stdout.write('5. Checking SVG diagrams and web assets... ');
+    process.stdout.write('5. Checking SVG diagrams and web assets... ');
   const keyFiles = [
     'public/index.html',
     'public/assets/css/styles.css',
-    'public/assets/js/api.js',
     'public/assets/js/app.js',
     'public/assets/svg/counters/decade-counter-state.svg',
     'public/assets/svg/counters/mod8-up-counter-state.svg',
@@ -116,8 +110,7 @@ async function verify() {
     errors++;
   }
 
-  // 6. Test Express HTTP server & API endpoints
-  process.stdout.write('6. Testing HTTP Server & API endpoints... ');
+    process.stdout.write('6. Testing HTTP Server & API endpoints... ');
   let server;
   try {
     await new Promise(resolve => {

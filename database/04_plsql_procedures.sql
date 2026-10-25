@@ -1,16 +1,7 @@
--- ================================================================
--- ElectroDB - 04_plsql_procedures.sql
--- MySQL stored procedures implementing the stored-program requirements
--- Target: MySQL 8.0+ / MariaDB 10.4+
--- ================================================================
-
 USE electrodb;
 
 DELIMITER $$
 
--- ----------------------------------------------------------------
--- 1. Component CRUD stored procedures
--- ----------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_insert_component$$
 CREATE PROCEDURE sp_insert_component(
   IN p_category_id BIGINT UNSIGNED,
@@ -22,15 +13,14 @@ BEGIN
   IF p_name IS NULL OR CHAR_LENGTH(TRIM(p_name)) = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Component name is required';
   END IF;
-  
-  -- If slug is null, generate default from name
+
   IF p_slug IS NULL OR CHAR_LENGTH(TRIM(p_slug)) = 0 THEN
     SET p_slug = LOWER(REPLACE(TRIM(p_name), ' ', '-'));
   END IF;
 
   INSERT INTO components(category_id, name, slug, short_description)
   VALUES (p_category_id, TRIM(p_name), p_slug, p_short_description);
-  
+
   SELECT LAST_INSERT_ID() AS component_id;
 END$$
 
@@ -55,7 +45,7 @@ BEGIN
   IF ROW_COUNT() = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Component not found or no values changed';
   END IF;
-  
+
   SELECT p_component_id AS component_id, 'Component updated successfully' AS status;
 END$$
 
@@ -69,25 +59,20 @@ BEGIN
   IF ROW_COUNT() = 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Component not found';
   END IF;
-  
+
   SELECT p_component_id AS component_id, 'Component deleted successfully' AS status;
 END$$
 
--- ----------------------------------------------------------------
--- 2. Explicit cursor procedures
--- ----------------------------------------------------------------
-
--- 2A. Unbounded explicit cursor: iterates through all qualifying rows
 DROP PROCEDURE IF EXISTS sp_cursor_components_all$$
 CREATE PROCEDURE sp_cursor_components_all()
 BEGIN
   DECLARE v_done BOOLEAN DEFAULT FALSE;
   DECLARE v_id BIGINT UNSIGNED;
   DECLARE v_name VARCHAR(180);
-  
+
   DECLARE cur_components CURSOR FOR
     SELECT component_id, name FROM components ORDER BY component_id;
-    
+
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
 
   DROP TEMPORARY TABLE IF EXISTS tmp_cursor_components;
@@ -110,7 +95,6 @@ BEGIN
   DROP TEMPORARY TABLE IF EXISTS tmp_cursor_components;
 END$$
 
--- 2B. Bounded explicit cursor: fetches rows up to a specified limit
 DROP PROCEDURE IF EXISTS sp_cursor_components_limited$$
 CREATE PROCEDURE sp_cursor_components_limited(IN p_limit INT)
 BEGIN
@@ -152,11 +136,6 @@ BEGIN
   DROP TEMPORARY TABLE IF EXISTS tmp_cursor_components;
 END$$
 
--- ----------------------------------------------------------------
--- 3. Paginated search procedures
--- ----------------------------------------------------------------
-
--- 3A. Paginated search without filter
 DROP PROCEDURE IF EXISTS sp_search_components_page$$
 CREATE PROCEDURE sp_search_components_page(IN p_page INT, IN p_page_size INT)
 BEGIN
@@ -177,7 +156,6 @@ BEGIN
   SELECT COUNT(*) AS total_rows FROM components WHERE is_published = 1;
 END$$
 
--- 3B. Paginated search with category filter
 DROP PROCEDURE IF EXISTS sp_search_components_by_category$$
 CREATE PROCEDURE sp_search_components_by_category(
   IN p_category_id BIGINT UNSIGNED,
@@ -204,9 +182,6 @@ BEGIN
   WHERE is_published = 1 AND category_id = p_category_id;
 END$$
 
--- ----------------------------------------------------------------
--- 4. Grouped sum procedure
--- ----------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_sum_component_ids_by_category$$
 CREATE PROCEDURE sp_sum_component_ids_by_category()
 BEGIN
@@ -220,9 +195,6 @@ BEGIN
   ORDER BY cat.category_id;
 END$$
 
--- ----------------------------------------------------------------
--- 5. Application user login CRUD procedures
--- ----------------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_insert_app_user$$
 CREATE PROCEDURE sp_insert_app_user(
   IN p_username VARCHAR(100),

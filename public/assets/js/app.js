@@ -1,7 +1,1281 @@
-/**
- * ElectroDB Frontend Application
- * Hash-based SPA router + catalog renderers + database lab console.
- */
+const api = {
+  baseUrl: '/api',
+
+  async request(path, options = {}) {
+    const url = `${this.baseUrl}${path}`;
+    const headers = { ...options.headers };
+
+    if (options.body && typeof options.body === 'object') {
+      headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(options.body);
+    }
+
+    try {
+                  const res = await fetch(url, { credentials: 'same-origin', ...options, headers });
+      const contentType = res.headers.get('content-type') || '';
+
+      if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || `HTTP error ${res.status}`);
+        return text;
+      }
+
+      const json = await res.json();
+      if (!res.ok) {
+        const errMsg = json.error ? json.error.message : `HTTP error ${res.status}`;
+        const err = new Error(errMsg);
+        err.status = res.status;
+        err.code = json.error ? json.error.code : 'API_ERROR';
+
+                                                if (res.status === 401 && !/^\/auth\//.test(path) && typeof window !== 'undefined') {
+          window.dispatchEvent(new window.CustomEvent('electrodb:unauthorized', { detail: { path } }));
+        }
+
+        throw err;
+      }
+      return json;
+    } catch (err) {
+      console.error(`[API Error] ${path}:`, err);
+      throw err;
+    }
+  },
+
+    getHealth() {
+    return this.request('/health');
+  },
+
+      getStats() {
+    return this.request('/stats');
+  },
+
+  getCategories() {
+    return this.request('/categories');
+  },
+
+  getCategory(idOrSlug, page = 1, pageSize = 20) {
+    return this.request(`/categories/${encodeURIComponent(idOrSlug)}?page=${page}&pageSize=${pageSize}`);
+  },
+
+  getCatalog(page = 1, pageSize = 24, categoryId = null) {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (categoryId) params.set('categoryId', String(categoryId));
+    return this.request(`/components?${params.toString()}`);
+  },
+
+  getTags() {
+    return this.request('/tags');
+  },
+
+  getTag(idOrSlug, page = 1, pageSize = 24) {
+    return this.request(`/tags/${encodeURIComponent(idOrSlug)}?page=${page}&pageSize=${pageSize}`);
+  },
+
+  getComponent(idOrSlug) {
+    return this.request(`/components/${encodeURIComponent(idOrSlug)}`);
+  },
+
+  search(q, page = 1, pageSize = 20) {
+    return this.request(`/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`);
+  },
+
+        auth: {
+    me() {
+      return api.request('/auth/me');
+    },
+
+    register(payload) {
+      return api.request('/auth/register', { method: 'POST', body: payload });
+    },
+
+    login(payload) {
+      return api.request('/auth/login', { method: 'POST', body: payload });
+    },
+
+    logout() {
+      return api.request('/auth/logout', { method: 'POST' });
+    },
+
+    changePassword(payload) {
+      return api.request('/auth/change-password', { method: 'POST', body: payload });
+    },
+
+    updateProfile(payload) {
+      return api.request('/users/me', { method: 'PATCH', body: payload });
+    },
+
+    listBookmarks(page = 1, pageSize = 24) {
+      return api.request(`/users/me/bookmarks?page=${page}&pageSize=${pageSize}`);
+    },
+
+    addBookmark(componentId) {
+      return api.request('/users/me/bookmarks', { method: 'POST', body: { componentId } });
+    },
+
+    removeBookmark(componentId) {
+      return api.request(`/users/me/bookmarks/${encodeURIComponent(componentId)}`, { method: 'DELETE' });
+    },
+
+    listCollections() {
+      return api.request('/users/me/collections');
+    },
+
+    createCollection(payload) {
+      return api.request('/users/me/collections', { method: 'POST', body: payload });
+    },
+
+    updateCollection(collectionId, payload) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`, {
+        method: 'PATCH',
+        body: payload
+      });
+    },
+
+    deleteCollection(collectionId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`, { method: 'DELETE' });
+    },
+
+    getCollection(collectionId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}`);
+    },
+
+    addToCollection(collectionId, componentId) {
+      return api.request(`/users/me/collections/${encodeURIComponent(collectionId)}/components`, {
+        method: 'POST',
+        body: { componentId }
+      });
+    },
+
+    removeFromCollection(collectionId, componentId) {
+      return api.request(
+        `/users/me/collections/${encodeURIComponent(collectionId)}/components/${encodeURIComponent(componentId)}`,
+        { method: 'DELETE' }
+      );
+    },
+
+    recent(limit = 8) {
+      return api.request(`/users/me/recently-viewed?limit=${limit}`);
+    },
+
+    recordView(componentId) {
+      return api.request('/users/me/recently-viewed', { method: 'POST', body: { componentId } });
+    },
+
+    clearRecent() {
+      return api.request('/users/me/recently-viewed', { method: 'DELETE' });
+    },
+
+    dashboard() {
+      return api.request('/users/me/dashboard');
+    },
+
+        listUsers(query = '') {
+      return api.request(`/admin/users?q=${encodeURIComponent(query)}`);
+    },
+
+    updateUser(userId, payload) {
+      return api.request(`/admin/users/${encodeURIComponent(userId)}`, { method: 'PATCH', body: payload });
+    }
+  },
+
+    lab: {
+    getComponents(page = 1, pageSize = 50, bounded = true) {
+      return api.request(`/lab/components?page=${page}&pageSize=${pageSize}&bounded=${bounded}`);
+    },
+
+    getComponentsXml(page = 1, pageSize = 50) {
+      return api.request(`/lab/components.xml?page=${page}&pageSize=${pageSize}`);
+    },
+
+    createComponent(payload) {
+      return api.request('/lab/components', { method: 'POST', body: payload });
+    },
+
+    updateComponent(id, payload) {
+      return api.request(`/lab/components/${id}`, { method: 'PATCH', body: payload });
+    },
+
+    deleteComponent(id) {
+      return api.request(`/lab/components/${id}`, { method: 'DELETE' });
+    },
+
+    getAggregate(fn = 'COUNT', field = 'component_id', table = 'components') {
+      return api.request(`/lab/aggregate?function=${encodeURIComponent(fn)}&field=${encodeURIComponent(field)}&table=${encodeURIComponent(table)}`);
+    },
+
+    getAggregateXml(fn = 'COUNT', field = 'component_id', table = 'components') {
+      return api.request(`/lab/aggregate.xml?function=${encodeURIComponent(fn)}&field=${encodeURIComponent(field)}&table=${encodeURIComponent(table)}`);
+    },
+
+    getFilter(field = 'category_id', op = 'eq', value = '6', page = 1, pageSize = 50) {
+      return api.request(`/lab/filter?field=${encodeURIComponent(field)}&operator=${encodeURIComponent(op)}&value=${encodeURIComponent(value)}&page=${page}&pageSize=${pageSize}`);
+    },
+
+    getFilterXml(field = 'category_id', op = 'eq', value = '6') {
+      return api.request(`/lab/filter.xml?field=${encodeURIComponent(field)}&operator=${encodeURIComponent(op)}&value=${encodeURIComponent(value)}`);
+    },
+
+    getJoin(left = 'components', right = 'categories', type = 'inner', page = 1, pageSize = 25) {
+      return api.request(`/lab/join?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}&type=${encodeURIComponent(type)}&page=${page}&pageSize=${pageSize}`);
+    },
+
+    getSubquery(kind = 'categories_in_digital') {
+      return api.request(`/lab/subquery?kind=${encodeURIComponent(kind)}`);
+    },
+
+    getCorrelated(kind = 'categories_with_components') {
+      return api.request(`/lab/correlated-query?kind=${encodeURIComponent(kind)}`);
+    },
+
+    getCursorsAll() {
+      return api.request('/lab/cursors/all');
+    },
+
+    getCursorsLimited(limit = 10) {
+      return api.request(`/lab/cursors/limited?limit=${limit}`);
+    },
+
+    getSum() {
+      return api.request('/lab/sum');
+    },
+
+    getAppUsers() {
+      return api.request('/lab/users');
+    },
+
+    createAppUser(payload) {
+      return api.request('/lab/users', { method: 'POST', body: payload });
+    },
+
+    updateAppUser(id, payload) {
+      return api.request(`/lab/users/${id}`, { method: 'PATCH', body: payload });
+    },
+
+    deleteAppUser(id) {
+      return api.request(`/lab/users/${id}`, { method: 'DELETE' });
+    },
+
+    getAuditLogs(limit = 50) {
+      return api.request(`/lab/audit-log?limit=${limit}`);
+    },
+
+    getViewCatalogue(page = 1, pageSize = 25) {
+      return api.request(`/lab/views/catalogue?page=${page}&pageSize=${pageSize}`);
+    },
+
+    getViewCounts() {
+      return api.request('/lab/views/counts');
+    },
+
+    getDashboard() {
+      return api.request('/lab/dashboard');
+    },
+
+    getTimingReport() {
+      return api.request('/lab/timing-report');
+    }
+  }
+};
+
+const account = {
+  user: null,
+  bookmarkIds: new Set(),
+
+            sessionVersion: 0,
+
+  bumpSessionVersion() {
+    this.sessionVersion += 1;
+    return this.sessionVersion;
+  },
+
+  async loadSession() {
+    this.watchSession();
+    const version = this.sessionVersion;
+    try {
+      const res = await api.auth.me();
+      if (version === this.sessionVersion) this.applySession(res.data);
+    } catch (err) {
+                  if (version === this.sessionVersion) this.applySession({ user: null, bookmarkIds: [] });
+    }
+    return this.user;
+  },
+
+    watchFocus() {
+    if (this.focusWatching) return;
+    this.focusWatching = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !this.isSignedIn()) return;
+      const now = Date.now();
+      if (now - (this.lastCheckAt || 0) < 60000) return;
+      this.lastCheckAt = now;
+      api.auth
+        .me()
+        .then(res => {
+          if (!res.data.user) this.onSessionLost();
+          else this.applySession(res.data);
+        })
+        .catch(() => {});
+    });
+  },
+
+  watchSession() {
+    if (this.watching) return;
+    this.watching = true;
+    window.addEventListener('electrodb:unauthorized', () => this.onSessionLost());
+    this.watchFocus();
+  },
+
+    isProtectedRoute(hash = window.location.hash || '') {
+    return /^#\/(dashboard|bookmarks|collections|profile|admin)\b/.test(hash);
+  },
+
+    clearSession() {
+    const wasSignedIn = this.isSignedIn();
+    this.bumpSessionVersion();
+    this.applySession({ user: null, bookmarkIds: [] });
+    return wasSignedIn;
+  },
+
+  onSessionLost() {
+    const wasSignedIn = this.clearSession();
+    if (!wasSignedIn) return;
+
+        const now = Date.now();
+    if (now - (this.sessionLostAt || 0) < 2000) return;
+    this.sessionLostAt = now;
+
+    const next = this.currentRoute();
+
+            if (this.isProtectedRoute()) {
+      window.location.hash = this.loginHref(next);
+      return;
+    }
+    app.openModal(
+      'Your session ended',
+      `<p class="modal-lead">The server no longer has this session, so the change was not saved. That happens when a session expires, when the password is changed somewhere else, or when an administrator disables the account.</p>
+       <p class="modal-lead">Signing in again brings you straight back to this page.</p>
+       <div class="modal-actions">
+         <a class="btn btn-primary" href="${this.loginHref(next)}">Sign in again</a>
+       </div>`
+    );
+  },
+
+  applySession(data = {}) {
+    this.user = data.user || null;
+    this.lastCheckAt = Date.now();
+    this.bookmarkIds = new Set((data.bookmarkIds || []).map(Number));
+    this.renderNav();
+    document.body.classList.toggle('is-signed-in', Boolean(this.user));
+    return this.user;
+  },
+
+  isSignedIn() {
+    return Boolean(this.user);
+  },
+
+  role() {
+    return this.user ? this.user.role : null;
+  },
+
+  canAuthor() {
+    return Boolean(this.user && this.user.permissions && this.user.permissions.canAuthorContent);
+  },
+
+  canAdminister() {
+    return Boolean(this.user && this.user.permissions && this.user.permissions.canAdminister);
+  },
+
+  isBookmarked(componentId) {
+    return this.bookmarkIds.has(Number(componentId));
+  },
+
+    currentRoute() {
+    return window.location.hash || '#/';
+  },
+
+  loginHref(intent) {
+    const next = intent || this.currentRoute();
+    return `#/login?next=${encodeURIComponent(next)}`;
+  },
+
+  guard() {
+    if (this.isSignedIn()) return true;
+    const next = this.currentRoute();
+    window.location.hash = `#/login?next=${encodeURIComponent(next)}`;
+    return false;
+  },
+
+  renderNav() {
+            document.querySelectorAll('[data-requires]').forEach(el => {
+      const need = el.getAttribute('data-requires');
+                  const visible =
+        need === 'user' ? Boolean(this.user)
+          : need === 'author' ? this.canAuthor()
+            : need === 'admin' ? this.canAdminister()
+              : true;
+      el.hidden = !visible;
+    });
+
+    const host = document.getElementById('nav-account');
+    if (!host) return;
+
+    if (!this.user) {
+      host.innerHTML = `
+        <a class="nav-account-link" href="${this.loginHref('#/dashboard')}" data-requires-guest>Sign in</a>
+        <a class="btn btn-primary btn-sm nav-cta" href="#/register">Create account</a>
+      `;
+      return;
+    }
+
+    const initials = this.user.username.slice(0, 2).toUpperCase();
+    host.innerHTML = `
+      <a class="nav-user" href="#/profile" title="Your profile">
+        <span class="nav-avatar" aria-hidden="true">${app.escapeHtml(initials)}</span>
+        <span class="nav-username">${app.escapeHtml(this.user.username)}</span>
+        <span class="nav-role">${app.escapeHtml(this.user.role)}</span>
+      </a>
+      <a class="nav-account-link" href="#/dashboard">Dashboard</a>
+      <a class="nav-account-link" href="#/bookmarks">Bookmarks</a>
+      <button class="nav-account-link nav-signout" type="button" data-action="sign-out">Sign out</button>
+    `;
+  },
+
+  async signOut() {
+    try {
+      await api.auth.logout();
+    } catch (err) {
+          }
+    this.applySession({ user: null, bookmarkIds: [] });
+    app.toast('Signed out.', 'success');
+    window.location.hash = '#/';
+  },
+
+    bookmarkButton(componentId, { labelled = false } = {}) {
+    const saved = this.isBookmarked(componentId);
+    const name = this.bookmarkName(componentId);
+    const label = labelled ? (saved ? 'Saved' : 'Save') : '';
+    return `
+      <button class="bookmark-btn${saved ? ' is-saved' : ''}" type="button"
+              data-action="toggle-bookmark" data-arg="${componentId}"
+              aria-pressed="${saved ? 'true' : 'false'}"
+              aria-label="${saved ? 'Remove from' : 'Add to'} bookmarks${name ? `: ${app.escapeHtml(name)}` : ''}">
+        ${this.bookmarkIcon()}
+        ${label ? `<span class="bookmark-btn-text">${label}</span>` : ''}
+      </button>
+    `;
+  },
+
+  bookmarkIcon() {
+    return `<svg class="bookmark-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>`;
+  },
+
+  bookmarkName(componentId) {
+    const node = document.querySelector(`.component-card[data-component-id="${componentId}"] .component-card-title`);
+    return node ? node.textContent.trim() : '';
+  },
+
+  async toggleBookmark(componentId, element) {
+    const id = Number(componentId);
+    if (!id) return;
+
+    if (!this.isSignedIn()) {
+      this.promptSignIn('bookmark');
+      return;
+    }
+
+    const wasSaved = this.isBookmarked(id);
+    const target = element || document.querySelector(`[data-action="toggle-bookmark"][data-arg="${id}"]`);
+
+    try {
+      if (wasSaved) {
+        await api.auth.removeBookmark(id);
+        this.bookmarkIds.delete(id);
+      } else {
+        await api.auth.addBookmark(id);
+        this.bookmarkIds.add(id);
+      }
+      this.syncBookmarkControls(id, !wasSaved);
+      app.toast(wasSaved ? 'Removed from bookmarks.' : 'Added to bookmarks.', 'success');
+
+                  if (wasSaved && window.location.hash.startsWith('#/bookmarks')) {
+        await this.renderBookmarks();
+      }
+    } catch (err) {
+            if (err.status === 401) return;
+      app.toast(err.message || 'Could not update that bookmark.', 'error');
+    }
+
+    if (target) target.blur();
+  },
+
+    syncBookmarkControls(componentId, saved) {
+    document
+      .querySelectorAll(`[data-action="toggle-bookmark"][data-arg="${componentId}"]`)
+      .forEach(button => {
+        button.classList.toggle('is-saved', saved);
+        button.setAttribute('aria-pressed', saved ? 'true' : 'false');
+        const label = button.querySelector('.bookmark-btn-text');
+        if (label) label.textContent = saved ? 'Saved' : 'Save';
+        const aria = button.getAttribute('aria-label') || '';
+        button.setAttribute(
+          'aria-label',
+          saved ? aria.replace(/^Add to/, 'Remove from') : aria.replace(/^Remove from/, 'Add to')
+        );
+      });
+  },
+
+  promptSignIn(intent) {
+    const message =
+      intent === 'bookmark'
+        ? 'Bookmarks belong to an account, so signing in is what keeps this one yours.'
+        : 'Sign in to use this part of the site.';
+
+    app.openModal(
+      'Sign in to continue',
+      `<p class="modal-lead">${message}</p>
+       <p class="modal-lead">You will come back to this page straight after signing in.</p>
+       <div class="modal-actions">
+         <a class="btn btn-primary" href="${this.loginHref()}">Sign in</a>
+         <a class="btn btn-secondary" href="#/register">Create an account</a>
+       </div>`
+    );
+  },
+
+    renderLogin(params) {
+    app.setTitle('Sign in');
+    const next = params.get('next') || '#/dashboard';
+    const registered = params.get('registered') === '1';
+
+    app.contentEl.innerHTML = `
+      <div class="page page--narrow">
+        <header class="page-header">
+          <p class="page-eyebrow">Account</p>
+          <h1 class="page-title">Sign in</h1>
+          <p class="page-lead">Bookmarks, collections and recently viewed components are kept to your account.</p>
+        </header>
+
+        ${registered ? '<p class="form-note form-note--success" role="status">Account created. Sign in to continue.</p>' : ''}
+        <div id="demo-accounts" hidden></div>
+
+        <form class="auth-form" data-form="login" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email address</label>
+            <input class="form-control" id="login-email" name="email" type="email"
+                   autocomplete="email" required aria-describedby="login-error">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input class="form-control" id="login-password" name="password" type="password"
+                   autocomplete="current-password" required aria-describedby="login-error">
+          </div>
+          <p class="form-error" id="login-error" role="alert" hidden></p>
+          <input type="hidden" name="next" value="${app.escapeHtml(next)}">
+          <div class="auth-actions">
+            <button class="btn btn-primary" type="submit">Sign in</button>
+            <p class="auth-alt">New here? <a href="#/register">Create an account</a></p>
+          </div>
+        </form>
+      </div>
+    `;
+  },
+
+  async renderDemoAccounts() {
+    const host = document.getElementById('demo-accounts');
+    if (!host) return;
+
+    let payload = null;
+    try {
+      const res = await api.request('/preview/demo-accounts');
+      payload = res.data;
+    } catch (err) {
+      host.hidden = true;
+      return;
+    }
+    if (!payload || !payload.accounts || !payload.accounts.length) return;
+
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="demo-accounts">
+        <p class="demo-accounts-title">Demo accounts <span>(preview data only)</span></p>
+        <p class="demo-accounts-password">Password for all of them: <code>${app.escapeHtml(payload.password)}</code></p>
+        <div class="demo-account-list">
+          ${payload.accounts
+            .map(
+              account => `
+            <button class="demo-account" type="button" data-action="fill-demo-account"
+                    data-arg="${app.escapeHtml(account.email)}">
+              <span class="demo-account-role">${app.escapeHtml(account.role)}</span>
+              <span class="demo-account-email">${app.escapeHtml(account.email)}</span>
+            </button>`
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+  },
+
+  fillDemoAccount(email) {
+    const payload = document.querySelector('.demo-accounts-password code');
+    const emailField = document.getElementById('login-email');
+    const passwordField = document.getElementById('login-password');
+    if (!emailField || !passwordField) return;
+    emailField.value = email;
+    passwordField.value = payload ? payload.textContent : '';
+    passwordField.focus();
+  },
+
+  renderRegister() {
+    app.setTitle('Create an account');
+    app.contentEl.innerHTML = `
+      <div class="page page--narrow">
+        <header class="page-header">
+          <p class="page-eyebrow">Account</p>
+          <h1 class="page-title">Create an account</h1>
+          <p class="page-lead">Keep the components you use often. Browsing never needs an account.</p>
+        </header>
+
+        <form class="auth-form" data-form="register" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="register-username">Username</label>
+            <input class="form-control" id="register-username" name="username" type="text"
+                   autocomplete="username" required aria-describedby="register-username-hint register-error">
+            <p class="form-hint" id="register-username-hint">3-40 characters: letters, numbers, dots, underscores or hyphens.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="register-email">Email address</label>
+            <input class="form-control" id="register-email" name="email" type="email"
+                   autocomplete="email" required aria-describedby="register-error">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="register-password">Password</label>
+            <input class="form-control" id="register-password" name="password" type="password"
+                   autocomplete="new-password" required aria-describedby="register-password-hint register-error">
+            <p class="form-hint" id="register-password-hint">At least 10 characters, mixing three of: lowercase, uppercase, digits, symbols.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="register-confirm">Confirm password</label>
+            <input class="form-control" id="register-confirm" name="confirmPassword" type="password"
+                   autocomplete="new-password" required aria-describedby="register-error">
+          </div>
+          <p class="form-error" id="register-error" role="alert" hidden></p>
+          <div class="auth-actions">
+            <button class="btn btn-primary" type="submit">Create account</button>
+            <p class="auth-alt">Already registered? <a href="#/login">Sign in</a></p>
+          </div>
+        </form>
+      </div>
+    `;
+  },
+
+    async renderProfile() {
+    if (!this.guard()) return;
+    app.setTitle('Your profile');
+    const user = this.user;
+
+    app.contentEl.innerHTML = `
+      <div class="page">
+        <header class="page-header">
+          <p class="page-eyebrow">Account</p>
+          <h1 class="page-title">${app.escapeHtml(user.username)}</h1>
+          <p class="page-lead">Signed in as ${app.escapeHtml(user.email)} · ${app.escapeHtml(user.role)} role</p>
+        </header>
+
+        <div class="account-grid">
+          <section class="account-panel">
+            <h2 class="section-title">Details</h2>
+            <form data-form="profile" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="profile-username">Username</label>
+                <input class="form-control" id="profile-username" name="username" type="text"
+                       value="${app.escapeHtml(user.username)}" autocomplete="username" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-email">Email address</label>
+                <input class="form-control" id="profile-email" name="email" type="email"
+                       value="${app.escapeHtml(user.email || '')}" autocomplete="email" required>
+              </div>
+              <p class="form-error" id="profile-error" role="alert" hidden></p>
+              <button class="btn btn-primary" type="submit">Save details</button>
+            </form>
+          </section>
+
+          <section class="account-panel">
+            <h2 class="section-title">Password</h2>
+            <form data-form="password" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="password-current">Current password</label>
+                <input class="form-control" id="password-current" name="currentPassword" type="password"
+                       autocomplete="current-password" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="password-new">New password</label>
+                <input class="form-control" id="password-new" name="newPassword" type="password"
+                       autocomplete="new-password" required aria-describedby="password-hint">
+                <p class="form-hint" id="password-hint">At least 10 characters. Other sessions are signed out when you change it.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="password-confirm">Confirm new password</label>
+                <input class="form-control" id="password-confirm" name="confirmPassword" type="password"
+                       autocomplete="new-password" required>
+              </div>
+              <p class="form-error" id="password-error" role="alert" hidden></p>
+              <button class="btn btn-primary" type="submit">Change password</button>
+            </form>
+          </section>
+        </div>
+
+        <section class="account-panel account-panel--wide account-panel--actions">
+          <button class="btn btn-secondary" type="button" data-action="sign-out">Sign out</button>
+        </section>
+      </div>
+    `;
+  },
+
+    async renderBookmarks() {
+    if (!this.guard()) return;
+    app.setTitle('Your bookmarks');
+    app.renderLoading();
+
+    try {
+      const res = await api.auth.listBookmarks(1, 60);
+      const items = res.data.items || [];
+
+      app.contentEl.innerHTML = `
+        <div class="page">
+          <header class="page-header">
+            <p class="page-eyebrow">Saved</p>
+            <h1 class="page-title">Bookmarks</h1>
+            <p class="page-lead">${items.length ? `${items.length} component${items.length === 1 ? '' : 's'} saved to your account.` : 'Nothing saved yet.'}</p>
+          </header>
+          ${
+            items.length
+              ? `<div class="component-grid">${items.map(item => app.componentCard(item)).join('')}</div>`
+              : `<div class="empty-state">
+                   <h3>No bookmarks yet</h3>
+                   <p>Use the save control on any component card or component page, and it will appear here.</p>
+                   <a class="btn btn-primary" href="#/catalog">Browse the catalog</a>
+                 </div>`
+          }
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      app.renderError(err);
+    }
+  },
+
+    async renderCollections() {
+    if (!this.guard()) return;
+    app.setTitle('Your collections');
+    app.renderLoading();
+
+    try {
+      const res = await api.auth.listCollections();
+      const items = res.data.items || [];
+
+      app.contentEl.innerHTML = `
+        <div class="page">
+          <header class="page-header">
+            <p class="page-eyebrow">Organise</p>
+            <h1 class="page-title">Collections</h1>
+            <p class="page-lead">Group components for a topic, a lab or an exam.</p>
+          </header>
+
+          <section class="account-panel">
+            <h2 class="section-title">New collection</h2>
+            <form data-form="collection" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="collection-name">Name</label>
+                <input class="form-control" id="collection-name" name="name" type="text" maxlength="80" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="collection-description">Description <span class="form-optional">(optional)</span></label>
+                <input class="form-control" id="collection-description" name="description" type="text" maxlength="280">
+              </div>
+              <p class="form-error" id="collection-error" role="alert" hidden></p>
+              <button class="btn btn-primary" type="submit">Create collection</button>
+            </form>
+          </section>
+
+          ${
+            items.length
+              ? `<div class="collection-grid">${items
+                  .map(
+                    collection => `
+                <article class="collection-card">
+                  <a class="collection-card-main" href="#/collections/${collection.collectionId}">
+                    <h3 class="collection-card-name">${app.escapeHtml(collection.name)}</h3>
+                    ${collection.description ? `<p class="collection-card-desc">${app.escapeHtml(collection.description)}</p>` : ''}
+                    <p class="collection-card-meta">${collection.itemCount} component${collection.itemCount === 1 ? '' : 's'}</p>
+                  </a>
+                  <button class="btn btn-danger btn-sm" type="button"
+                          data-action="delete-collection" data-arg="${collection.collectionId}">Delete</button>
+                </article>`
+                  )
+                  .join('')}</div>`
+              : `<div class="empty-state">
+                   <h3>No collections yet</h3>
+                   <p>A collection is a list you name yourself - handy for a syllabus or a single experiment.</p>
+                 </div>`
+          }
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      app.renderError(err);
+    }
+  },
+
+  async renderCollection(collectionId) {
+    if (!this.guard()) return;
+    app.setTitle('Collection');
+    app.renderLoading();
+
+    try {
+      const res = await api.auth.getCollection(collectionId);
+      const collection = res.data;
+      const items = collection.items || [];
+
+      app.setTitle(collection.name);
+      app.contentEl.innerHTML = `
+        <div class="page">
+          <a class="back-link" href="#/collections">
+            <span class="back-link-arrow" aria-hidden="true">←</span>
+            All collections
+          </a>
+
+          <header class="page-header">
+            <p class="page-eyebrow">Collection</p>
+            <h1 class="page-title">${app.escapeHtml(collection.name)}</h1>
+            <p class="page-lead">${collection.description ? app.escapeHtml(collection.description) : `${items.length} component${items.length === 1 ? '' : 's'}.`}</p>
+          </header>
+
+          ${
+            items.length
+              ? `<div class="component-grid">${items
+                  .map(
+                    item => `
+                <div class="saved-item">
+                  ${app.componentCard(item)}
+                  <button class="btn btn-secondary btn-sm saved-item-remove" type="button"
+                          data-action="remove-from-collection"
+                          data-collection="${collection.collectionId}"
+                          data-arg="${item.componentId}">Remove</button>
+                </div>`
+                  )
+                  .join('')}</div>`
+              : `<div class="empty-state">
+                   <h3>This collection is empty</h3>
+                   <p>Open a component and add it to this collection.</p>
+                   <a class="btn btn-primary" href="#/catalog">Browse the catalog</a>
+                 </div>`
+          }
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      if (err.status === 404) return app.renderNotFound('That collection does not exist, or it belongs to another account.');
+      app.renderError(err);
+    }
+  },
+
+  async createCollection(form) {
+    const errorEl = document.getElementById('collection-error');
+    const name = (this.value(form, 'name') || '').trim();
+    const description = (this.value(form, 'description') || '').trim();
+
+    if (name.length < 1) return this.showFormError(errorEl, 'Give the collection a name.');
+
+    try {
+      await api.auth.createCollection({ name, description });
+      app.toast(`Collection “${name}” created.`, 'success');
+      await this.renderCollections();
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      this.showFormError(errorEl, err.message || 'Could not create that collection.');
+    }
+  },
+
+  async deleteCollection(collectionId) {
+    const ok = window.confirm('Delete this collection? The components themselves are not affected.');
+    if (!ok) return;
+    try {
+      await api.auth.deleteCollection(collectionId);
+      app.toast('Collection deleted.', 'success');
+      await this.renderCollections();
+    } catch (err) {
+      if (err.status === 401) return;
+      app.toast(err.message || 'Could not delete that collection.', 'error');
+    }
+  },
+
+  async removeFromCollection(collectionId, componentId) {
+    try {
+      await api.auth.removeFromCollection(collectionId, componentId);
+      app.toast('Removed from the collection.', 'success');
+      await this.renderCollection(collectionId);
+    } catch (err) {
+      if (err.status === 401) return;
+      app.toast(err.message || 'Could not update that collection.', 'error');
+    }
+  },
+
+    async collectionPicker(componentId, host) {
+    if (!this.isSignedIn()) {
+      this.promptSignIn('collection');
+      return;
+    }
+    try {
+      const res = await api.auth.listCollections();
+      const items = res.data.items || [];
+      if (!items.length) {
+        host.innerHTML = `<p class="account-note">You have no collections yet. <a href="#/collections">Create one</a> first.</p>`;
+        return;
+      }
+      host.innerHTML = `
+        <label class="form-label" for="collection-pick">Add to collection</label>
+        <div class="picker-row">
+          <select class="form-control" id="collection-pick" name="collectionId">
+            ${items
+              .map(item => `<option value="${item.collectionId}">${app.escapeHtml(item.name)}</option>`)
+              .join('')}
+          </select>
+          <button class="btn btn-secondary" type="button" data-action="add-to-collection" data-arg="${componentId}">Add</button>
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) {
+        app.closeModal();
+        return;
+      }
+      host.innerHTML = `<p class="form-error">${app.escapeHtml(err.message || 'Could not load your collections.')}</p>`;
+    }
+  },
+
+  async addToCollection(componentId) {
+    const select = document.getElementById('collection-pick');
+    if (!select) return;
+    try {
+      const res = await api.auth.addToCollection(select.value, componentId);
+      app.closeModal();
+      app.toast(res.data.created ? 'Added to the collection.' : 'Already in that collection.', 'success');
+    } catch (err) {
+      if (err.status === 401) {
+        app.closeModal();
+        return;
+      }
+      app.toast(err.message || 'Could not add that component.', 'error');
+    }
+  },
+
+    async renderDashboard() {
+    if (!this.guard()) return;
+    app.setTitle('Dashboard');
+    app.renderLoading();
+
+    try {
+      const res = await api.auth.dashboard();
+      const data = res.data;
+      const { counts, collections, recent } = data;
+
+      app.contentEl.innerHTML = `
+        <div class="page">
+          <header class="page-header">
+            <p class="page-eyebrow">Dashboard</p>
+            <h1 class="page-title">Welcome back, ${app.escapeHtml(data.user.username)}</h1>
+            <p class="page-lead">Everything here comes from your account: ${counts.bookmarks} bookmark${counts.bookmarks === 1 ? '' : 's'}, ${counts.collections} collection${counts.collections === 1 ? '' : 's'}, ${counts.recentlyViewed} recently viewed.</p>
+          </header>
+
+          <div class="stats-grid">
+            <a class="stat-card stat-card--link" href="#/bookmarks">
+              <span class="stat-value">${counts.bookmarks}</span>
+              <span class="stat-label">Bookmarks</span>
+            </a>
+            <a class="stat-card stat-card--link" href="#/collections">
+              <span class="stat-value">${counts.collections}</span>
+              <span class="stat-label">Collections</span>
+            </a>
+            <div class="stat-card">
+              <span class="stat-value">${counts.recentlyViewed}</span>
+              <span class="stat-label">Recently viewed</span>
+            </div>
+          </div>
+
+          <section class="account-panel account-panel--wide">
+            <div class="section-head">
+              <h2 class="section-title">Recently viewed</h2>
+              ${recent.length ? '<button class="btn btn-secondary btn-sm" type="button" data-action="clear-recent">Clear</button>' : ''}
+            </div>
+            ${
+              recent.length
+                ? `<div class="component-grid">${recent.map(item => app.componentCard(item)).join('')}</div>`
+                : `<div class="empty-state empty-state--inline">
+                     <h3>Nothing viewed yet</h3>
+                     <p>Components you open while signed in are listed here, newest first.</p>
+                     <a class="btn btn-secondary" href="#/catalog">Browse the catalog</a>
+                   </div>`
+            }
+          </section>
+
+          <section class="account-panel account-panel--wide">
+            <h2 class="section-title">Your collections</h2>
+            ${
+              collections.length
+                ? `<ul class="collection-list">${collections
+                    .map(
+                      collection => `<li>
+                        <a href="#/collections/${collection.collectionId}">${app.escapeHtml(collection.name)}</a>
+                        <span class="collection-list-count">${collection.itemCount}</span>
+                      </li>`
+                    )
+                    .join('')}</ul>`
+                : `<p class="account-note">No collections yet. <a href="#/collections">Create your first one</a>.</p>`
+            }
+          </section>
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      app.renderError(err);
+    }
+  },
+
+  async clearRecent() {
+    try {
+      await api.auth.clearRecent();
+      app.toast('Recently viewed cleared.', 'success');
+      await this.renderDashboard();
+    } catch (err) {
+      if (err.status === 401) return;
+      app.toast(err.message || 'Could not clear your history.', 'error');
+    }
+  },
+
+    async renderAdmin() {
+    if (!this.guard()) return;
+    if (!this.canAdminister()) return this.renderForbidden();
+    app.setTitle('Account administration');
+    app.renderLoading();
+
+    try {
+      const res = await api.auth.listUsers();
+      const items = res.data.items || [];
+      const roles = ['User', 'Developer', 'DBA'];
+
+      app.contentEl.innerHTML = `
+        <div class="page">
+          <header class="page-header">
+            <p class="page-eyebrow">DBA only</p>
+            <h1 class="page-title">Account administration</h1>
+            <p class="page-lead">Roles are checked on every request. Nobody can change their own role, and the last active DBA cannot be demoted or disabled.</p>
+          </header>
+
+          <div class="table-responsive">
+            <table class="edu-table">
+              <thead>
+                <tr><th scope="col">Account</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Saved</th></tr>
+              </thead>
+              <tbody>
+                ${items
+                  .map(
+                    user => `
+                  <tr>
+                    <td>${app.escapeHtml(user.username)}</td>
+                    <td>${app.escapeHtml(user.email || '—')}</td>
+                    <td>
+                      <label class="visually-hidden" for="role-${user.userId}">Role for ${app.escapeHtml(user.username)}</label>
+                      <select class="form-control form-control--compact" id="role-${user.userId}"
+                              data-action="admin-set-role" data-arg="${user.userId}">
+                        ${roles
+                          .map(role => `<option value="${role}"${role === user.role ? ' selected' : ''}>${role}</option>`)
+                          .join('')}
+                      </select>
+                    </td>
+                    <td>${user.isActive ? 'Active' : 'Disabled'}</td>
+                    <td>${user.bookmarkCount ?? 0} bookmarks</td>
+                  </tr>`
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      if (err.status === 403) return this.renderForbidden();
+      app.renderError(err);
+    }
+  },
+
+  async setUserRole(userId, role) {
+    try {
+      await api.auth.updateUser(userId, { role });
+      app.toast(`Role updated to ${role}.`, 'success');
+    } catch (err) {
+      if (err.status === 401) return;
+      app.toast(err.message || 'Could not change that role.', 'error');
+    }
+    await this.renderAdmin();
+  },
+
+  renderForbidden() {
+    app.setTitle('Not available');
+    app.contentEl.innerHTML = `
+      <div class="page">
+        <div class="empty-state" style="margin-top: 4rem;">
+          <p class="page-eyebrow" style="color: var(--accent);">Error 403</p>
+          <h3 style="font-size: 2.2rem; letter-spacing: -0.02em;">This page needs a different role</h3>
+          <p>Your account is signed in, but it does not have access to this area.</p>
+          <a class="btn btn-primary" href="#/">Back to home</a>
+          <a class="btn btn-secondary" href="#/dashboard">Your dashboard</a>
+        </div>
+      </div>
+    `;
+  },
+
+      value(form, name) {
+    const field = form && form.elements ? form.elements.namedItem(name) : null;
+    return field ? field.value : '';
+  },
+
+  showFormError(element, message) {
+    if (!element) {
+      app.toast(message, 'error');
+      return;
+    }
+    element.textContent = message;
+    element.hidden = false;
+    element.focus({ preventScroll: false });
+  },
+
+  clearFormError(element) {
+    if (!element) return;
+    element.hidden = true;
+    element.textContent = '';
+  },
+
+  async handleForm(kind, form) {
+    if (kind === 'login') return this.submitLogin(form);
+    if (kind === 'register') return this.submitRegister(form);
+    if (kind === 'profile') return this.submitProfile(form);
+    if (kind === 'password') return this.submitPassword(form);
+    if (kind === 'collection') return this.createCollection(form);
+    return undefined;
+  },
+
+  async submitLogin(form) {
+    const errorEl = document.getElementById('login-error');
+    this.clearFormError(errorEl);
+
+    const email = (this.value(form, 'email') || '').trim();
+    const password = this.value(form, 'password');
+
+    if (!email) return this.showFormError(errorEl, 'Enter your email address.');
+    if (!password) return this.showFormError(errorEl, 'Enter your password.');
+
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    submit.textContent = 'Signing in…';
+
+    try {
+      this.bumpSessionVersion();
+      const res = await api.auth.login({ email, password });
+      this.applySession(res.data);
+
+                        const check = await api.auth.me().catch(() => null);
+      if (!check || !check.data.user) {
+        this.clearSession();
+        this.showFormError(
+          errorEl,
+          'Signed in, but this browser did not keep the session cookie, so the next page would ask again. ' +
+            'Allow cookies for this site (or open the page in its own tab) and try once more.'
+        );
+        submit.disabled = false;
+        submit.textContent = 'Sign in';
+        return undefined;
+      }
+
+      this.applySession(check.data);
+      app.toast(`Signed in as ${check.data.user.username}.`, 'success');
+      const next = this.value(form, 'next') || '#/dashboard';
+      window.location.hash = next.startsWith('#/') ? next : '#/dashboard';
+    } catch (err) {
+      this.showFormError(errorEl, err.message || 'Could not sign you in.');
+      submit.disabled = false;
+      submit.textContent = 'Sign in';
+    }
+  },
+
+  async submitRegister(form) {
+    const errorEl = document.getElementById('register-error');
+    this.clearFormError(errorEl);
+
+    const username = (this.value(form, 'username') || '').trim();
+    const email = (this.value(form, 'email') || '').trim();
+    const password = this.value(form, 'password');
+    const confirmPassword = this.value(form, 'confirmPassword');
+
+    if (username.length < 3) return this.showFormError(errorEl, 'Choose a username of at least 3 characters.');
+    if (!email.includes('@')) return this.showFormError(errorEl, 'Enter a valid email address.');
+    if (password.length < 10) return this.showFormError(errorEl, 'Use at least 10 characters for the password.');
+    if (password !== confirmPassword) return this.showFormError(errorEl, 'The two passwords do not match.');
+
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    submit.textContent = 'Creating account…';
+
+    try {
+      await api.auth.register({ username, email, password, confirmPassword });
+      window.location.hash = '#/login?registered=1';
+    } catch (err) {
+      this.showFormError(errorEl, err.message || 'Could not create that account.');
+      submit.disabled = false;
+      submit.textContent = 'Create account';
+    }
+  },
+
+  async submitProfile(form) {
+    const errorEl = document.getElementById('profile-error');
+    this.clearFormError(errorEl);
+
+    const username = (this.value(form, 'username') || '').trim();
+    const email = (this.value(form, 'email') || '').trim();
+    if (!username) return this.showFormError(errorEl, 'A username is required.');
+    if (!email.includes('@')) return this.showFormError(errorEl, 'Enter a valid email address.');
+
+    try {
+      const res = await api.auth.updateProfile({ username, email });
+      this.applySession({ user: res.data.user, bookmarkIds: [...this.bookmarkIds] });
+      app.toast('Profile updated.', 'success');
+      await this.renderProfile();
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      this.showFormError(errorEl, err.message || 'Could not save your details.');
+    }
+  },
+
+  async submitPassword(form) {
+    const errorEl = document.getElementById('password-error');
+    this.clearFormError(errorEl);
+
+    const currentPassword = this.value(form, 'currentPassword');
+    const newPassword = this.value(form, 'newPassword');
+    const confirmPassword = this.value(form, 'confirmPassword');
+
+    if (!currentPassword) return this.showFormError(errorEl, 'Enter your current password.');
+    if (newPassword.length < 10) return this.showFormError(errorEl, 'Use at least 10 characters for the new password.');
+    if (newPassword !== confirmPassword) return this.showFormError(errorEl, 'The two new passwords do not match.');
+
+    try {
+      await api.auth.changePassword({ currentPassword, newPassword, confirmPassword });
+      form.reset();
+      app.toast('Password changed. Other sessions were signed out.', 'success');
+    } catch (err) {
+      if (err.status === 401) return this.guard();
+      this.showFormError(errorEl, err.message || 'Could not change your password.');
+    }
+  }
+};
 
 const ASSET_VERSION = (() => {
   try {
@@ -19,10 +1293,6 @@ const app = {
   contentEl: null,
   currentXml: '',
 
-  /**
-   * Append the build stamp to an asset URL. Artwork is regenerated in place, so
-   * without this a browser or proxy can keep showing the previous drawing.
-   */
   asset(path) {
     if (!path) return path;
     const value = String(path);
@@ -31,16 +1301,11 @@ const app = {
     return `${value}${separator}v=${ASSET_VERSION}`;
   },
 
-  // ----------------------------------------------------------------
-  // Bootstrapping
-  // ----------------------------------------------------------------
-  async init() {
+        async init() {
     this.contentEl = document.getElementById('app-content');
     this.initCursorGlow();
     this.bindEvents();
-    // The session has to be known before the first paint so the header and any
-    // bookmark control render in the right state.
-    await account.loadSession();
+            await account.loadSession();
     this.handleRouting();
   },
 
@@ -51,9 +1316,7 @@ const app = {
     const finePointer = window.matchMedia('(pointer: fine)').matches;
     if (!finePointer || this.prefersReducedMotion()) return;
 
-    // Follow the pointer with a lerp on a composited transform instead of
-    // writing left/top on every mousemove, which keeps the glow smooth.
-    const position = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+            const position = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
     const target = { ...position };
     let frame = null;
     let visible = false;
@@ -89,8 +1352,7 @@ const app = {
   bindEvents() {
     window.addEventListener('hashchange', () => this.handleRouting());
 
-    // Header search → search route
-    const searchInput = document.getElementById('global-search-input');
+        const searchInput = document.getElementById('global-search-input');
     if (searchInput) {
       searchInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
@@ -100,8 +1362,7 @@ const app = {
       });
     }
 
-    // Delegated form submissions (all forms are rendered dynamically)
-    document.addEventListener('submit', e => {
+        document.addEventListener('submit', e => {
       const kind = e.target && e.target.getAttribute('data-form');
 
       if (kind === 'hero-search') {
@@ -118,23 +1379,19 @@ const app = {
       }
     });
 
-    // Delegated select changes
-    document.addEventListener('change', e => {
+        document.addEventListener('change', e => {
       const control = e.target.closest('[data-change]');
       if (control && control.getAttribute('data-change') === 'catalog-filter') {
         this.onCatalogFilterChange(control.value);
       }
 
-      // Administration: a role change is applied through the API, which is the
-      // only place the decision is actually made.
-      const roleSelect = e.target.closest('[data-action="admin-set-role"]');
+                  const roleSelect = e.target.closest('[data-action="admin-set-role"]');
       if (roleSelect) {
         account.setUserRole(Number(roleSelect.getAttribute('data-arg')), roleSelect.value);
       }
     });
 
-    // Delegated range sliders: paint the filled part of the track and react.
-    const syncRange = input => {
+        const syncRange = input => {
       const min = Number(input.min || 0);
       const max = Number(input.max || 100);
       const value = Number(input.value);
@@ -150,12 +1407,10 @@ const app = {
       if (output) output.textContent = input.value;
     });
 
-    // Paint any sliders that rendered with the markup.
-    const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(syncRange);
+        const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(syncRange);
     this.paintRanges = paintRanges;
 
-    // Hide images that fail to load (delegated error handler; CSP-safe)
-    document.addEventListener('error', e => {
+        document.addEventListener('error', e => {
       const target = e.target;
       if (target && target.tagName === 'IMG' && target.hasAttribute('data-hide-on-error')) {
         target.classList.add('no-art');
@@ -163,8 +1418,7 @@ const app = {
       }
     }, true);
 
-    // Delegated clicks: modal, image previews, mobile nav
-    document.addEventListener('click', e => {
+        document.addEventListener('click', e => {
       if (e.target.matches('.modal-overlay') || e.target.closest('.modal-close-btn')) {
         this.closeModal();
         return;
@@ -198,8 +1452,7 @@ const app = {
         this.closeMobileNav();
       }
 
-      // "/" focuses the header search when not already typing
-      if (e.key === '/' && !/^(input|textarea|select)$/i.test(document.activeElement.tagName)) {
+            if (e.key === '/' && !/^(input|textarea|select)$/i.test(document.activeElement.tagName)) {
         const input = document.getElementById('global-search-input');
         if (input) {
           e.preventDefault();
@@ -306,17 +1559,11 @@ const app = {
       return;
     }
     const target = `#/search?q=${encodeURIComponent(query)}`;
-    // Already showing this result set: re-rendering would replay the page
-    // animation for a click that changed nothing, which is exactly the kind of
-    // flicker worth avoiding.
-    if (window.location.hash === target) return;
+                if (window.location.hash === target) return;
     window.location.hash = target;
   },
 
-  // ----------------------------------------------------------------
-  // Routing
-  // ----------------------------------------------------------------
-  parseHash() {
+        parseHash() {
     const raw = window.location.hash || '#/';
     const [rawPath, rawQuery = ''] = raw.replace(/^#/, '').split('?');
     const segments = rawPath
@@ -385,9 +1632,7 @@ const app = {
         } else if (section === 'admin') {
           await account.renderAdmin();
         } else if (section === 'lab') {
-          // The Lab Console is an internal tool. Hiding the link is a courtesy;
-          // the API refuses these routes to anyone who is not Developer or DBA.
-          if (account.canAuthor()) {
+                              if (account.canAuthor()) {
             await this.renderLabConsole();
           } else if (account.isSignedIn()) {
             account.renderForbidden();
@@ -409,9 +1654,7 @@ const app = {
 
     await render();
 
-    // Reset the scroll position together with the new markup, in the same task
-    // as the render, so the reader never sees the old page jump first.
-    this.scrollToTop();
+            this.scrollToTop();
   },
 
   updateActiveNav(section) {
@@ -436,10 +1679,7 @@ const app = {
     document.title = title ? `${title} - ElectroDB` : 'ElectroDB - Electronic Components Reference Catalog';
   },
 
-  // ----------------------------------------------------------------
-  // Shared states
-  // ----------------------------------------------------------------
-  prefersReducedMotion() {
+        prefersReducedMotion() {
     try {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     } catch (err) {
@@ -485,10 +1725,7 @@ const app = {
     `;
   },
 
-  // ----------------------------------------------------------------
-  // Home
-  // ----------------------------------------------------------------
-  async renderHome() {
+        async renderHome() {
     this.setTitle();
 
     const [categoryRes, tagRes, catalogRes, statsRes] = await Promise.all([
@@ -502,11 +1739,7 @@ const app = {
     const tags = (tagRes.data || []).slice(0, 8);
     const featured = (catalogRes.data && catalogRes.data.items) || [];
 
-    // The summary figures come from the API, which counts the rows it serves.
-    // If the counts call fails the page still works: components and categories
-    // fall back to what the category tree already reports, and any figure that
-    // cannot be counted (the diagram total) is left out rather than invented.
-    const stats = (statsRes && statsRes.data) || null;
+                    const stats = (statsRes && statsRes.data) || null;
     const counted = (value, fallback) =>
       Number.isFinite(Number(value)) && value !== null && value !== undefined
         ? Number(value)
@@ -526,8 +1759,7 @@ const app = {
     const categoryCount = counted(stats && stats.categories, categories.length + treeSubfamilies);
     const subfamilyCount = counted(stats && stats.subfamilies, treeSubfamilies);
 
-    // Only rendered when it was counted; there is no fallback number.
-    const diagramCount = stats && Number.isFinite(Number(stats.diagrams))
+        const diagramCount = stats && Number.isFinite(Number(stats.diagrams))
       ? Number(stats.diagrams)
       : null;
 
@@ -627,10 +1859,7 @@ const app = {
     this.contentEl.innerHTML = html;
   },
 
-  // ----------------------------------------------------------------
-  // Category index
-  // ----------------------------------------------------------------
-  async renderCategoriesIndex() {
+        async renderCategoriesIndex() {
     this.setTitle('Categories');
 
     const res = await api.getCategories();
@@ -667,10 +1896,7 @@ const app = {
     `;
   },
 
-  // ----------------------------------------------------------------
-  // Category detail
-  // ----------------------------------------------------------------
-  async renderCategory(idOrSlug, page = 1) {
+        async renderCategory(idOrSlug, page = 1) {
     const res = await api.getCategory(idOrSlug, page, 24);
     const { category, breadcrumbs = [], children = [], components = [], pagination } = res.data;
 
@@ -712,11 +1938,7 @@ const app = {
       `;
     }
 
-    // A branch category holds components only inside its subcategories, so the
-    // "Components" heading is not printed when there is nothing under it. The
-    // section only appears when there is something to read - either components,
-    // or an empty leaf that deserves an explanation.
-    if (components.length || !children.length) {
+                    if (components.length || !children.length) {
       html += `
         <section class="section">
           <div class="section-head">
@@ -748,10 +1970,7 @@ const app = {
     this.contentEl.innerHTML = html;
   },
 
-  // ----------------------------------------------------------------
-  // Catalog
-  // ----------------------------------------------------------------
-  async renderCatalog(page = 1, categoryFilter = '') {
+        async renderCatalog(page = 1, categoryFilter = '') {
     this.setTitle('Catalog');
 
     const [categoryRes, catalogRes] = await Promise.all([
@@ -819,10 +2038,7 @@ const app = {
     else window.location.hash = target;
   },
 
-  // ----------------------------------------------------------------
-  // Tags
-  // ----------------------------------------------------------------
-  async renderTagsIndex() {
+        async renderTagsIndex() {
     this.setTitle('Tags');
 
     const res = await api.getTags();
@@ -899,10 +2115,7 @@ const app = {
     `;
   },
 
-  // ----------------------------------------------------------------
-  // Search
-  // ----------------------------------------------------------------
-  async renderSearch(query, page = 1) {
+        async renderSearch(query, page = 1) {
     this.setTitle(query ? `Search: ${query}` : 'Search');
 
     const headerInput = document.getElementById('global-search-input');
@@ -957,19 +2170,14 @@ const app = {
     `;
   },
 
-  // ----------------------------------------------------------------
-  // Component detail
-  // ----------------------------------------------------------------
-  async renderComponentDetail(idOrSlug) {
+        async renderComponentDetail(idOrSlug) {
     const res = await api.getComponent(idOrSlug);
     const comp = res.data;
     const compId = comp.componentId !== undefined ? comp.componentId : comp.component_id;
 
     this.setTitle(comp.name);
 
-    // Recently viewed is the signed-in user's own history, so it is recorded
-    // here and only here; the API decides whose history that is.
-    if (account.isSignedIn() && compId) {
+            if (account.isSignedIn() && compId) {
       api.auth.recordView(compId).catch(() => {});
     }
 
@@ -986,13 +2194,10 @@ const app = {
       { label: comp.name }
     ];
 
-    // The description lives in the hero, directly beneath the title.
-    const heroLead =
+        const heroLead =
       comp.description || comp.shortDescription || '';
 
-    // Tags carry the classification; the category itself is already in the
-    // breadcrumb, so it is not repeated as a pill here.
-    const tagPills = tags
+            const tagPills = tags
       .filter(tag => tag && tag.slug && tag.slug !== 'educational-example')
       .map(tag => `<a class="tag" href="#/tags/${encodeURIComponent(tag.slug)}">#${this.escapeHtml(tag.name)}</a>`)
       .join('');
@@ -1052,9 +2257,7 @@ const app = {
         </section>
     `;
 
-    // Circuit diagram, immediately after the hero. Logic gates are excluded:
-    // their implementation is the IC pinout shown with the specifications.
-    circuitDiagrams.forEach(diagram => {
+            circuitDiagrams.forEach(diagram => {
       html += `
         <section class="detail-section">
           <h2 class="section-title">Circuit Diagram</h2>
@@ -1075,8 +2278,7 @@ const app = {
       `;
     });
 
-    // Structured educational sections
-    (comp.content || []).forEach(section => {
+        (comp.content || []).forEach(section => {
       if (section.sectionKey === 'overview') return;
 
       html += `
@@ -1087,10 +2289,7 @@ const app = {
       `;
     });
 
-    // Supporting artwork. Each drawing becomes its own titled section, exactly
-    // like Truth Table or Equation - no grid of cards, no asset counter, no
-    // footnotes.
-    extraDiagrams.forEach(diagram => {
+                extraDiagrams.forEach(diagram => {
       const kind = diagram.kind || 'OTHER';
       const isState = kind === 'STATE';
       const isTiming = kind === 'TIMING';
@@ -1117,9 +2316,7 @@ const app = {
       `;
     });
 
-    // The IC pinout is a drawing, so it is its own section rather than being
-    // folded into the specifications table.
-    const pinout = byKind('PINOUT')[0];
+            const pinout = byKind('PINOUT')[0];
     if (pinout) {
       html += `
         <section class="detail-section">
@@ -1141,8 +2338,7 @@ const app = {
       `;
     }
 
-    // Technical specifications, on their own.
-    if (comp.specifications && comp.specifications.length) {
+        if (comp.specifications && comp.specifications.length) {
       html += `
         <section class="detail-section">
           <h2 class="section-title">Technical Specifications</h2>
@@ -1175,13 +2371,8 @@ const app = {
     html += '</div>';
     this.contentEl.innerHTML = html;
 
-    // Typeset the table signals and equations once the markup exists.
-    this.renderMath();
+        this.renderMath();
   },
-
-  // ----------------------------------------------------------------
-  // Educational content renderers
-  // ----------------------------------------------------------------
 
   renderSectionBody(section) {
     const content = section.content;
@@ -1222,10 +2413,7 @@ const app = {
     }
   },
 
-  // ----------------------------------------------------------------
-  // Educational content renderers
-  // ----------------------------------------------------------------
-  renderTableContent(tableJson) {
+        renderTableContent(tableJson) {
     if (!tableJson || !Array.isArray(tableJson.columns) || !Array.isArray(tableJson.rows)) {
       return `<p class="result-text">No table data available for this section.</p>`;
     }
@@ -1246,26 +2434,17 @@ const app = {
     `;
   },
 
-  /**
-   * Signal symbols (J, K, Q, Q(next), S0, Q3Q2Q1Q0 ...) are typeset as maths so
-   * subscripts and overbars read correctly. Words, numbers and binary strings
-   * stay as plain text.
-   */
   symbolToLatex(raw) {
     let tex = String(raw).trim();
 
-    // Q' / Q' with overbar -> \overline{Q}
-    const primed = tex.match(/^([A-Z][A-Za-z0-9]*)\s*['\u2032\u0305]$/);
+        const primed = tex.match(/^([A-Z][A-Za-z0-9]*)\s*['\u2032\u0305]$/);
     if (primed) return `\\overline{${primed[1]}}`;
 
-    // Q(next) -> Q_{next}
-    tex = tex.replace(/\(next\)/gi, '_{next}');
+        tex = tex.replace(/\(next\)/gi, '_{next}');
 
-    // letter followed by one or more digits -> subscript
-    tex = tex.replace(/([A-Za-z])(\d+)/g, '$1_{$2}');
+        tex = tex.replace(/([A-Za-z])(\d+)/g, '$1_{$2}');
 
-    // unicode subscripts used by the seed data
-    tex = tex.replace(/[\u2080-\u2089]/g, ch => `_{${ch.charCodeAt(0) - 0x2080}}`);
+        tex = tex.replace(/[\u2080-\u2089]/g, ch => `_{${ch.charCodeAt(0) - 0x2080}}`);
 
     return tex;
   },
@@ -1274,10 +2453,7 @@ const app = {
     const trimmed = String(raw).trim();
     if (!trimmed || trimmed.length > 14) return false;
     if (!/[A-Za-z]/.test(trimmed)) return false;
-    // Signal names only: a capitalised token, optionally carrying digits,
-    // primes, "(next)" or unicode subscripts. Plain English words such as
-    // "Decimal" or "Modulus" are left as text.
-    if (/^[A-Z]\(next\)$/i.test(trimmed)) return true;
+                if (/^[A-Z]\(next\)$/i.test(trimmed)) return true;
     if (!/^[A-Z][A-Z0-9()'\u2032\u0305\u2080-\u2089 ]*$/.test(trimmed)) return false;
     const hasDecoration = /[0-9()'\u2032\u0305\u2080-\u2089]/.test(trimmed);
     if (!hasDecoration && trimmed.length > 3) return false;
@@ -1298,9 +2474,7 @@ const app = {
     }
 
     if (tex) {
-      // Headers are set in bold maths (\boldsymbol); cells keep the normal
-      // weight so the two never read as the same emphasis.
-      const body = header ? `\\boldsymbol{${tex}}` : tex;
+                  const body = header ? `\\boldsymbol{${tex}}` : tex;
       return `<span data-katex-inline="${this.escapeHtml(body)}"${
         header ? ' class="th-math"' : ''
       }>${this.escapeHtml(raw.replace(/^\\\(|\\\)$/g, ''))}</span>`;
@@ -1313,9 +2487,7 @@ const app = {
   },
 
   renderEquationContent(latex) {
-    // Rendered maths only - the source LaTeX used to be printed underneath as a
-    // footnote and is now dropped.
-    return `
+            return `
       <div class="equation-block">
         <div class="equation-rendered" data-latex="${this.escapeHtml(latex)}">
           <code>${this.escapeHtml(latex)}</code>
@@ -1350,57 +2522,38 @@ const app = {
     });
   },
 
-  /**
-   * Scale each rendered equation so it fills its column instead of being
-   * clipped into a horizontal scroller. Short equations grow up to a ceiling;
-   * an unusually long one is shrunk just enough to fit.
-   */
   fitEquations() {
     document.querySelectorAll('.equation-block').forEach(block => {
       const katex = block.querySelector('.katex-display > .katex') || block.querySelector('.katex');
       if (!katex) return;
 
       katex.style.fontSize = '';
-      // The column width, minus the block's own horizontal padding: the
-      // equation is fitted to the space that actually exists, so the page
-      // never grows a horizontal scrollbar (no slider under the maths).
-      const styles = window.getComputedStyle(block);
+                        const styles = window.getComputedStyle(block);
       const gutter = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
       const available = block.clientWidth - gutter;
-      if (!available) return; // no layout (e.g. headless DOM): keep the CSS size
+      if (!available) return;
 
       const baseSize = parseFloat(window.getComputedStyle(katex).fontSize) || 24;
       const natural = katex.getBoundingClientRect().width;
       if (!natural) return;
 
-      // Fill ~94% of the column; short equations are allowed to grow well past
-      // their 1.5rem base size, long ones shrink until they fit.
-      const target = available * 0.94;
-      // Grow well past the 1.7rem base, but stop at a readable ceiling so a
-      // two-symbol equation does not become a poster.
-      const ceiling = 64 / baseSize;
+                  const target = available * 0.94;
+                  const ceiling = 64 / baseSize;
       let scale = target / natural;
       scale = Math.min(3.4, ceiling, Math.max(0.6, scale));
       katex.style.fontSize = `${(baseSize * scale).toFixed(2)}px`;
 
-      // One correction pass in case rounding or font fallback changed the
-      // measured width. This is what guarantees "no slider".
-      const fitted = katex.getBoundingClientRect().width;
+                  const fitted = katex.getBoundingClientRect().width;
       if (fitted > available && fitted > 0) {
         katex.style.fontSize = `${(baseSize * scale * (available / fitted) * 0.99).toFixed(2)}px`;
       }
     });
   },
 
-  // ----------------------------------------------------------------
-  // Lab console
-  // ----------------------------------------------------------------
-  async renderLabConsole() {
+        async renderLabConsole() {
     this.setTitle('Lab Console');
 
-    // The benchmark note names the dataset it was measured on; the size comes
-    // from the API so it cannot drift from the seeded catalogue.
-    const labStats = await api.getStats().catch(() => null);
+            const labStats = await api.getStats().catch(() => null);
     const labComponentCount = labStats && labStats.data && Number.isFinite(Number(labStats.data.components))
       ? Number(labStats.data.components)
       : null;
@@ -1559,10 +2712,7 @@ const app = {
     });
   },
 
-  // ----------------------------------------------------------------
-  // Lab actions
-  // ----------------------------------------------------------------
-  async handleInsertComponent(event) {
+        async handleInsertComponent(event) {
     event.preventDefault();
 
     const categoryId = document.getElementById('sp-cat-id').value;
@@ -1802,10 +2952,7 @@ const app = {
             <tbody>
               ${res.data
                 .map(log => {
-                  // Audit operations get their own badge classes; reusing the
-                  // component badge classes here was confusing and made the
-                  // removed "Illustrative"/"Published" styling look alive.
-                  const op = String(log.operation_type || '').toLowerCase();
+                                                                        const op = String(log.operation_type || '').toLowerCase();
                   const badgeClass = `badge-op badge-op--${['insert', 'update', 'delete'].includes(op) ? op : 'other'}`;
                   return `
                     <tr>
@@ -1846,12 +2993,7 @@ const app = {
     }
   },
 
-  /* ----------------------------------------------------------------
-     Index benchmark report: markdown in, tables out.
-     ---------------------------------------------------------------- */
-
-  /** One `| a | b |` row -> trimmed cells with the markdown noise removed. */
-  splitMarkdownRow(line) {
+    splitMarkdownRow(line) {
     return String(line)
       .trim()
       .replace(/^\|/, '')
@@ -1860,8 +3002,7 @@ const app = {
       .map(cell => cell.trim().replace(/\*\*/g, '').replace(/`/g, ''));
   },
 
-  /** Every GitHub-style table in a markdown document, in reading order. */
-  parseMarkdownTables(markdown) {
+    parseMarkdownTables(markdown) {
     const lines = String(markdown).split('\n');
     const tables = [];
     let i = 0;
@@ -1887,33 +3028,20 @@ const app = {
     return tables;
   },
 
-  /**
-   * Pull the report's header facts, the summary table and the per-query timing
-   * ranges out of the markdown.
-   *
-   * Only those three views are kept: the candidate-index list, the per-query
-   * execution plans and the closing methodology notes stay in the markdown
-   * source instead of being repeated on screen.
-   */
   parseBenchmarkReport(markdown) {
     const md = String(markdown);
 
-    // Header bullets: "**Database Engine:** ..." plus the dataset line items.
-    const meta = [];
+        const meta = [];
     const metaMatches = md.matchAll(/^\*\*([^*\n]+):\*\*\s*(.+)$/gm);
     for (const match of metaMatches) {
       const value = match[2].replace(/\s+/g, ' ').trim();
-      // "Dataset Size:" only introduces a list; the list items follow below.
-      if (!value || value.startsWith('-')) continue;
+            if (!value || value.startsWith('-')) continue;
       meta.push([match[1].trim(), value]);
     }
     const datasetMatches = md.matchAll(/^-\s*`?([^`:\n]+)`?\s*table:\s*([\d,]+)\s*rows/gm);
     for (const match of datasetMatches) meta.push([`${match[1].trim()} (rows)`, match[2].trim()]);
 
-    // "### Q1: Full-table display query" sections. Each one contributes a row
-    // to the per-query table: name, rows returned, index used, and the min/max
-    // behind every average.
-    const queries = [];
+                const queries = [];
     const lines = md.split('\n');
     lines.forEach((line, index) => {
       const heading = line.match(/^###\s+(Q\d+):\s*(.+)$/);
@@ -1951,8 +3079,7 @@ const app = {
     return { meta, summary: tables[0] || null, queries };
   },
 
-  /** Render the parsed report as three labelled tables. */
-  renderBenchmarkReport(report) {
+    renderBenchmarkReport(report) {
     const parts = [];
 
     if (report.meta.length) {
@@ -2076,14 +3203,8 @@ const app = {
     }
   },
 
-  // ----------------------------------------------------------------
-  // Shared markup helpers
-  // ----------------------------------------------------------------
-  categoryCard(category) {
-    // Parent categories use exactly the same tile as subcategories: name,
-    // summary, then "<n> components ->". The count includes nested children so
-    // a top-level category reports everything underneath it.
-    const children = category.children || [];
+        categoryCard(category) {
+                const children = category.children || [];
     const directCount = Number(
       category.componentCount !== undefined ? category.componentCount : category.component_count || 0
     );
@@ -2107,11 +3228,7 @@ const app = {
     const description = comp.short_description || comp.shortDescription || '';
     const symbol = comp.circuit_symbol_path || comp.circuitSymbolPath;
 
-    // Cards stay deliberately minimal: name, symbol, summary, and one quiet
-    // save control. Category and status badges only appear on the component's
-    // own page. The link and the button are siblings because a button inside a
-    // link is neither valid markup nor usable with a keyboard.
-    return `
+                    return `
       <div class="component-card component-card--plain" data-component-id="${this.escapeHtml(id)}">
         <a class="component-card-link" href="#/components/${encodeURIComponent(slug)}">
           <div class="component-card-top">
@@ -2129,10 +3246,6 @@ const app = {
     `;
   },
 
-  /**
-   * Subcategory button: card-like (as before) but compact and distinct from
-   * both the parent category cards and the component cards.
-   */
   subcategoryCard(category) {
     const id = category.category_id !== undefined ? category.category_id : category.categoryId;
     const count = Number(
@@ -2140,9 +3253,7 @@ const app = {
     );
     const description = category.description || '';
 
-    // The count lives in the footer next to the arrow so both read as one
-    // sentence: "5 components ->". No ordinal, no floating chip.
-    return `
+            return `
       <a class="subcategory-card" href="#/categories/${encodeURIComponent(id)}">
         <span class="subcategory-name">${this.escapeHtml(category.name)}</span>
         ${description ? `<p class="subcategory-desc">${this.escapeHtml(description)}</p>` : ''}
@@ -2230,10 +3341,7 @@ const app = {
     return html;
   },
 
-  // ----------------------------------------------------------------
-  // Modal, toasts, downloads, utilities
-  // ----------------------------------------------------------------
-  openModal(title, bodyHtml) {
+        openModal(title, bodyHtml) {
     const modal = document.getElementById('global-modal');
     const titleEl = document.getElementById('modal-title');
     const bodyEl = document.getElementById('modal-body');
@@ -2306,9 +3414,6 @@ const app = {
 
 window.addEventListener('DOMContentLoaded', () => app.init());
 
-// Equations are sized to the column, so they must be re-fitted whenever the
-// column or the font metrics change - otherwise a late webfont can push a
-// scaled equation past the edge and bring back the horizontal scrollbar.
 let equationResizeTimer = null;
 const refitEquations = () => {
   clearTimeout(equationResizeTimer);

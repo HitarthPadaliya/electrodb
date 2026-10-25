@@ -1,5 +1,5 @@
-const pool = require('../server/src/db/pool');
-const config = require('../server/src/config');
+const { pool } = require('../src/db');
+const { config } = require('../src/config');
 
 async function main() {
   console.log('Testing ElectroDB MySQL Database Connection...');

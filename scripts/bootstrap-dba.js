@@ -1,23 +1,10 @@
 #!/usr/bin/env node
-/**
- * Create (or repair) the first DBA account.
- *
- * There is deliberately no way to become an administrator through the web
- * interface: public registration can only ever create a User. The first DBA is
- * made here, by someone who already has database credentials.
- *
- * Usage
- *   npm run bootstrap:dba                       # reads BOOTSTRAP_DBA_* from .env
- *   node scripts/bootstrap-dba.js --email dba@example.com --username dba \
- *        --password 'a long unique passphrase'
- *
- * Re-running is safe: it updates the password and re-enables the account.
- */
+
 require('dotenv').config({ path: require('path').resolve(__dirname, '../server/.env') });
 require('dotenv').config();
 
-const { query, closePool } = require('../server/src/db/pool');
-const passwords = require('../server/src/security/passwords');
+const { pool } = require('../src/db');
+const { passwords } = require('../src/security');
 
 function arg(name) {
   const index = process.argv.indexOf(`--${name}`);
@@ -47,7 +34,7 @@ async function main() {
 
   let existing;
   try {
-    [existing] = await query(
+    [existing] = await pool.query(
       'SELECT user_id, role_code, email FROM app_users WHERE email = ? OR username = ? LIMIT 1',
       [email, username]
     );
@@ -63,7 +50,7 @@ async function main() {
   }
 
   if (existing.length) {
-    await query(
+    await pool.query(
       `UPDATE app_users
           SET username = ?, email = ?, password_hash = ?, role_code = 'DBA', is_active = 1
         WHERE user_id = ?`,
@@ -71,7 +58,7 @@ async function main() {
     );
     console.log(`Updated existing account #${existing[0].user_id} and ensured the DBA role.`);
   } else {
-    const result = await query(
+    const result = await pool.query(
       `INSERT INTO app_users (username, email, password_hash, role_code, is_active)
        VALUES (?, ?, ?, 'DBA', 1)`,
       [username, email, passwordHash]
@@ -91,8 +78,7 @@ main()
   })
   .finally(async () => {
     try {
-      await closePool();
+      await pool.closePool();
     } catch (err) {
-      /* the pool may never have opened */
-    }
+          }
   });

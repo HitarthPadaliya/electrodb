@@ -1,9 +1,3 @@
--- ================================================================
--- ElectroDB - 01_schema.sql
--- Core catalogue, assignment demo, and audit log tables
--- Target: MySQL 8.0+ / MariaDB 10.4+
--- ================================================================
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -12,9 +6,6 @@ CREATE DATABASE IF NOT EXISTS electrodb
   COLLATE utf8mb4_unicode_ci;
 USE electrodb;
 
--- ------------------------------
--- 1. Hierarchical category tree
--- ------------------------------
 CREATE TABLE IF NOT EXISTS categories (
   category_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   parent_category_id BIGINT UNSIGNED NULL,
@@ -34,9 +25,6 @@ CREATE TABLE IF NOT EXISTS categories (
   CONSTRAINT chk_categories_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 2. Tags
--- ------------------------------
 CREATE TABLE IF NOT EXISTS tags (
   tag_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(80) NOT NULL,
@@ -46,9 +34,6 @@ CREATE TABLE IF NOT EXISTS tags (
   UNIQUE KEY uq_tags_slug (slug)
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 3. Components
--- ------------------------------
 CREATE TABLE IF NOT EXISTS components (
   component_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   category_id BIGINT UNSIGNED NOT NULL,
@@ -89,9 +74,6 @@ CREATE TABLE IF NOT EXISTS component_tags (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 4. Content types and category templates
--- ------------------------------
 CREATE TABLE IF NOT EXISTS content_types (
   content_type_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   code VARCHAR(40) NOT NULL,
@@ -120,9 +102,6 @@ CREATE TABLE IF NOT EXISTS category_content_types (
   CONSTRAINT chk_cct_required CHECK (is_required IN (0,1))
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 5. Component educational content
--- ------------------------------
 CREATE TABLE IF NOT EXISTS component_content (
   component_content_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
@@ -147,15 +126,11 @@ CREATE TABLE IF NOT EXISTS component_content (
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 5A. Component diagrams (generic SVG model)
--- ------------------------------
 CREATE TABLE IF NOT EXISTS component_diagrams (
   diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
-  -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
-  -- diagram, and from state/timing artwork, so the UI can place each one.
+
   diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
@@ -171,9 +146,6 @@ CREATE TABLE IF NOT EXISTS component_diagrams (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 6. Specifications
--- ------------------------------
 CREATE TABLE IF NOT EXISTS specifications (
   specification_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(120) NOT NULL,
@@ -206,9 +178,6 @@ CREATE TABLE IF NOT EXISTS component_specifications (
   )
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 7. Assignment-specific application users
--- ------------------------------
 CREATE TABLE IF NOT EXISTS app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
@@ -223,9 +192,6 @@ CREATE TABLE IF NOT EXISTS app_users (
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB;
 
--- ------------------------------
--- 8. Audit log
--- ------------------------------
 CREATE TABLE IF NOT EXISTS application_audit_log (
   audit_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   table_name VARCHAR(128) NOT NULL,

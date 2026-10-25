@@ -1,15 +1,66 @@
-const pool = require('./pool');
-const {
-  validateTable,
-  validateColumn,
-  validateAggregateFunction,
-  validateOperator,
-  validateJoinType
-} = require('../validators/inputValidators');
+const mysql = require('mysql2/promise');
+const { config } = require('./config');
+const { validateTable, validateColumn, validateAggregateFunction, validateOperator, validateJoinType } = require('./validate');
 
-// ================================================================
-// Catalogue Repository
-// ================================================================
+let connectionPool = null;
+
+function getPool() {
+  if (!connectionPool) {
+    connectionPool = mysql.createPool({
+      host: config.db.host,
+      port: config.db.port,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database,
+      waitForConnections: config.db.waitForConnections,
+      connectionLimit: config.db.connectionLimit,
+      queueLimit: config.db.queueLimit,
+      charset: config.db.charset,
+      multipleStatements: false,
+      dateStrings: true
+    });
+  }
+  return connectionPool;
+}
+
+async function query(sql, params = []) {
+  const connection = await getPool().getConnection();
+  try {
+    const [rows, fields] = await connection.query(sql, params);
+    return [rows, fields];
+  } finally {
+    connection.release();
+  }
+}
+
+async function executeProcedure(procName, params = []) {
+  const placeholders = params.map(() => '?').join(',');
+  const sql = `CALL ${procName}(${placeholders})`;
+  const connection = await getPool().getConnection();
+  try {
+    const [results] = await connection.query(sql, params);
+    return results;
+  } finally {
+    connection.release();
+  }
+}
+
+async function checkHealth() {
+  const connection = await getPool().getConnection();
+  try {
+    const [rows] = await connection.query('SELECT 1 AS healthy, CURRENT_TIMESTAMP AS server_time, VERSION() AS db_version');
+    return rows[0];
+  } finally {
+    connection.release();
+  }
+}
+
+async function closePool() {
+  if (connectionPool) {
+    await connectionPool.end();
+    connectionPool = null;
+  }
+}
 
 async function getAllCategories() {
   const [rows] = await pool.query(
@@ -297,10 +348,6 @@ async function getComponentTags(componentId) {
   return rows;
 }
 
-// ================================================================
-// Assignment 10 Stored Programs Repository
-// ================================================================
-
 async function insertComponentSP(categoryId, name, slug, shortDescription) {
   const results = await pool.executeProcedure('sp_insert_component', [
     categoryId,
@@ -308,8 +355,7 @@ async function insertComponentSP(categoryId, name, slug, shortDescription) {
     slug || null,
     shortDescription || null
   ]);
-  // mysql2 returns [[rows], [meta]] for procedure calls
-  const row = (Array.isArray(results) && Array.isArray(results[0])) ? results[0][0] : results[0];
+    const row = (Array.isArray(results) && Array.isArray(results[0])) ? results[0][0] : results[0];
   return row ? row.component_id : null;
 }
 
@@ -380,10 +426,6 @@ async function getAuditLogs(limit = 50) {
   );
   return rows;
 }
-
-// ================================================================
-// Assignment 11 Lab Repository
-// ================================================================
 
 async function getFullTableComponents({ limit, offset, bounded = true }) {
   if (bounded) {
@@ -460,8 +502,7 @@ async function executeDynamicJoin(leftTable, rightTable, joinTypeKey, { limit, o
   } else if (validLeft === 'components' && validRight === 'component_content') {
     joinCondition = 'components.component_id = component_content.component_id';
   } else {
-    // Default safe fallback join if relationship isn't directly pre-mapped
-    joinCondition = `${validLeft}.component_id = ${validRight}.component_id`;
+        joinCondition = `${validLeft}.component_id = ${validRight}.component_id`;
   }
 
   const sql = `SELECT ${validLeft}.*, ${validRight}.name AS joined_name
@@ -493,8 +534,7 @@ async function executeSubquery(kind = 'categories_in_digital') {
            )
            LIMIT 25`;
   } else {
-    // Default: Components in subcategories under parent category 1 (Digital Electronics)
-    description = 'Components belonging to categories under Digital Electronics (parent_category_id = 1)';
+        description = 'Components belonging to categories under Digital Electronics (parent_category_id = 1)';
     sql = `SELECT component_id, name, category_id, slug
            FROM components
            WHERE category_id IN (
@@ -520,8 +560,7 @@ async function executeCorrelatedQuery(kind = 'categories_with_components') {
            )
            LIMIT 25`;
   } else {
-    // Default: Categories that have at least one published component
-    description = 'Categories that have at least one published component';
+        description = 'Categories that have at least one published component';
     sql = `SELECT cat.category_id, cat.name, cat.slug
            FROM categories cat
            WHERE EXISTS (
@@ -577,10 +616,6 @@ async function getDashboardStats() {
   };
 }
 
-/**
- * Catalogue-wide counts used by the public pages (home hero, lab notes).
- * One round-trip, so a number shown in the UI can never drift from the data.
- */
 async function getCatalogueCounts() {
   const [rows] = await pool.query(
     `SELECT
@@ -597,7 +632,9 @@ async function getCatalogueCounts() {
   return (rows && rows[0]) || {};
 }
 
-module.exports = {
+const pool = { getPool, query, executeProcedure, checkHealth, closePool };
+
+const repo = {
   getAllCategories,
   getCategoryById,
   getCategoryBySlug,
@@ -643,3 +680,5 @@ module.exports = {
   getDashboardStats,
   getCatalogueCounts
 };
+
+module.exports = { pool, repo };

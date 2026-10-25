@@ -16,10 +16,9 @@ The application also features a dedicated **Lab Console** that exercises the dat
 - **Database Driver:** `mysql2/promise` with connection pooling
 - **Backend Framework:** Node.js LTS + Express
 - **Security & Headers:** `helmet`, `cors`, parameterized SQL, allowlisted query templates
-- **Frontend:** Semantic HTML5, CSS3 responsive design tokens, vanilla JavaScript (hash-based Single Page Architecture) themed after the `electrodb-frontend/` design reference (dark cyan/teal palette, Space Grotesk/Poppins/Lexend/Inter typography, spotlight hover effects)
+- **Frontend:** Semantic HTML5, CSS3 responsive design tokens, vanilla JavaScript (hash-based Single Page Architecture) with a dark cyan/teal palette, Space Grotesk/Poppins/Lexend/Inter typography and spotlight hover effects
 - **LaTeX Math Rendering:** KaTeX
 - **Vector Graphics:** Custom SVG assets generated from the catalogue (circuit symbols, gate/device circuit implementations, IC pinouts, flip-flop state machines, counter rings, timing waveforms)
-- **Automated Testing:** Node.js native test runner (`node:test`)
 
 ---
 
@@ -49,53 +48,30 @@ electrodb/
 │   ├── 08_assignment10_demo.sql             # Executable verification script for the stored programs
 │   ├── 09_assignment11_queries.sql          # Executable verification script for the SQL demonstrations
 │   └── 10_query_timing_results.md           # Real measured before/after index timing report
-├── server/
-│   ├── package.json
-│   ├── .env.example
-│   ├── src/
-│   │   ├── app.js                           # Express application setup
-│   │   ├── server.js                        # Server entry point & graceful shutdown
-│   │   ├── config/index.js                  # Environment configuration
-│   │   ├── db/
-│   │   │   ├── pool.js                      # MySQL connection pool
-│   │   │   └── repository.js                # Data access layer
-│   │   ├── routes/
-│   │   │   ├── catalogueRoutes.js           # Public catalogue endpoints
-│   │   │   ├── authRoutes.js                # register / login / logout / me
-│   │   │   ├── userRoutes.js                # profile, bookmarks, collections, dashboard
-│   │   │   ├── adminRoutes.js               # DBA account administration
-│   │   │   ├── contentRoutes.js             # category/tag management (Developer/DBA)
-│   │   │   └── labRoutes.js                 # lab console endpoints (Developer/DBA)
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   ├── validators/                      # Allowlisted tables, operators, functions
-│   │   ├── security/                        # Password hashing, session tokens, role mapping
-│   │   ├── db/personalStore.js              # Selects the MySQL or in-memory account store
-│   │   ├── serializers/xml.js               # Dedicated XML serializer (Query 1, 3, 4)
-│   │   └── middleware/errorHandler.js       # Centralized error handler
-│   └── tests/
-│       ├── api.test.js                      # Database integration tests (needs MySQL)
-│       ├── offline.test.js                  # DB-free contract and security tests
-│       └── personal.test.js                 # Accounts, roles and personalization (in-memory store)
-├── electrodb-frontend/                      # Static design reference used for the refit
-│   ├── index.html                           # Reference layout: navbar, hero, breadcrumbs, tables
-│   ├── styles.css                           # Reference palette, typography, and spacing tokens
-│   └── img/                                 # Reference SVG artwork
+├── src/
+│   ├── server.js                            # Express app, server entry point & graceful shutdown
+│   ├── routes.js                            # Route definitions, request handlers & auth middleware
+│   ├── services.js                          # Business logic (catalogue, accounts, lab, content, XML)
+│   ├── db.js                                # MySQL connection pool & catalogue data access
+│   ├── store.js                             # Account persistence (MySQL or in-memory)
+│   ├── security.js                          # Password hashing, session tokens, role mapping
+│   ├── validate.js                          # Allowlisted tables, operators, functions, input rules
+│   ├── errors.js                            # Application errors & centralized error handler
+│   └── config.js                            # Environment configuration & database date helpers
 ├── public/
 │   ├── index.html                           # Single Page Application shell
-│   ├── favicon.svg                          # Site icon carried over from the design reference
-│   ├── assets/
-│   │   ├── css/styles.css                   # Refitted design system (dark cyan/teal theme)
-│   │   ├── js/
-│   │   │   ├── api.js                       # API client (catalogue, accounts, lab)
-│   │   │   ├── account.js                   # Session, auth pages, bookmarks, collections, dashboard
-│   │   │   └── app.js                       # SPA router, renderers, KaTeX, lab console
-│   │   └── svg/                             # generated SVG vector assets
+│   ├── favicon.svg                          # Site icon
+│   └── assets/
+│       ├── css/styles.css                   # Design system (dark cyan/teal theme)
+│       ├── js/app.js                        # API client, session, SPA router, renderers, lab console
+│       └── svg/                             # generated SVG vector assets
 └── scripts/
     ├── check-db-connection.js               # Database ping & diagnostic verification
     ├── preview-server.js                    # Frontend-only preview server (seed-derived data)
-    ├── generate-svg-assets.js               # Vector graphics generator
+    ├── build-circuit-diagrams.js            # Gate/device-level circuit diagram generator
+    ├── restyle-svgs.js                      # Recolours catalogue artwork to the reference palette
     ├── run-benchmarks.js                    # Query timing & index benchmark suite
+    ├── bootstrap-dba.js                     # Creates or repairs the first DBA account
     └── verify-install.js                    # End-to-end system verification audit
 ```
 
@@ -137,10 +113,6 @@ npm install
 # Verify database connection and schema
 npm run check-db
 
-# Run automated tests (30 database tests + 4 DB-free contract tests)
-npm test
-npm run test:offline
-
 # Run complete system verification audit
 npm run verify
 ```
@@ -176,24 +148,22 @@ http://localhost:3000/
 | `#/admin` | Account administration (DBA only) |
 | `#/lab` | Lab console (Developer & DBA only) |
 
-The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography are taken from the `electrodb-frontend/` reference; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views were added so the reference styling covers the complete application.
+The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables, colour tokens, and typography form one design system; loading, empty, error, 404, modal, toast, pagination, catalog, and tag views are built from the same tokens so the styling covers the complete application.
 
 ### Diagram artwork
 
-`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte and
-together defining the style every other drawing follows:
+The JK Flip-Flop drawings define the style every other drawing follows:
 
-| Reference file | Shipped verbatim as | Served as | Shown |
-|---|---|---|---|
-| `jk-flip-flop.svg` | `public/assets/svg/flipflops/jk.svg` | `public/assets/svg/flipflops/jk-flip-flop.svg` | JK Flip-Flop hero symbol |
-| `jk-flip-flop_circuit.svg` | `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | same file | JK Flip-Flop circuit diagram, directly below the hero |
+| File | Shown |
+|---|---|
+| `public/assets/svg/flipflops/jk-flip-flop.svg` | JK Flip-Flop hero symbol |
+| `public/assets/svg/circuits/jk-flip-flop-circuit.svg` | JK Flip-Flop circuit diagram, directly below the hero |
 
-The delivered JK symbol stays byte-for-byte as supplied and is not served. The page displays a copy of
-it, `flipflops/jk-flip-flop.svg`, built from the reference by `scripts/build-diagrams.js`: identical
-canvas and geometry, with the preset and clear pins carrying the house colours (amber `#e8b455` for
-PRE, violet `#b48cf0` for CLR) on their dashed stubs, inversion bubbles and labels.
+The hero symbol is the pin-level block drawing, with the preset and clear pins carrying the house
+colours (amber `#e8b455` for PRE, violet `#b48cf0` for CLR) on their dashed stubs, inversion bubbles
+and labels.
 
-Every other drawing is generated from those two references:
+Every other drawing is generated from the catalogue:
 
 ```bash
 npm run svg:restyle    # recolour existing symbol/state/timing artwork to the reference palette
@@ -278,9 +248,6 @@ reference and the honest testing report are in [`docs/accounts.md`](docs/account
 |---|---|
 | `npm start` | Launches the Express API + frontend at `http://localhost:3000` (requires MySQL) |
 | `npm run preview` | Frontend-only preview at `http://localhost:3000` using data derived from `electrodb.sql`; useful when MySQL is unavailable |
-| `npm test` | Runs the database integration tests (needs a seeded MySQL) |
-| `npm run test:offline` | Runs the 42 DB-free contract and security tests |
-| `npm run test:personal` | Runs the 55 account, role and personalization tests (in-memory store, no DB) |
 | `npm run bootstrap:dba` | Creates or repairs the first DBA account from `BOOTSTRAP_DBA_*` |
 | `npm run svg:restyle` | Recolours catalogue artwork to the reference palette |
 | `npm run svg:circuits` | Regenerates circuit diagrams for every component |

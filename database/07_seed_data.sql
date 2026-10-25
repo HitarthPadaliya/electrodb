@@ -1,14 +1,5 @@
--- ================================================================
--- ElectroDB - 07_seed_data.sql
--- Seed data for categories, tags, components, content, diagrams, and specs
--- Target: MySQL 8.0+ / MariaDB 10.4+
--- ================================================================
-
 USE electrodb;
 
--- ------------------------------
--- 9. Content type seed data
--- ------------------------------
 INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('TEXT','Text','TEXT','Readable prose or lists'),
 ('IMAGE','Image','IMAGE','Image or image resource'),
@@ -18,9 +9,6 @@ INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('GRAPH','Graph','SVG_DIAGRAM','Graph image or SVG resource'),
 ('DOCUMENT','Document','DOCUMENT','Datasheet or document URL');
 
--- ------------------------------
--- 10. Categories
--- ------------------------------
 INSERT INTO categories (category_id, parent_category_id, name, slug, description, display_order) VALUES
 (1,NULL,'Digital Electronics','digital-electronics','Digital logic and sequential circuits',1),
 (2,NULL,'Semiconductor Devices','semiconductor-devices','Semiconductor components',2),
@@ -48,18 +36,12 @@ INSERT INTO categories (category_id, parent_category_id, name, slug, description
 (22,5,'Relays','relays','Electrically operated switches',1),
 (23,5,'DC Motors','dc-motors','Brushed DC motors and control',2);
 
--- ------------------------------
--- 11. Tags
--- ------------------------------
 INSERT INTO tags (name, slug) VALUES
 ('digital','digital'),('sequential-logic','sequential-logic'),('combinational-logic','combinational-logic'),
 ('semiconductor','semiconductor'),('analog','analog'),('power','power'),('sensor','sensor'),
 ('memory','memory'),('electromechanical','electromechanical'),
 ('timing','timing'),('state-machine','state-machine'),('la-te-x','latex');
 
--- ------------------------------
--- 12. Specification definitions
--- ------------------------------
 INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('Number of States',NULL,'NUMBER','Number of logical states'),
 ('Number of Bits','bit','NUMBER','Number of state bits'),
@@ -86,9 +68,6 @@ INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('No-Load Speed','RPM','NUMBER','No-load speed'),
 ('Contact Configuration',NULL,'TEXT','Contact arrangement');
 
--- ------------------------------
--- 13. Components (46 initial educational entries)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
@@ -138,11 +117,6 @@ VALUES
 (23, 'Brushed DC Motor', 'brushed-dc-motor', 'A motor using brushes and a commutator.', 'Armature current interacts with a magnetic field to create torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/brushed-dc.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1),
 (23, 'DC Gear Motor', 'dc-gear-motor', 'A DC motor combined with a reduction gearbox.', 'The gearbox trades speed for increased output torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/dc-gear.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1);
 
-
-
--- ------------------------------
--- 13B. Additional component seed data (102 more; total catalogue exceeds 100)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
@@ -249,9 +223,6 @@ VALUES
 (23, 'Servo Motor', 'servo-motor', 'A motor used in a closed-loop position or speed system.', 'Feedback compares desired and measured motion. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/servo-motor.png', '/assets/svg/components/servo-motor.svg', NULL, 1, 1),
 (23, 'Permanent-Magnet DC Motor', 'permanent-magnet-dc-motor', 'A DC motor with permanent-magnet field excitation.', 'Armature current interacts with the fixed magnetic field. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/permanent-magnet-dc-motor.png', '/assets/svg/components/permanent-magnet-dc-motor.svg', NULL, 1, 1);
 
--- ------------------------------
--- 14. Component tags
--- ------------------------------
 INSERT IGNORE INTO component_tags (component_id, tag_id)
 SELECT c.component_id, t.tag_id
 FROM components c
@@ -265,9 +236,6 @@ JOIN tags t ON (
   (c.category_id IN (22,23) AND t.slug IN ('electromechanical'))
 );
 
--- ------------------------------
--- 15. Category content templates
--- ------------------------------
 INSERT INTO category_content_types
 (category_id, content_type_id, section_key, section_label, is_required, display_order)
 SELECT c.category_id, ct.content_type_id, x.section_key, x.section_label, x.is_required, x.display_order
@@ -288,17 +256,12 @@ FROM (
 JOIN categories c ON c.category_id = x.category_id
 JOIN content_types ct ON ct.code = x.type_code;
 
--- ------------------------------
--- 16. Component content seed records
--- ------------------------------
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'overview', 'Overview',
        c.description, NULL, NULL, 1
 FROM components c JOIN content_types ct ON ct.code='TEXT';
 
-
--- Counter state tables (stored as JSON strings)
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'state_table', 'State / Next-State Table',
@@ -321,7 +284,6 @@ FROM components c
 JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=6;
 
--- Flip-flop truth, characteristic, excitation tables, and equations are separate.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
@@ -388,10 +350,6 @@ SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
--- All visual assets use one generic diagram model. Titles describe the
--- diagram to people; the database does not store a diagram subtype.
--- SYMBOL is the pin-level block shown in the hero; CIRCUIT is the
--- gate/transistor-level schematic shown immediately below it.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
@@ -432,7 +390,6 @@ SELECT c.component_id, 'Timing Diagram', 'TIMING',
 FROM components c
 WHERE c.category_id=6;
 
--- Representative Boolean equations for gates and multiplexers.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, display_order)
 SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation',
@@ -451,9 +408,6 @@ SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation
 FROM components c JOIN content_types ct ON ct.code='EQUATION'
 WHERE c.category_id IN (8,9);
 
--- ------------------------------
--- 17. Specification values
--- ------------------------------
 INSERT INTO component_specifications
 (component_id, specification_id, numeric_value, text_value, range_min, range_max, unit_override, source_note)
 SELECT c.component_id, s.specification_id,
@@ -481,4 +435,3 @@ INSERT INTO component_specifications
 SELECT c.component_id, s.specification_id, 1, NULL, NULL, NULL, NULL, 'Logical input count'
 FROM components c JOIN specifications s ON s.name='Number of Inputs'
 WHERE c.slug='not-gate';
-

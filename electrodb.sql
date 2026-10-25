@@ -1,71 +1,8 @@
--- ================================================================
--- ElectroDB - Complete database installer (single file)
--- Target: MySQL 8.0+ / MariaDB 10.4+ (utf8mb4)
---
--- HOW TO IMPORT
---   Create an empty database first, then import this file into it. The file
---   does not create, drop or name a database, so it works whatever you called
---   yours.
---
---   Command line:
---     mysql -u root -p -e "CREATE DATABASE mydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
---     mysql -u root -p mydb < electrodb.sql
---
---   phpMyAdmin:
---     1. New -> create a database (utf8mb4_unicode_ci)
---     2. select it -> Import -> choose this file -> Go
---
--- WHAT IT CREATES
---   * 17 tables: the component catalogue, its educational content, diagrams,
---     specifications, plus application accounts and per-user data
---   * 2 views, 11 stored procedures, 1 function, 15 triggers
---   * Seed data: 23 categories, 147 components, 12 tags, their content,
---     diagrams, specifications and specifications mapping
---
--- AFTER IMPORTING
---   No application users are seeded, so nothing here has a default password.
---   Point .env at the database and create the first DBA account once:
---     npm run bootstrap:dba        (reads BOOTSTRAP_DBA_* from .env)
---   Then `npm start`; `npm run verify` re-checks the schema, the seed counts
---   and the HTTP endpoints against the live database.
---
--- RE-IMPORTING
---   Section 0 below drops every view, trigger, stored procedure, function and
---   table this script owns, so the file can be run again against an existing
---   database without "already exists" errors. It does NOT drop the database and
---   does not touch anything it did not create.
---   Running it against a database that holds real data will delete that data.
---
--- NOT INCLUDED
---   database/00_create_users_and_roles.sql (server roles and MySQL accounts)
---   is deliberately separate: it needs administrative privileges and it grants
---   on a specific schema name. Apply it afterwards if you want it, adjusting
---   the schema name to yours.
---
--- NOTES
---   * Tables declare utf8mb4/utf8mb4_unicode_ci explicitly, so the database
---     default character set does not matter (some seed values contain
---     non-ASCII symbols such as the degree sign in '°C').
---   * MySQL stored-program syntax, not Oracle PL/SQL.
---   * Diagram rows store SVG paths; the files themselves live in
---     public/assets/svg and are shipped with the application.
---   * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and
---     trigger features.
--- ================================================================
-
 SET NAMES utf8mb4;
 
--- Foreign-key checks are suspended for the whole load: the table drops need it,
--- and it keeps the seed inserts independent of insertion order. The setting the
--- session arrived with is restored at the end of the file.
 SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ------------------------------
--- 0. Reset everything this script owns
--- ------------------------------
--- Views and stored programs are dropped explicitly: they are not removed by
--- DROP TABLE, and MySQL has no CREATE OR REPLACE for procedures or functions.
 DROP VIEW IF EXISTS v_component_catalogue;
 DROP VIEW IF EXISTS v_category_component_counts;
 
@@ -116,10 +53,6 @@ DROP PROCEDURE IF EXISTS sp_update_app_user;
 DROP PROCEDURE IF EXISTS sp_delete_app_user;
 DROP FUNCTION IF EXISTS fn_sum_component_ids;
 
-
--- ------------------------------
--- 1. Hierarchical category tree
--- ------------------------------
 CREATE TABLE categories (
   category_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   parent_category_id BIGINT UNSIGNED NULL,
@@ -139,9 +72,6 @@ CREATE TABLE categories (
   CONSTRAINT chk_categories_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 2. Tags
--- ------------------------------
 CREATE TABLE tags (
   tag_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(80) NOT NULL,
@@ -151,9 +81,6 @@ CREATE TABLE tags (
   UNIQUE KEY uq_tags_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 3. Components
--- ------------------------------
 CREATE TABLE components (
   component_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   category_id BIGINT UNSIGNED NOT NULL,
@@ -194,9 +121,6 @@ CREATE TABLE component_tags (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 4. Content types and category templates
--- ------------------------------
 CREATE TABLE content_types (
   content_type_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   code VARCHAR(40) NOT NULL,
@@ -225,10 +149,6 @@ CREATE TABLE category_content_types (
   CONSTRAINT chk_cct_required CHECK (is_required IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 5. Component educational content
--- content may be prose, JSON text, LaTeX, or an SVG resource path.
--- ------------------------------
 CREATE TABLE component_content (
   component_content_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
@@ -253,18 +173,11 @@ CREATE TABLE component_content (
     ON DELETE RESTRICT ON UPDATE CASCADE
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 5A. Component diagrams
--- All diagrams share one storage model. The database stores title,
--- caption, alt text, asset path, and display order; it does not classify
--- diagrams as circuit/timing/state/etc.
--- ------------------------------
 CREATE TABLE component_diagrams (
   diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
-  -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
-  -- diagram, and from state/timing artwork, so the UI can place each one.
+
   diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
@@ -280,9 +193,6 @@ CREATE TABLE component_diagrams (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 6. Specifications
--- ------------------------------
 CREATE TABLE specifications (
   specification_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(120) NOT NULL,
@@ -315,17 +225,10 @@ CREATE TABLE component_specifications (
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 7. Application user accounts
--- These are application demo records, not MySQL server accounts.
--- Password hashes must be generated by the backend; no plaintext passwords.
--- ------------------------------
 CREATE TABLE app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
-  -- Login identifier. Nullable so rows created before accounts existed stay
-  -- valid, since a UNIQUE key permits several NULLs while keeping real
-  -- addresses unique.
+
   email VARCHAR(255) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role_code ENUM('NAIVE_USER','APP_DEVELOPER','DBA') NOT NULL DEFAULT 'NAIVE_USER',
@@ -339,9 +242,6 @@ CREATE TABLE app_users (
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 8. Audit log
--- ------------------------------
 CREATE TABLE application_audit_log (
   audit_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   table_name VARCHAR(128) NOT NULL,
@@ -357,9 +257,6 @@ CREATE TABLE application_audit_log (
   KEY idx_audit_operation_time (operation_type, changed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 9. Content type seed data
--- ------------------------------
 INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('TEXT','Text','TEXT','Readable prose or lists'),
 ('IMAGE','Image','IMAGE','Image or image resource'),
@@ -369,9 +266,6 @@ INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('GRAPH','Graph','SVG_DIAGRAM','Graph image or SVG resource'),
 ('DOCUMENT','Document','DOCUMENT','Datasheet or document URL');
 
--- ------------------------------
--- 10. Categories
--- ------------------------------
 INSERT INTO categories (category_id, parent_category_id, name, slug, description, display_order) VALUES
 (1,NULL,'Digital Electronics','digital-electronics','Digital logic and sequential circuits',1),
 (2,NULL,'Semiconductor Devices','semiconductor-devices','Semiconductor components',2),
@@ -399,18 +293,12 @@ INSERT INTO categories (category_id, parent_category_id, name, slug, description
 (22,5,'Relays','relays','Electrically operated switches',1),
 (23,5,'DC Motors','dc-motors','Brushed DC motors and control',2);
 
--- ------------------------------
--- 11. Tags
--- ------------------------------
 INSERT INTO tags (name, slug) VALUES
 ('digital','digital'),('sequential-logic','sequential-logic'),('combinational-logic','combinational-logic'),
 ('semiconductor','semiconductor'),('analog','analog'),('power','power'),('sensor','sensor'),
 ('memory','memory'),('electromechanical','electromechanical'),
 ('timing','timing'),('state-machine','state-machine'),('la-te-x','latex');
 
--- ------------------------------
--- 12. Specification definitions
--- ------------------------------
 INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('Number of States',NULL,'NUMBER','Number of logical states'),
 ('Number of Bits','bit','NUMBER','Number of state bits'),
@@ -437,9 +325,6 @@ INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('No-Load Speed','RPM','NUMBER','No-load speed'),
 ('Contact Configuration',NULL,'TEXT','Contact arrangement');
 
--- ------------------------------
--- 13. Components (45 initial educational entries)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
@@ -489,11 +374,6 @@ VALUES
 (23, 'Brushed DC Motor', 'brushed-dc-motor', 'A motor using brushes and a commutator.', 'Armature current interacts with a magnetic field to create torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/brushed-dc.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1),
 (23, 'DC Gear Motor', 'dc-gear-motor', 'A DC motor combined with a reduction gearbox.', 'The gearbox trades speed for increased output torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/dc-gear.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1);
 
-
-
--- ------------------------------
--- 13B. Additional component seed data (102 more; total catalogue exceeds 100)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
@@ -600,9 +480,6 @@ VALUES
 (23, 'Servo Motor', 'servo-motor', 'A motor used in a closed-loop position or speed system.', 'Feedback compares desired and measured motion. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/servo-motor.png', '/assets/svg/components/servo-motor.svg', NULL, 1, 1),
 (23, 'Permanent-Magnet DC Motor', 'permanent-magnet-dc-motor', 'A DC motor with permanent-magnet field excitation.', 'Armature current interacts with the fixed magnetic field. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/permanent-magnet-dc-motor.png', '/assets/svg/components/permanent-magnet-dc-motor.svg', NULL, 1, 1);
 
--- ------------------------------
--- 14. Component tags
--- ------------------------------
 INSERT IGNORE INTO component_tags (component_id, tag_id)
 SELECT c.component_id, t.tag_id
 FROM components c
@@ -616,9 +493,6 @@ JOIN tags t ON (
   (c.category_id IN (22,23) AND t.slug IN ('electromechanical'))
 );
 
--- ------------------------------
--- 15. Category content templates
--- ------------------------------
 INSERT INTO category_content_types
 (category_id, content_type_id, section_key, section_label, is_required, display_order)
 SELECT c.category_id, ct.content_type_id, x.section_key, x.section_label, x.is_required, x.display_order
@@ -639,17 +513,12 @@ FROM (
 JOIN categories c ON c.category_id = x.category_id
 JOIN content_types ct ON ct.code = x.type_code;
 
--- ------------------------------
--- 16. Component content seed records
--- ------------------------------
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'overview', 'Overview',
        c.description, NULL, NULL, 1
 FROM components c JOIN content_types ct ON ct.code='TEXT';
 
-
--- Counter state tables (stored as JSON strings)
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'state_table', 'State / Next-State Table',
@@ -672,7 +541,6 @@ FROM components c
 JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=6;
 
--- Flip-flop truth, characteristic, excitation tables, and equations are separate.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
@@ -739,10 +607,6 @@ SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
--- Visual assets share one model; diagram_kind records which drawing it is.
--- SYMBOL is the pin-level block (what the hero shows); CIRCUIT is the
--- all-NAND implementation shown immediately below the hero; PINOUT is the DIP
--- package drawing shown beside the technical specifications.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
@@ -750,7 +614,6 @@ SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
 FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
--- Logic gates have no circuit diagram: their implementation is the IC pinout.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
@@ -762,7 +625,6 @@ SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
 FROM components c
 WHERE c.category_id <> 8;
 
--- IC pinout, shown with the technical specifications.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Pinout Diagram', 'PINOUT',
@@ -806,7 +668,6 @@ SELECT c.component_id, 'Timing Diagram', 'TIMING',
 FROM components c
 WHERE c.category_id IN (6,7);
 
--- Representative Boolean equations for gates and multiplexers.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, display_order)
 SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation',
@@ -825,9 +686,6 @@ SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation
 FROM components c JOIN content_types ct ON ct.code='EQUATION'
 WHERE c.category_id IN (8,9);
 
--- ------------------------------
--- 17. Specification values
--- ------------------------------
 INSERT INTO component_specifications
 (component_id, specification_id, numeric_value, text_value, range_min, range_max, unit_override, source_note)
 SELECT c.component_id, s.specification_id,
@@ -856,9 +714,6 @@ SELECT c.component_id, s.specification_id, 1, NULL, NULL, NULL, NULL, 'Logical i
 FROM components c JOIN specifications s ON s.name='Number of Inputs'
 WHERE c.slug='not-gate';
 
--- ------------------------------
--- 18. Views
--- ------------------------------
 CREATE VIEW v_component_catalogue AS
 SELECT c.component_id, c.name AS component_name, c.slug, c.short_description,
        c.is_published, c.is_illustrative, cat.category_id, cat.name AS category_name,
@@ -873,9 +728,6 @@ FROM categories cat
 LEFT JOIN components c ON c.category_id = cat.category_id
 GROUP BY cat.category_id, cat.name;
 
--- ------------------------------
--- 19. Stored procedures/functions/triggers
--- ------------------------------
 DELIMITER $$
 
 CREATE PROCEDURE sp_insert_component(
@@ -1042,8 +894,6 @@ BEGIN
   DELETE FROM app_users WHERE user_id=p_user_id;
 END$$
 
--- Category self-parent validation is implemented with triggers rather than a CHECK.
--- MySQL rejects references to AUTO_INCREMENT columns inside CHECK constraints.
 CREATE TRIGGER trg_categories_no_self_parent_bi
 BEFORE INSERT ON categories FOR EACH ROW
 BEGIN
@@ -1060,7 +910,6 @@ BEGIN
   END IF;
 END$$
 
--- MySQL row-level validation triggers. The table also has declarative checks.
 CREATE TRIGGER trg_components_validate_bi
 BEFORE INSERT ON components FOR EACH ROW
 BEGIN
@@ -1083,7 +932,6 @@ BEGIN
   END IF;
 END$$
 
--- MySQL has no statement-level trigger; these row triggers normalize each changed row.
 CREATE TRIGGER trg_components_uppercase_bi
 BEFORE INSERT ON components FOR EACH ROW
 BEGIN
@@ -1156,14 +1004,6 @@ END$$
 
 DELIMITER ;
 
--- ------------------------------
--- 20. Accounts: sessions and personal collections
---     Mirrors database/11_auth_and_personalization.sql. This file is a fresh
---     install, so the objects are created outright rather than migrated.
---
---     The cookie carries a random token; only its SHA-256 digest is stored here,
---     so a database dump cannot be replayed as a live session.
--- ------------------------------
 CREATE TABLE user_sessions (
   session_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -1180,7 +1020,6 @@ CREATE TABLE user_sessions (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- One row per (user, component): saving twice cannot create a duplicate.
 CREATE TABLE bookmarks (
   bookmark_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -1227,7 +1066,6 @@ CREATE TABLE collection_components (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- DATETIME(6): two views inside the same second still have a definite order.
 CREATE TABLE recently_viewed (
   user_id BIGINT UNSIGNED NOT NULL,
   component_id BIGINT UNSIGNED NOT NULL,
@@ -1242,8 +1080,6 @@ CREATE TABLE recently_viewed (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Audit trail for account changes (mirrors database/12_app_user_audit.sql).
--- Password material is never logged: an update records only whether it changed.
 DELIMITER $$
 
 CREATE TRIGGER trg_app_users_audit_ai
@@ -1283,9 +1119,6 @@ END$$
 
 DELIMITER ;
 
--- ------------------------------
--- 21. Verification queries
--- ------------------------------
 SELECT 'categories' AS table_name, COUNT(*) AS row_count FROM categories
 UNION ALL SELECT 'components', COUNT(*) FROM components
 UNION ALL SELECT 'content_types', COUNT(*) FROM content_types
@@ -1298,34 +1131,4 @@ UNION ALL SELECT 'user_sessions', COUNT(*) FROM user_sessions
 UNION ALL SELECT 'bookmarks', COUNT(*) FROM bookmarks
 UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 
--- Query examples (a fuller set lives in database/09_assignment11_queries.sql).
--- 1. Full-table display:
--- SELECT * FROM components;
--- 2. Insert demonstration (use a valid category and unique slug):
--- CALL sp_insert_component(8,'Example Gate','example-gate','Example row inserted through the procedure');
--- 3. Aggregate:
--- SELECT COUNT(*) AS component_count FROM components;
--- 4. Conditional query:
--- SELECT * FROM components WHERE category_id=6;
--- 5. Join:
--- SELECT c.name,cat.name AS category_name FROM components c JOIN categories cat ON cat.category_id=c.category_id;
--- 6. Subquery:
--- SELECT name FROM components WHERE category_id IN (SELECT category_id FROM categories WHERE parent_category_id=1);
--- 7. Correlated subquery:
--- SELECT cat.name FROM categories cat WHERE EXISTS (SELECT 1 FROM components c WHERE c.category_id=cat.category_id);
--- 8. Update:
--- UPDATE components SET short_description='Updated description' WHERE slug='decade-counter';
--- XML output for queries 1, 3, and 4 should be serialized by the Node.js API/frontend.
-
--- Final notes:
--- * This script resets the tables it owns (see the DROP list at the top);
---   it never drops or creates the database itself.
--- * State-machine and other SVG files are referenced by path and must be created in the frontend.
--- * Do not use the application demo user table as a substitute for MySQL server accounts/roles.
--- * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and trigger features.
-
--- ------------------------------
--- Restore the session setting changed at the top of this file
--- ------------------------------
 SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS;
-
