@@ -2210,7 +2210,6 @@ const app = {
       diagram => !['SYMBOL', 'CIRCUIT', 'PINOUT'].includes(diagram.kind || 'OTHER')
     );
     const symbolPath = (symbolDiagram && symbolDiagram.imagePath) || comp.circuitSymbolPath;
-
     let html = `
       <div class="page">
         ${this.breadcrumbs(crumbs)}
@@ -2573,7 +2572,6 @@ const app = {
           <button class="lab-tab-btn" type="button" role="tab" aria-selected="false" data-action="switch-lab-tab" data-arg="tab-dashboard">Dashboard</button>
         </div>
 
-        <!-- Tab 1: stored programs -->
         <div id="tab-a10" class="lab-panel active" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -2656,7 +2654,6 @@ const app = {
           </div>
         </div>
 
-        <!-- Tab 2: Benchmarks -->
         <div id="tab-benchmarks" class="lab-panel" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
@@ -2672,7 +2669,6 @@ const app = {
           </div>
         </div>
 
-        <!-- Tab 3: Dashboard -->
         <div id="tab-dashboard" class="lab-panel" role="tabpanel">
           <div class="lab-card">
             <div class="lab-card-head">
