@@ -594,7 +594,9 @@ writeSvg('assets/svg/gates/xnor.svg', XNOR_GATE);
 
 // Flip-Flops
 writeSvg('assets/svg/flipflops/sr.svg', createFlipFlopSymbol('SR Flip-Flop', ['S', 'R']));
-writeSvg('assets/svg/flipflops/jk.svg', createFlipFlopSymbol('JK Flip-Flop', ['J', 'K']));
+// assets/svg/flipflops/jk.svg is the supplied reference drawing: never write
+// over it. The catalogue serves the copy derived from it, which
+// scripts/build-diagrams.js produces.
 writeSvg('assets/svg/flipflops/d.svg', createFlipFlopSymbol('D Flip-Flop', ['D']));
 writeSvg('assets/svg/flipflops/t.svg', createFlipFlopSymbol('T Flip-Flop', ['T']));
 writeSvg('assets/svg/flipflops/master-slave-jk.svg', createFlipFlopSymbol('MS-JK Flip-Flop', ['J', 'K']));

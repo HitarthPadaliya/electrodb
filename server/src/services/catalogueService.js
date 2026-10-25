@@ -298,6 +298,32 @@ async function search(queryStr, { page = 1, pageSize = 20 }) {
   };
 }
 
+/**
+ * Counts for the summary figures shown on the public pages.
+ *
+ * The UI asks for these instead of carrying its own numbers, so the hero band
+ * and the lab notes always describe the catalogue that is actually loaded.
+ * Values arrive from MySQL as strings or nulls, so each one is normalised.
+ */
+async function getStats() {
+  const counts = (await repo.getCatalogueCounts()) || {};
+  const asCount = value => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  return {
+    components: asCount(counts.components),
+    componentsTotal: asCount(counts.components_total),
+    categories: asCount(counts.categories),
+    subfamilies: asCount(counts.subfamilies),
+    tags: asCount(counts.tags),
+    diagrams: asCount(counts.diagrams),
+    specifications: asCount(counts.specifications),
+    contentSections: asCount(counts.content_sections)
+  };
+}
+
 module.exports = {
   getCategoriesTree,
   getCategoryDetail,
@@ -306,5 +332,6 @@ module.exports = {
   getCatalog,
   getTags,
   getTagDetail,
-  search
+  search,
+  getStats
 };

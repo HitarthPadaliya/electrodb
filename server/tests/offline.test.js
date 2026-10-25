@@ -19,6 +19,7 @@ const machines = require('../../scripts/lib/machines');
 const { SPECS } = require('../../scripts/lib/component-specs');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const repoRoot = path.resolve(__dirname, '../..');
 
@@ -33,7 +34,7 @@ function stubComponent(overrides = {}) {
     short_description: 'short',
     description: 'long description',
     main_image_path: null,
-    circuit_symbol_path: '/assets/svg/flipflops/jk.svg',
+    circuit_symbol_path: '/assets/svg/flipflops/jk-flip-flop.svg',
     datasheet_url: null,
     is_illustrative: 1,
     is_published: 1,
@@ -55,7 +56,7 @@ function installStubs(diagrams) {
 describe('Component detail mapping', () => {
   it('exposes the diagram kind so the UI can place each drawing', async () => {
     installStubs([
-      { diagram_id: 1, title: 'Symbol Diagram', diagram_kind: 'SYMBOL', image_path: '/assets/svg/flipflops/jk.svg', alt_text: 'a', caption: 'c', display_order: 10 },
+      { diagram_id: 1, title: 'Symbol Diagram', diagram_kind: 'SYMBOL', image_path: '/assets/svg/flipflops/jk-flip-flop.svg', alt_text: 'a', caption: 'c', display_order: 10 },
       { diagram_id: 2, title: 'Circuit Diagram', diagram_kind: 'CIRCUIT', image_path: '/assets/svg/circuits/jk-flip-flop-circuit.svg', alt_text: 'b', caption: 'c', display_order: 20 }
     ]);
 
@@ -110,6 +111,60 @@ describe('SVG restyle pipeline', () => {
     const width = Number(out.match(/viewBox="0 0 ([\d.]+) /)[1]);
 
     assert.ok(width > 200, `expected a wider canvas, got ${width}`);
+  });
+});
+
+describe('Reference symbol and its displayed copy', () => {
+  const ROOT = repoRoot;
+  const REFERENCE = path.join(ROOT, 'electrodb-frontend/img/jk-flip-flop.svg');
+  const SERVED = path.join(ROOT, 'public/assets/svg/flipflops/jk-flip-flop.svg');
+  const reference = fs.readFileSync(REFERENCE, 'utf8');
+  const served = fs.readFileSync(SERVED, 'utf8');
+
+  it('leaves the supplied reference byte-for-byte as delivered', () => {
+    const digest = crypto.createHash('md5').update(fs.readFileSync(REFERENCE)).digest('hex');
+    assert.strictEqual(digest, '0464952732b79015f510079b71f1e6e8', 'reference artwork must not be edited');
+    assert.ok(!reference.includes('#e8b455') && !reference.includes('#b48cf0'), 'reference keeps its original greys');
+  });
+
+  it('serves a copy rather than the reference itself', () => {
+    assert.notStrictEqual(served, reference);
+    assert.ok(served.includes('viewBox="0 0 360 320"'), 'the copy keeps the reference canvas');
+    for (const anchor of [/<line\b/g, /<circle\b/g, /<text\b/g, /<rect\b/g, /<path\b/g]) {
+      assert.strictEqual(
+        (served.match(anchor) || []).length,
+        (reference.match(anchor) || []).length,
+        `the copy keeps every ${anchor.source} element of the reference`
+      );
+    }
+  });
+
+  it('recolours primary and clear on the copy only', () => {
+    const preset = '#e8b455';
+    const clear = '#b48cf0';
+    for (const colour of [preset, clear]) {
+      assert.ok(served.includes(colour), `copy uses ${colour}`);
+      assert.ok(!reference.includes(colour), `reference does not use ${colour}`);
+    }
+
+    const set = /<line class="(st1[45])" x1="180" y1="(?:40|280)"[^>]*\/>/g;
+    assert.deepStrictEqual((served.match(set) || []).length, 2, 'both control stubs are recoloured');
+    assert.ok(/<line class="st14" x1="180" y1="40" x2="180" y2="74"\/>/.test(served), 'preset stub is amber');
+    assert.ok(/<line class="st15" x1="180" y1="280" x2="180" y2="246"\/>/.test(served), 'clear stub is violet');
+    assert.ok(/<text class="st18"[^>]*>[\s\S]*?PRE/.test(served), 'preset label is amber');
+    assert.ok(/<text class="st19"[^>]*>[\s\S]*?CLR/.test(served), 'clear label is violet');
+    // The copy is authored, not restyled: both pipeline scripts skip it so a
+    // `npm run svg:restyle` sweep cannot repaint the recoloured pins.
+    const restyler = fs.readFileSync(path.join(ROOT, 'scripts/restyle-svgs.js'), 'utf8');
+    assert.ok(restyler.includes("'flipflops/jk-flip-flop.svg'"), 'restyle pipeline protects the copy');
+    const builder = fs.readFileSync(path.join(ROOT, 'scripts/build-diagrams.js'), 'utf8');
+    assert.ok(builder.includes("REFERENCE_COPY_SLUG = 'jk-flip-flop'"), 'build derives the copy from the reference');
+  });
+
+  it('catalogue records point at the copy, not the reference copy', () => {
+    const sql = fs.readFileSync(path.join(ROOT, 'electrodb.sql'), 'utf8');
+    assert.ok(sql.includes("'/assets/svg/flipflops/jk-flip-flop.svg'"), 'seed serves the copy');
+    assert.ok(!sql.includes("'/assets/svg/flipflops/jk.svg'"), 'seed never points at the verbatim archive');
   });
 });
 
@@ -429,7 +484,7 @@ describe('Arrow motion language', () => {
   const css = fs.readFileSync(path.join(__dirname, '../../public/assets/css/styles.css'), 'utf8');
 
   const shared = css.slice(
-    css.indexOf('--- Arrows carry a charge'),
+    css.indexOf('--- Small arrows step'),
     css.indexOf('.section-sub {')
   );
 
@@ -439,24 +494,38 @@ describe('Arrow motion language', () => {
     return css.slice(start, css.indexOf('}', start));
   };
 
-  it('charges the glyph itself instead of transforming it', () => {
-    assert.ok(/background-clip:\s*text/.test(shared), 'the light is clipped to the glyph itself');
-    assert.ok(/background-size:\s*400%/.test(shared), 'the charge has room to travel');
+  it('steps the small arrows instead of charging them', () => {
     assert.ok(
-      !/transform|translate|rotate/i.test(shared),
-      'no arrow is translated or rotated, so none of them can trail'
+      /transform var\(--dur-1\) var\(--ease-out\)/.test(shared),
+      'the arrow is the thing that moves'
     );
+    assert.ok(
+      /transform: translateX\(var\(--arrow-step\)\)/.test(shared),
+      'hovering steps it along its own axis'
+    );
+    assert.ok(!/background-clip/.test(shared), 'nothing is painted inside the glyph');
+    assert.ok(!/background-position/.test(shared), 'there is no travelling band to park');
+    assert.ok(!/drop-shadow/.test(shared), 'and no glow at this size');
+    assert.ok(!/background-clip/.test(css), 'the glyph charge was removed outright');
   });
 
-  it('runs the charge from tail to head, mirrored for left-pointing arrows', () => {
-    assert.ok(/background-position:\s*98% 0/.test(shared), 'the band waits at the far end of the track');
-    assert.ok(/background-position:\s*36% 0/.test(shared), 'it comes to rest inside the head');
+  it('points each small arrow the way it looks, pagination included', () => {
+    assert.ok(
+      /\.link-arrow,\s*\n\.back-link-arrow,\s*\n\.page-arrow \{\s*\n[\s\S]*?--arrow-step:\s*0\.28em/.test(shared),
+      'every small arrow steps right by default'
+    );
+    assert.ok(
+      /\.back-link-arrow,\s*\n\.page-arrow--left \{\s*\n\s*--arrow-step:\s*-0\.28em/.test(shared),
+      'the two left-pointing arrows step left instead'
+    );
+    assert.ok(
+      /\.back-link:hover \.back-link-arrow,[\s\S]*?\.page-btn:hover:not\(:disabled\) \.page-arrow,/.test(shared),
+      'the back link and pagination share the step'
+    );
 
-    assert.ok(/--arrow-angle:\s*270deg/.test(body('.back-link-arrow')), 'the back arrow runs right to left');
-    assert.ok(/background-position:\s*2% 0/.test(body('.back-link-arrow')), 'its band waits at the other end');
-
-    assert.ok(/--arrow-angle:\s*270deg/.test(body('.page-arrow--left')), 'the previous-page arrow runs right to left');
-    assert.ok(/background-position:\s*2% 0/.test(body('.page-arrow--left')), 'its band waits at the other end');
+    const page = css.slice(css.lastIndexOf('.page-arrow {'), css.lastIndexOf('.page-arrow {') + 200);
+    assert.ok(/--arrow-idle:\s*var\(--fg-light\)/.test(page), 'pagination keeps its palette');
+    assert.ok(!/background-position/.test(page), 'with no leftover charge rules');
   });
 
   it('plots and then strikes the tile arrow instead of moving it', () => {
@@ -833,5 +902,92 @@ describe('Preview demo credentials', () => {
       .map(file => fs.readFileSync(path.join(repoRoot, file), 'utf8'))
       .join('\n');
     assert.ok(!/demo-accounts/.test(appRoutes));
+  });
+});
+
+describe('Summary figures are counted, never typed in', () => {
+  const appSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/app.js'), 'utf8');
+  const apiSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/api.js'), 'utf8');
+  const previewSource = fs.readFileSync(path.join(repoRoot, 'scripts/preview-server.js'), 'utf8');
+
+  it('maps the database row into numbers, including the diagram total', async () => {
+    // MySQL hands back strings (and NULLs) here, so both are normalised.
+    repo.getCatalogueCounts = async () => ({
+      components: '147',
+      components_total: '147',
+      categories: '23',
+      subfamilies: '18',
+      tags: '12',
+      diagrams: '446',
+      specifications: '24',
+      content_sections: '378'
+    });
+
+    const stats = await service.getStats();
+    assert.equal(stats.components, 147);
+    assert.equal(stats.categories, 23);
+    assert.equal(stats.subfamilies, 18);
+    assert.equal(stats.tags, 12);
+    assert.equal(stats.diagrams, 446);
+    assert.equal(stats.specifications, 24);
+    assert.equal(stats.contentSections, 378);
+  });
+
+  it('returns zeros instead of NaN when a count is missing', async () => {
+    repo.getCatalogueCounts = async () => ({ components: null, diagrams: undefined });
+
+    const stats = await service.getStats();
+    assert.equal(stats.components, 0);
+    assert.equal(stats.diagrams, 0);
+    assert.ok(Object.values(stats).every(value => Number.isFinite(value)));
+  });
+
+  it('exposes the counts over the catalogue API', () => {
+    const routeSource = fs.readFileSync(path.join(repoRoot, 'server/src/routes/catalogueRoutes.js'), 'utf8');
+    const controllerSource = fs.readFileSync(path.join(repoRoot, 'server/src/controllers/catalogueController.js'), 'utf8');
+    const repositorySource = fs.readFileSync(path.join(repoRoot, 'server/src/db/repository.js'), 'utf8');
+
+    assert.match(routeSource, /router\.get\('\/stats', catalogueController\.getStats\)/);
+    assert.match(controllerSource, /catalogueService\.getStats\(\)/);
+    assert.match(repositorySource, /FROM component_diagrams\) AS diagrams/);
+    assert.match(apiSource, /getStats\(\) \{\s*return this\.request\('\/stats'\);/);
+  });
+
+  it('renders the hero figures from that payload', () => {
+    assert.match(appSource, /api\.getStats\(\)/);
+    assert.match(appSource, /const heroStats = \[/);
+    assert.match(appSource, /if \(diagramCount !== null\) heroStats\.push/);
+    // The old typed-in totals must not come back.
+    assert.ok(!/192/.test(appSource), 'hero must not carry a typed-in diagram count');
+    assert.ok(!/147-component seed dataset/.test(appSource), 'lab note must not hard-code the dataset size');
+  });
+
+  it('counts the same figures in the preview server', () => {
+    assert.match(previewSource, /function catalogueStats\(\)/);
+    assert.match(previewSource, /if \(p === '\/api\/stats'\)/);
+    assert.match(previewSource, /rowOnlyCounts\.specifications/);
+    assert.ok(!/row_count: 18\b/.test(previewSource), 'preview dashboard must not invent the specification count');
+  });
+});
+
+describe('Profile page sign-out', () => {
+  const accountSource = fs.readFileSync(path.join(repoRoot, 'public/assets/js/account.js'), 'utf8');
+  const cssSource = fs.readFileSync(path.join(repoRoot, 'public/assets/css/styles.css'), 'utf8');
+  const profile = accountSource.slice(
+    accountSource.indexOf('async renderProfile'),
+    accountSource.indexOf('// ------------------------------------------------------------ bookmarks')
+  );
+
+  it('signs out from a bare action bar instead of explaining the session', () => {
+    assert.match(profile, /class="account-panel account-panel--wide account-panel--actions"/);
+    assert.ok(!/section-title">Session/.test(profile), 'no Session heading');
+    assert.ok(!/HttpOnly/.test(profile), 'no session explanation');
+    const bar = profile.slice(profile.indexOf('account-panel--actions'));
+    assert.match(bar, /data-action="sign-out"/, 'the button lives in the action bar');
+    assert.ok(bar.indexOf('</section>') > bar.indexOf('data-action="sign-out"'), 'button is inside the panel');
+  });
+
+  it('keeps the action bar a right-aligned row', () => {
+    assert.match(cssSource, /\.account-panel--actions \{[\s\S]{0,120}justify-content: flex-end/);
   });
 });

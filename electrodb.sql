@@ -1,44 +1,121 @@
 -- ================================================================
--- ElectroDB - Complete merged MySQL database and Assignment 10 stored programs
--- Target: MySQL 8.0+ / compatible MariaDB version bundled with XAMPP
--- Import: phpMyAdmin -> Import -> choose this file -> Go
+-- ElectroDB - Complete database installer (single file)
+-- Target: MySQL 8.0+ / MariaDB 10.4+ (utf8mb4)
 --
--- WARNING:
---   This script DROPS and recreates the `electrodb` database.
---   Back up any existing database named `electrodb` before importing.
+-- HOW TO IMPORT
+--   Create an empty database first, then import this file into it. The file
+--   does not create, drop or name a database, so it works whatever you called
+--   yours.
 --
--- Includes:
---   * Hierarchical categories and tags
---   * Components, educational content, and component diagrams
---   * Separate truth/characteristic/excitation tables and equations
---   * Specifications and component specifications
---   * Application user records for the access-control demonstration
---   * Sessions, bookmarks, collections and recently viewed components
---   * Audit log, including triggers on app_users
---   * Views, indexes, stored procedures, functions, cursors, and triggers
---   * Consolidates the standalone Assignment 10 stored-program examples;
---     duplicate routine/trigger definitions are intentionally not repeated
---   * Seed data for 147 components
---   * Dedicated component_diagrams table; diagram subtypes are not stored
+--   Command line:
+--     mysql -u root -p -e "CREATE DATABASE mydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+--     mysql -u root -p mydb < electrodb.sql
 --
--- Notes:
---   * This is MySQL stored-program syntax, not Oracle PL/SQL.
---   * Includes the shared procedures, cursor examples, aggregate function,
---     validation/normalization/audit/restricted-hours triggers, and app-user routines.
---   * Diagram assets are SVG paths; create the actual SVG files in the
---     frontend public/assets/svg directory before expecting them to load.
---   * Educational numeric examples are illustrative unless sourced
---     from a verified datasheet.
+--   phpMyAdmin:
+--     1. New -> create a database (utf8mb4_unicode_ci)
+--     2. select it -> Import -> choose this file -> Go
+--
+-- WHAT IT CREATES
+--   * 17 tables: the component catalogue, its educational content, diagrams,
+--     specifications, plus application accounts and per-user data
+--   * 2 views, 11 stored procedures, 1 function, 15 triggers
+--   * Seed data: 23 categories, 147 components, 12 tags, their content,
+--     diagrams, specifications and specifications mapping
+--
+-- AFTER IMPORTING
+--   No application users are seeded, so nothing here has a default password.
+--   Point .env at the database and create the first DBA account once:
+--     npm run bootstrap:dba        (reads BOOTSTRAP_DBA_* from .env)
+--   Then `npm start`; `npm run verify` re-checks the schema, the seed counts
+--   and the HTTP endpoints against the live database.
+--
+-- RE-IMPORTING
+--   Section 0 below drops every view, trigger, stored procedure, function and
+--   table this script owns, so the file can be run again against an existing
+--   database without "already exists" errors. It does NOT drop the database and
+--   does not touch anything it did not create.
+--   Running it against a database that holds real data will delete that data.
+--
+-- NOT INCLUDED
+--   database/00_create_users_and_roles.sql (server roles and MySQL accounts)
+--   is deliberately separate: it needs administrative privileges and it grants
+--   on a specific schema name. Apply it afterwards if you want it, adjusting
+--   the schema name to yours.
+--
+-- NOTES
+--   * Tables declare utf8mb4/utf8mb4_unicode_ci explicitly, so the database
+--     default character set does not matter (some seed values contain
+--     non-ASCII symbols such as the degree sign in '°C').
+--   * MySQL stored-program syntax, not Oracle PL/SQL.
+--   * Diagram rows store SVG paths; the files themselves live in
+--     public/assets/svg and are shipped with the application.
+--   * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and
+--     trigger features.
 -- ================================================================
 
 SET NAMES utf8mb4;
+
+-- Foreign-key checks are suspended for the whole load: the table drops need it,
+-- and it keeps the seed inserts independent of insertion order. The setting the
+-- session arrived with is restored at the end of the file.
+SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP DATABASE IF EXISTS electrodb;
-CREATE DATABASE electrodb
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-USE electrodb;
+-- ------------------------------
+-- 0. Reset everything this script owns
+-- ------------------------------
+-- Views and stored programs are dropped explicitly: they are not removed by
+-- DROP TABLE, and MySQL has no CREATE OR REPLACE for procedures or functions.
+DROP VIEW IF EXISTS v_component_catalogue;
+DROP VIEW IF EXISTS v_category_component_counts;
+
+DROP TRIGGER IF EXISTS trg_categories_no_self_parent_bi;
+DROP TRIGGER IF EXISTS trg_categories_no_self_parent_bu;
+DROP TRIGGER IF EXISTS trg_components_validate_bi;
+DROP TRIGGER IF EXISTS trg_components_validate_bu;
+DROP TRIGGER IF EXISTS trg_components_uppercase_bi;
+DROP TRIGGER IF EXISTS trg_components_uppercase_bu;
+DROP TRIGGER IF EXISTS trg_components_audit_ai;
+DROP TRIGGER IF EXISTS trg_components_audit_au;
+DROP TRIGGER IF EXISTS trg_components_audit_ad;
+DROP TRIGGER IF EXISTS trg_components_restricted_bi;
+DROP TRIGGER IF EXISTS trg_components_restricted_bu;
+DROP TRIGGER IF EXISTS trg_components_restricted_bd;
+DROP TRIGGER IF EXISTS trg_app_users_audit_ai;
+DROP TRIGGER IF EXISTS trg_app_users_audit_au;
+DROP TRIGGER IF EXISTS trg_app_users_audit_ad;
+
+DROP TABLE IF EXISTS collection_components;
+DROP TABLE IF EXISTS collections;
+DROP TABLE IF EXISTS bookmarks;
+DROP TABLE IF EXISTS recently_viewed;
+DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS component_specifications;
+DROP TABLE IF EXISTS component_diagrams;
+DROP TABLE IF EXISTS component_content;
+DROP TABLE IF EXISTS component_tags;
+DROP TABLE IF EXISTS category_content_types;
+DROP TABLE IF EXISTS components;
+DROP TABLE IF EXISTS specifications;
+DROP TABLE IF EXISTS content_types;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS app_users;
+DROP TABLE IF EXISTS application_audit_log;
+
+DROP PROCEDURE IF EXISTS sp_insert_component;
+DROP PROCEDURE IF EXISTS sp_update_component;
+DROP PROCEDURE IF EXISTS sp_delete_component;
+DROP PROCEDURE IF EXISTS sp_search_components_page;
+DROP PROCEDURE IF EXISTS sp_search_components_by_category;
+DROP PROCEDURE IF EXISTS sp_sum_component_ids_by_category;
+DROP PROCEDURE IF EXISTS sp_cursor_components_all;
+DROP PROCEDURE IF EXISTS sp_cursor_components_limited;
+DROP PROCEDURE IF EXISTS sp_insert_app_user;
+DROP PROCEDURE IF EXISTS sp_update_app_user;
+DROP PROCEDURE IF EXISTS sp_delete_app_user;
+DROP FUNCTION IF EXISTS fn_sum_component_ids;
+
 
 -- ------------------------------
 -- 1. Hierarchical category tree
@@ -60,7 +137,7 @@ CREATE TABLE categories (
     FOREIGN KEY (parent_category_id) REFERENCES categories(category_id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT chk_categories_active CHECK (is_active IN (0,1))
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 2. Tags
@@ -72,7 +149,7 @@ CREATE TABLE tags (
   PRIMARY KEY (tag_id),
   UNIQUE KEY uq_tags_name (name),
   UNIQUE KEY uq_tags_slug (slug)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 3. Components
@@ -102,7 +179,7 @@ CREATE TABLE components (
   CONSTRAINT chk_components_illustrative CHECK (is_illustrative IN (0,1)),
   CONSTRAINT chk_components_published CHECK (is_published IN (0,1)),
   CONSTRAINT chk_components_name CHECK (CHAR_LENGTH(TRIM(name)) > 0)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE component_tags (
   component_id BIGINT UNSIGNED NOT NULL,
@@ -115,7 +192,7 @@ CREATE TABLE component_tags (
   CONSTRAINT fk_component_tags_tag
     FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 4. Content types and category templates
@@ -128,7 +205,7 @@ CREATE TABLE content_types (
   description VARCHAR(500) NULL,
   PRIMARY KEY (content_type_id),
   UNIQUE KEY uq_content_types_code (code)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE category_content_types (
   category_id BIGINT UNSIGNED NOT NULL,
@@ -146,7 +223,7 @@ CREATE TABLE category_content_types (
     FOREIGN KEY (content_type_id) REFERENCES content_types(content_type_id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT chk_cct_required CHECK (is_required IN (0,1))
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 5. Component educational content
@@ -174,7 +251,7 @@ CREATE TABLE component_content (
   CONSTRAINT fk_component_content_type
     FOREIGN KEY (content_type_id) REFERENCES content_types(content_type_id)
     ON DELETE RESTRICT ON UPDATE CASCADE
- ) ENGINE=InnoDB;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 5A. Component diagrams
@@ -201,7 +278,7 @@ CREATE TABLE component_diagrams (
   CONSTRAINT fk_component_diagrams_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 6. Specifications
@@ -214,7 +291,7 @@ CREATE TABLE specifications (
   description VARCHAR(500) NULL,
   PRIMARY KEY (specification_id),
   UNIQUE KEY uq_specifications_name (name)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE component_specifications (
   component_id BIGINT UNSIGNED NOT NULL,
@@ -236,18 +313,19 @@ CREATE TABLE component_specifications (
   CONSTRAINT chk_component_spec_range CHECK (
     range_min IS NULL OR range_max IS NULL OR range_min <= range_max
   )
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
--- 7. Assignment-specific application users
+-- 7. Application user accounts
 -- These are application demo records, not MySQL server accounts.
 -- Password hashes must be generated by the backend; no plaintext passwords.
 -- ------------------------------
 CREATE TABLE app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
-  -- Login identifier. Nullable so rows created before accounts existed stay valid;
-  -- a UNIQUE key still permits several NULLs while keeping real addresses unique.
+  -- Login identifier. Nullable so rows created before accounts existed stay
+  -- valid, since a UNIQUE key permits several NULLs while keeping real
+  -- addresses unique.
   email VARCHAR(255) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role_code ENUM('NAIVE_USER','APP_DEVELOPER','DBA') NOT NULL DEFAULT 'NAIVE_USER',
@@ -259,7 +337,7 @@ CREATE TABLE app_users (
   UNIQUE KEY uq_app_users_username (username),
   UNIQUE KEY uq_app_users_email (email),
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 8. Audit log
@@ -277,7 +355,7 @@ CREATE TABLE application_audit_log (
   PRIMARY KEY (audit_id),
   KEY idx_audit_table_time (table_name, changed_at),
   KEY idx_audit_operation_time (operation_type, changed_at)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------
 -- 9. Content type seed data
@@ -360,7 +438,7 @@ INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('Contact Configuration',NULL,'TEXT','Contact arrangement');
 
 -- ------------------------------
--- 13. Components (46 initial educational entries)
+-- 13. Components (45 initial educational entries)
 -- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
@@ -371,7 +449,7 @@ VALUES
 (6, 'Binary Up Counter', 'binary-up-counter', 'A counter that increments its binary state.', 'Binary counters represent integer states using flip-flops. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/binary-up.png', '/assets/svg/counters/binary-counter.svg', NULL, 1, 1),
 (6, 'Binary Ripple Counter', 'binary-ripple-counter', 'An asynchronous counter with cascaded toggle stages.', 'Each stage is clocked by a preceding stage output. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/ripple.png', '/assets/svg/counters/ripple-counter.svg', NULL, 1, 1),
 (7, 'SR Flip-Flop', 'sr-flip-flop', 'A set-reset bistable storage element.', 'The SR element stores one bit using set and reset inputs. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/sr.png', '/assets/svg/flipflops/sr.svg', NULL, 1, 1),
-(7, 'JK Flip-Flop', 'jk-flip-flop', 'A bistable element with set, reset, hold, and toggle behavior.', 'The JK flip-flop is a clocked sequential element. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/jk.png', '/assets/svg/flipflops/jk.svg', NULL, 1, 1),
+(7, 'JK Flip-Flop', 'jk-flip-flop', 'A bistable element with set, reset, hold, and toggle behavior.', 'The JK flip-flop is a clocked sequential element. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/jk.png', '/assets/svg/flipflops/jk-flip-flop.svg', NULL, 1, 1),
 (7, 'D Flip-Flop', 'd-flip-flop', 'A clocked storage element that samples D.', 'The D flip-flop stores the input value at the active clock edge. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/d.png', '/assets/svg/flipflops/d.svg', NULL, 1, 1),
 (7, 'T Flip-Flop', 't-flip-flop', 'A toggle flip-flop.', 'The T flip-flop either holds or toggles its state. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/t.png', '/assets/svg/flipflops/t.svg', NULL, 1, 1),
 (7, 'Master-Slave JK Flip-Flop', 'master-slave-jk-flip-flop', 'A JK flip-flop using master and slave stages.', 'Two controlled storage stages reduce race-through behavior. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/master-slave-jk.png', '/assets/svg/flipflops/master-slave-jk.svg', NULL, 1, 1),
@@ -1100,7 +1178,7 @@ CREATE TABLE user_sessions (
   CONSTRAINT fk_user_sessions_user
     FOREIGN KEY (user_id) REFERENCES app_users(user_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- One row per (user, component): saving twice cannot create a duplicate.
 CREATE TABLE bookmarks (
@@ -1117,7 +1195,7 @@ CREATE TABLE bookmarks (
   CONSTRAINT fk_bookmarks_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE collections (
   collection_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -1133,7 +1211,7 @@ CREATE TABLE collections (
     FOREIGN KEY (user_id) REFERENCES app_users(user_id)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT chk_collections_name CHECK (CHAR_LENGTH(TRIM(name)) > 0)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE collection_components (
   collection_id BIGINT UNSIGNED NOT NULL,
@@ -1147,7 +1225,7 @@ CREATE TABLE collection_components (
   CONSTRAINT fk_collection_components_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- DATETIME(6): two views inside the same second still have a definite order.
 CREATE TABLE recently_viewed (
@@ -1162,7 +1240,7 @@ CREATE TABLE recently_viewed (
   CONSTRAINT fk_recently_viewed_component
     FOREIGN KEY (component_id) REFERENCES components(component_id)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Audit trail for account changes (mirrors database/12_app_user_audit.sql).
 -- Password material is never logged: an update records only whether it changed.
@@ -1220,11 +1298,11 @@ UNION ALL SELECT 'user_sessions', COUNT(*) FROM user_sessions
 UNION ALL SELECT 'bookmarks', COUNT(*) FROM bookmarks
 UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 
--- Assignment 11 examples; record actual timings in your report.
+-- Query examples (a fuller set lives in database/09_assignment11_queries.sql).
 -- 1. Full-table display:
 -- SELECT * FROM components;
 -- 2. Insert demonstration (use a valid category and unique slug):
--- CALL sp_insert_component(8,'Example Gate','example-gate','Assignment demonstration row');
+-- CALL sp_insert_component(8,'Example Gate','example-gate','Example row inserted through the procedure');
 -- 3. Aggregate:
 -- SELECT COUNT(*) AS component_count FROM components;
 -- 4. Conditional query:
@@ -1240,7 +1318,14 @@ UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 -- XML output for queries 1, 3, and 4 should be serialized by the Node.js API/frontend.
 
 -- Final notes:
--- * The script drops and recreates `electrodb`; back up existing data first.
+-- * This script resets the tables it owns (see the DROP list at the top);
+--   it never drops or creates the database itself.
 -- * State-machine and other SVG files are referenced by path and must be created in the frontend.
 -- * Do not use the application demo user table as a substitute for MySQL server accounts/roles.
 -- * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and trigger features.
+
+-- ------------------------------
+-- Restore the session setting changed at the top of this file
+-- ------------------------------
+SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS;
+

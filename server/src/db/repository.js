@@ -577,6 +577,26 @@ async function getDashboardStats() {
   };
 }
 
+/**
+ * Catalogue-wide counts used by the public pages (home hero, lab notes).
+ * One round-trip, so a number shown in the UI can never drift from the data.
+ */
+async function getCatalogueCounts() {
+  const [rows] = await pool.query(
+    `SELECT
+       (SELECT COUNT(*) FROM components WHERE is_published = 1) AS components,
+       (SELECT COUNT(*) FROM components) AS components_total,
+       (SELECT COUNT(*) FROM categories) AS categories,
+       (SELECT COUNT(*) FROM categories WHERE parent_category_id IS NOT NULL) AS subfamilies,
+       (SELECT COUNT(*) FROM tags) AS tags,
+       (SELECT COUNT(*) FROM component_diagrams) AS diagrams,
+       (SELECT COUNT(*) FROM specifications) AS specifications,
+       (SELECT COUNT(*) FROM component_content) AS content_sections
+    `
+  );
+  return (rows && rows[0]) || {};
+}
+
 module.exports = {
   getAllCategories,
   getCategoryById,
@@ -620,5 +640,6 @@ module.exports = {
   executeCorrelatedQuery,
   getViewCatalogue,
   getViewCounts,
-  getDashboardStats
+  getDashboardStats,
+  getCatalogueCounts
 };

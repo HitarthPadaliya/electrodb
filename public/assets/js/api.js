@@ -55,6 +55,12 @@ const api = {
     return this.request('/health');
   },
 
+  // Catalogue-wide counts (components, categories, tags, diagrams...), computed
+  // by the API from the database so no page has to carry its own numbers.
+  getStats() {
+    return this.request('/stats');
+  },
+
   getCategories() {
     return this.request('/categories');
   },
