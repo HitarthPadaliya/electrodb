@@ -180,7 +180,8 @@ The catalogue shell, navigation layout, breadcrumbs, hero treatment, data tables
 
 ### Diagram artwork
 
-`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte:
+`electrodb-frontend/img/` contributes the two reference drawings, both shipped byte-for-byte and
+together defining the style every other drawing follows:
 
 | Reference file | Shipped verbatim as | Served as | Shown |
 |---|---|---|---|
