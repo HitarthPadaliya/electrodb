@@ -36,7 +36,7 @@
   <circle cx="107.81" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="107.81" y="140" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">5</text>
   <text x="107.81" y="156" fill="#00dfc1" font-family="Consolas" font-size="10" font-weight="400" text-anchor="middle">101</text>
-  <text x="210" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">MOORE</text>
+  <text x="210" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle" letter-spacing="1.5px">MOORE</text>
   <path d="M647.56,102.55 Q677.1,117 706.63,131.45" fill="none" stroke="#8a8d93" stroke-width="1"/>
   <path d="M706.63,131.45 L699.03,131.07 L701.66,125.68 Z" fill="#8a8d93"/>
   <text x="683.69" y="103.53" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1/1</text>
@@ -67,5 +67,5 @@
   <text x="523.81" y="246" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">4</text>
   <circle cx="523.81" cy="142" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="523.81" y="146" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">5</text>
-  <text x="626" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">MEALY</text>
+  <text x="626" y="374" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle" letter-spacing="1.5px">MEALY</text>
 </svg>
