@@ -1,21 +1,5 @@
 #!/usr/bin/env node
-/**
- * Restyle the catalogue SVG artwork to match the design reference
- * (`electrodb-frontend/img/jk-flip-flop.svg`):
- *
- *   body      #0d1117 fill, #21262d stroke (reference: rounded dark block)
- *   inputs    #00a7da cyan
- *   outputs   #00dfc1 teal
- *   control   #8a8d93 dashed
- *   labels    #e8eaed / #c5c7c9 Consolas
- *
- * The artwork was authored light-on-light for a bright panel. Rather than
- * inverting it in CSS (which also inverts the accent colours), the files are
- * rewritten in place so every diagram is natively dark and can sit directly
- * on the page.
- *
- * Usage: node scripts/restyle-svgs.js [--check]
- */
+
 'use strict';
 
 const fs = require('fs');
@@ -23,18 +7,12 @@ const path = require('path');
 
 const SVG_ROOT = path.resolve(__dirname, '../public/assets/svg');
 
-// Files that come straight from the design reference and must never be
-// rewritten: they define the target style. `flipflops/jk-flip-flop.svg` is the
-// copy the catalogue displays, derived from the reference by
-// scripts/build-diagrams.js, which owns its content.
 const PROTECTED = new Set([
   'flipflops/jk.svg',
   'flipflops/jk-flip-flop.svg',
   'circuits/jk-flip-flop-circuit.svg'
 ]);
 
-// Colour used per CSS property. The same hex can mean different things as a
-// fill (a device body) or a stroke (a wire), so the mapping is per property.
 const PROPERTY_MAP = {
   fill: {
     '#0f172a': '#e8eaed',
@@ -92,7 +70,6 @@ const TEXT_COLOURS = {
   '#ffffff': '#e8eaed'
 };
 
-// Reference artwork uses a monospace engineering label face.
 const FONT_RULES = [
   [/font-family\s*:\s*[^;'"]*monospace[^;'"]*/gi, 'font-family: Consolas'],
   [/font-family\s*:\s*[^;}]*(system-ui|sans-serif|Arial)[^;'"]*/gi, 'font-family: Consolas']
@@ -104,7 +81,6 @@ function normaliseHex(value) {
   return v;
 }
 
-/** Rewrite every colour declaration inside the <style> block. */
 function restyleDeclarations(css) {
   return css.replace(/(fill|stroke|stop-color)\s*:\s*(#[0-9a-fA-F]{3,6})/g, (match, property, colour) => {
     const map = PROPERTY_MAP[property] || {};
@@ -113,7 +89,6 @@ function restyleDeclarations(css) {
   });
 }
 
-/** Keep device bodies visible: a dark fill needs the accent stroke. */
 function accentiseDeviceRules(css) {
   return css.replace(/(\.[\w-]+)\s*\{([^}]*)\}/g, (rule, selector, body) => {
     const hasDarkFill = /fill\s*:\s*#(101f38|0d1117)/i.test(body);
@@ -126,7 +101,7 @@ function accentiseDeviceRules(css) {
 }
 
 function restyleTextNodes(svg) {
-  // Inline fill attributes on text/arrow shapes.
+
   return svg.replace(/<(text|tspan|path|polygon|line|circle|rect)\b([^>]*)>/g, (match, tag, attrs) => {
     let next = attrs;
     next = next.replace(/\bfill="(#[0-9a-fA-F]{3,6})"/g, (m, colour) => {
@@ -145,10 +120,6 @@ function restyleTextNodes(svg) {
   });
 }
 
-/**
- * Several hand-drawn symbols place a label so close to the right edge that it
- * is clipped by the viewBox. Widen the canvas instead of moving artwork.
- */
 function fitViewBox(svg) {
   const box = svg.match(/viewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/);
   if (!box) return svg;
@@ -189,7 +160,6 @@ function restyle(svg) {
   out = restyleTextNodes(out);
   out = fitViewBox(out);
 
-  // Explicit light backgrounds baked into an artwork would fight the page.
   out = out.replace(/<rect[^>]*fill="#(f8fafc|eff6ff|ffffff)"[^>]*\/>/gi, '');
 
   return out;

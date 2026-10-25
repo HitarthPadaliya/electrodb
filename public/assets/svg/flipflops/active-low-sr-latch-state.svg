@@ -1,35 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 245" role="img" aria-label="Active-Low SR Latch state machine">
   <title>Active-Low SR Latch state machine</title>
-  <path d="M92,126 C76,97 118,89 112,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <text x="122" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">SR=00</text>
-  <path d="M126,147 Q210,147 294,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <path d="M294,147 L287,150 L287,144 Z" fill="#8a8d93"/>
-  <text x="210" y="162" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">SR=10</text>
-  <path d="M294,147 Q210,107 126,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <path d="M126,147 L131.03,141.28 L133.61,146.7 Z" fill="#8a8d93"/>
-  <text x="203.55" y="113.46" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">SR=01</text>
-  <path d="M308,126 C292,97 334,89 328,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <text x="338" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">SR=00</text>
+  <path d="M85.68,129.72 C40,107.4 40,186.6 85.68,164.28" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M85.68,164.28 L80.71,170.05 L78.07,164.66 Z" fill="#8a8d93"/>
+  <text x="49" y="151" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="end">SR=00</text>
+  <path d="M126,147 Q210,177 294,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M294,147 L288.42,152.18 L286.4,146.53 Z" fill="#8a8d93"/>
+  <text x="215.05" y="176.13" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">SR=10</text>
+  <path d="M294,147 Q210,117 126,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M126,147 L131.58,141.82 L133.6,147.47 Z" fill="#8a8d93"/>
+  <text x="204.95" y="117.87" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">SR=01</text>
+  <path d="M334.32,129.72 C380,107.4 380,186.6 334.32,164.28" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M334.32,164.28 L341.93,164.66 L339.29,170.05 Z" fill="#8a8d93"/>
+  <text x="371" y="151" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">SR=00</text>
   <circle cx="102" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="102" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=0</text>
   <text x="102" y="185" fill="#00dfc1" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">0</text>
   <circle cx="318" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="318" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=1</text>
   <text x="318" y="185" fill="#00dfc1" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">1</text>
-  <text x="210" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Moore</text>
-  <path d="M508,126 C492,97 534,89 528,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <text x="538" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">00/0</text>
-  <path d="M542,147 Q626,147 710,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <path d="M710,147 L703,150 L703,144 Z" fill="#8a8d93"/>
-  <text x="626" y="162" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">10/1</text>
-  <path d="M710,147 Q626,107 542,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <path d="M542,147 L547.03,141.28 L549.61,146.7 Z" fill="#8a8d93"/>
-  <text x="619.55" y="113.46" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">01/0</text>
-  <path d="M724,126 C708,97 750,89 744,124" fill="none" stroke="#8a8d93" stroke-width="1"/>
-  <text x="754" y="111" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">00/1</text>
+  <text x="210" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle" letter-spacing="1.5px">MOORE</text>
+  <path d="M501.68,129.72 C456,107.4 456,186.6 501.68,164.28" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M501.68,164.28 L496.71,170.05 L494.07,164.66 Z" fill="#8a8d93"/>
+  <text x="465" y="151" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="end">00/0</text>
+  <path d="M542,147 Q626,177 710,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M710,147 L704.42,152.18 L702.4,146.53 Z" fill="#8a8d93"/>
+  <text x="631.05" y="176.13" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">10/1</text>
+  <path d="M710,147 Q626,117 542,147" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M542,147 L547.58,141.82 L549.6,147.47 Z" fill="#8a8d93"/>
+  <text x="620.95" y="117.87" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="middle">01/0</text>
+  <path d="M750.32,129.72 C796,107.4 796,186.6 750.32,164.28" fill="none" stroke="#8a8d93" stroke-width="1"/>
+  <path d="M750.32,164.28 L757.93,164.66 L755.29,170.05 Z" fill="#8a8d93"/>
+  <text x="787" y="151" fill="#00a7da" font-family="Consolas" font-size="11" font-weight="400" text-anchor="start">00/1</text>
   <circle cx="518" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="518" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=0</text>
   <circle cx="734" cy="147" r="24" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
   <text x="734" y="151" fill="#e8eaed" font-family="Consolas" font-size="13" font-weight="400" text-anchor="middle">Q=1</text>
-  <text x="626" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle">Mealy</text>
+  <text x="626" y="229" fill="#c5c7c9" font-family="Consolas" font-size="16" font-weight="400" text-anchor="middle" letter-spacing="1.5px">MEALY</text>
 </svg>

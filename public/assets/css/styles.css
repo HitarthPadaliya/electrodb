@@ -1,10 +1,5 @@
-/* ================================================================
-   ElectroDB - Main Frontend Design System
-   Layout, palette, and typography refit from electrodb-frontend/
-   ================================================================ */
-
 :root {
-  /* Core palette */
+
   --bg: #05070E;
   --bg-soft: #080B13;
   --fg: #E8EAED;
@@ -21,12 +16,10 @@
   --border-strong: #30363D;
   --white: #FFFFFF;
 
-  /* Data tables */
   --table-head: #1b5797a1;
   --table-even: #21262dbb;
   --table-hover: #0c2744;
 
-  /* Status */
   --danger: #ff7b8a;
   --danger-bg: rgba(220, 38, 38, 0.12);
   --success: #3ddc97;
@@ -34,14 +27,12 @@
   --warning: #ffc45c;
   --warning-bg: rgba(217, 119, 6, 0.12);
 
-  /* Shape & depth */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 22px;
   --shadow-card: 0 30px 60px -42px rgba(0, 0, 0, 0.95);
   --shadow-glow: 0 25px 60px -30px rgba(0, 167, 218, 0.55);
 
-  /* Typography */
   --font-accent: 'Sora', system-ui, sans-serif;
   --font-nav: 'Poppins', system-ui, sans-serif;
   --font-heading: 'Lexend', system-ui, sans-serif;
@@ -52,7 +43,6 @@
   --content-width: 1400px;
   --nav-height: 68px;
 
-  /* Motion - shared timing so every interaction feels like one system */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-1: 150ms;
@@ -204,9 +194,6 @@ select:focus-visible,
   transform: translateY(0);
 }
 
-/* ----------------------------------------------------------------
-   Cursor glow (from the design reference)
-   ---------------------------------------------------------------- */
 .cursor-glow {
   position: fixed;
   left: 50%;
@@ -230,9 +217,6 @@ select:focus-visible,
   opacity: 1;
 }
 
-/* ----------------------------------------------------------------
-   Navbar
-   ---------------------------------------------------------------- */
 .navbar {
   background-color: rgba(13, 17, 23, 0.94);
   border-bottom: 1px solid var(--border);
@@ -441,9 +425,6 @@ select:focus-visible,
   transform: translateY(-5.5px) rotate(-45deg);
 }
 
-/* ----------------------------------------------------------------
-   Main layout
-   ---------------------------------------------------------------- */
 .main-content {
   flex: 1;
   width: min(var(--content-width), 88vw);
@@ -456,10 +437,6 @@ select:focus-visible,
   outline: none;
 }
 
-/* Route content swaps in immediately; a short opacity-only fade keeps it from
-   popping. It deliberately does not translate: moving a full page of cards and
-   drawings on every click is what made navigation feel janky. Opacity is also
-   the only property the compositor has to touch. */
 .page {
   animation: page-in var(--dur-1) var(--ease-out);
 }
@@ -473,8 +450,6 @@ select:focus-visible,
   }
 }
 
-
-/* Breadcrumbs (dummy: Home > Digital Electronics > …) */
 .breadcrumbs {
   display: flex;
   align-items: center;
@@ -506,7 +481,6 @@ select:focus-visible,
   color: var(--fg-light);
 }
 
-/* Page headers */
 .page-header {
   margin: 1.9rem 0 2.4rem;
   max-width: 950px;
@@ -539,7 +513,6 @@ select:focus-visible,
   max-width: 80ch;
 }
 
-/* Section headers - mirrors the reference h2 (uppercase, spaced, underline) */
 .section {
   margin-top: 3.25rem;
 }
@@ -575,7 +548,6 @@ select:focus-visible,
   opacity: 0.65;
 }
 
-/* Section links: "All categories ->", "View all components ->", "All tags ->". */
 .section-link {
   display: inline-flex;
   align-items: center;
@@ -590,14 +562,6 @@ select:focus-visible,
   transition: color var(--dur-2) var(--ease-out);
 }
 
-/* --- Small arrows step, they do not perform -------------------------------
-   The section links, the back link and the pagination arrows are small: a
-   charge running inside a 14px glyph cannot be seen at that size, and anything
-   more elaborate makes a one-line link feel busy. They get the plainest
-   gesture there is - the arrow itself steps the way it points while the
-   pointer is on it, and walks back when the pointer leaves. The category
-   tiles are the exception and keep their drawn, lit arrow (see
-   `.subcategory-arrow`); they have the room for it. */
 .section-link {
   --arrow-idle: var(--accent);
   --arrow-live: var(--accent-hover);
@@ -609,7 +573,7 @@ select:focus-visible,
   display: inline-block;
   line-height: 1;
   color: var(--arrow-idle, var(--muted));
-  /* Right-pointing by default; left-pointing arrows negate it below. */
+
   --arrow-step: 0.28em;
   transition:
     transform var(--dur-1) var(--ease-out),
@@ -648,9 +612,6 @@ a:hover > .link-arrow,
   white-space: nowrap;
 }
 
-/* ----------------------------------------------------------------
-   Buttons
-   ---------------------------------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -729,11 +690,6 @@ a:hover > .link-arrow,
   width: 100%;
 }
 
-/* ----------------------------------------------------------------
-   Hero (home)
-   ---------------------------------------------------------------- */
-/* The home hero is intentionally boxless: type and search sit straight on the
-   page background so the first screen reads as an opening statement. */
 .hero {
   position: relative;
   display: block;
@@ -913,9 +869,6 @@ a:hover > .link-arrow,
   color: var(--muted);
 }
 
-/* ----------------------------------------------------------------
-   Categories & tags
-   ---------------------------------------------------------------- */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1029,11 +982,6 @@ a:hover > .link-arrow,
   color: var(--fg-light);
 }
 
-/* Category / subcategory tiles.
-   The same tile is used for the top-level categories and for the subcategories
-   nested inside them. The component count and the arrow form one readable
-   footer line - "<n> components ->" - instead of a detached chip and a floating
-   ordinal, so the two numbers on the tile always mean the same thing. */
 .subcategory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1098,7 +1046,6 @@ a:hover > .link-arrow,
   overflow: hidden;
 }
 
-/* Count + arrow: one line, so "5 components ->" reads as a single instruction. */
 .subcategory-foot {
   display: flex;
   align-items: center;
@@ -1129,22 +1076,6 @@ a:hover > .link-arrow,
   font-variant-numeric: tabular-nums;
 }
 
-/* The tile arrow is a gas tube, and it powers down as deliberately as it
-   lights up.
-
-   In:  a plotter draws the tube - the pen runs the length of the shaft, lifts,
-        and the beak closes behind it - then the tube is struck: a white-hot
-        filament fades up inside the stroke, the stroke blooms, and one short
-        stuttering flash marks the ignition.
-   Out: the filament cools, the ink is lifted back off the page head first and
-        then shaft, and only once the page is clear does the flat arrow fade
-        back in.
-
-   Both journeys are transitions rather than keyframes, and each element's
-   *destination* rule carries that direction's timing - which is how the return
-   trip gets a different order to the outward one. The practical payoff: let go
-   halfway through the draw and the ink rewinds from wherever it had reached
-   instead of snapping. */
 .subcategory-arrow {
   display: inline-flex;
   align-items: center;
@@ -1159,7 +1090,7 @@ a:hover > .link-arrow,
   height: 14px;
   overflow: visible;
   filter: none;
-  /* Out: the bloom dies with the filament. */
+
   transition: filter 240ms var(--ease-out);
 }
 
@@ -1169,8 +1100,6 @@ a:hover > .link-arrow,
   stroke-linejoin: round;
 }
 
-/* The unlit tube: the flat arrow every other affordance uses. It only comes
-   back once the ink has been lifted off, hence the delay. */
 .arrow-rest {
   stroke: var(--muted);
   stroke-width: 1.6;
@@ -1178,9 +1107,6 @@ a:hover > .link-arrow,
   transition: opacity 160ms var(--ease-out) 240ms;
 }
 
-/* The two strokes the pen lays down. Full dash offset is full invisibility, so
-   the ink needs no opacity of its own - one property carries the whole draw
-   and its reverse. */
 .arrow-shaft,
 .arrow-head {
   stroke: var(--secondary);
@@ -1190,7 +1116,6 @@ a:hover > .link-arrow,
   transition: stroke 160ms var(--ease-out);
 }
 
-/* Out: the beak lifts first, the shaft follows it off the page. */
 .arrow-head {
   transition:
     stroke-dashoffset 120ms linear,
@@ -1203,12 +1128,11 @@ a:hover > .link-arrow,
     stroke 160ms var(--ease-out);
 }
 
-/* The filament and the strike live inside the same stroke. */
 .arrow-core {
   stroke: #d9fff8;
   stroke-width: 0.72;
   opacity: 0;
-  /* Out: the light cools before the ink leaves. */
+
   transition: opacity 150ms var(--ease-out);
 }
 
@@ -1218,7 +1142,6 @@ a:hover > .link-arrow,
   opacity: 0;
 }
 
-/* The pen itself: a hot tip with a soft halo, present only while it draws. */
 .arrow-nib {
   opacity: 0;
 }
@@ -1231,7 +1154,6 @@ a:hover > .link-arrow,
   fill: #eafffb;
 }
 
-/* ---- setting off ---- */
 .subcategory-card:hover .arrow-rest,
 .subcategory-card:focus-visible .arrow-rest {
   opacity: 0;
@@ -1259,7 +1181,6 @@ a:hover > .link-arrow,
   animation: arrow-nib-run 210ms linear both;
 }
 
-/* ---- striking ---- */
 .subcategory-card:hover .arrow-core,
 .subcategory-card:focus-visible .arrow-core {
   opacity: 0.9;
@@ -1277,7 +1198,6 @@ a:hover > .link-arrow,
   transition: filter 300ms var(--ease-out) 200ms;
 }
 
-/* A press re-strikes the lit tube, a shade hotter. */
 .subcategory-card:active .arrow-shaft,
 .subcategory-card:active .arrow-head {
   stroke: var(--accent-hover);
@@ -1287,8 +1207,6 @@ a:hover > .link-arrow,
   animation: arrow-strike 260ms var(--ease-out) both;
 }
 
-/* 13.6 is the shaft's length, so the nib stays welded to the ink: same linear
-   easing, same 210 ms as the draw. */
 @keyframes arrow-nib-run {
   0% {
     opacity: 0;
@@ -1307,7 +1225,6 @@ a:hover > .link-arrow,
   }
 }
 
-/* The strike: one bright bloom with a small stutter, then darkness. */
 @keyframes arrow-strike {
   0% {
     opacity: 0;
@@ -1411,9 +1328,6 @@ a:hover > .link-arrow,
   font-family: var(--font-nav);
 }
 
-/* ----------------------------------------------------------------
-   Component cards
-   ---------------------------------------------------------------- */
 .components-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
@@ -1484,7 +1398,6 @@ a:hover > .link-arrow,
   line-height: 1.55;
 }
 
-/* Audit-trail operation badges (lab console) */
 .badge-op {
   display: inline-flex;
   align-items: center;
@@ -1521,9 +1434,6 @@ a:hover > .link-arrow,
   color: var(--muted);
 }
 
-/* ----------------------------------------------------------------
-   Filter bar
-   ---------------------------------------------------------------- */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1574,12 +1484,6 @@ a:hover > .link-arrow,
   padding-bottom: 0.55rem;
 }
 
-/* ----------------------------------------------------------------
-   Component detail
-   ---------------------------------------------------------------- */
-/* Component detail - closely mirrors the design reference:
-   oversized uppercase title, description directly beneath it, and the
-   circuit symbol floating on the page instead of inside a card. */
 .component-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
@@ -1614,8 +1518,6 @@ a:hover > .link-arrow,
   line-height: 1.75;
 }
 
-/* The back link belongs to the path, not to the actions: it reads as the last
-   line of the breadcrumb. */
 .crumbs-back {
   display: flex;
   margin: 1.15rem 0 0;
@@ -1625,8 +1527,6 @@ a:hover > .link-arrow,
   padding: 0.2rem 0;
 }
 
-/* Tags sit directly under the component name, above the description, with
-   enough air after them that the description reads as its own block. */
 .component-hero .hero-tags {
   margin-top: 0.85rem;
   margin-bottom: 1.5rem;
@@ -1684,7 +1584,6 @@ a:hover > .link-arrow,
   font-size: 2rem;
 }
 
-/* Back-to-category: a quiet inline link rather than a second button */
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -1712,7 +1611,6 @@ a:hover > .link-arrow,
   margin-top: 3rem;
 }
 
-/* Circuit diagram immediately below the hero */
 .circuit-section {
   margin-top: 2.25rem;
 }
@@ -1786,12 +1684,6 @@ a:hover > .link-arrow,
   max-width: 88ch;
 }
 
-/* Tables.
-   One framed surface instead of a grid of boxes: hairline row rules, a tinted
-   header band closed by an accent rule, zebra striping that only shifts the
-   surface a little, and a hover state that lights the whole row. Text headers
-   are tracked and quiet; maths headers keep their own typography, because the
-   weight comes from \boldsymbol in the markup, never from CSS. */
 .table-responsive {
   width: 100%;
   margin-top: 1.4rem;
@@ -1860,7 +1752,6 @@ a:hover > .link-arrow,
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
-/* Symbols rendered through KaTeX follow their cell, never the accent colour. */
 .edu-table .katex {
   color: inherit;
   font-size: 1.02em;
@@ -1878,7 +1769,6 @@ a:hover > .link-arrow,
   font-size: 0.85rem;
 }
 
-/* Specification tables read as a definition list, not a centred matrix. */
 .spec-table-wrap {
   margin-top: 1.25rem;
 }
@@ -1915,11 +1805,6 @@ a:hover > .link-arrow,
   color: var(--text-light);
 }
 
-/* Equations */
-/* Equations sit directly on the page: no card, no border, no scroller. They
-   are scaled to fill the column (see fitEquations in app.js), which is why the
-   block clips instead of scrolling: an equation can never push a horizontal
-   scrollbar onto the page. */
 .equation-block {
   margin: 1.5rem 0 0;
   overflow: hidden;
@@ -1938,9 +1823,6 @@ a:hover > .link-arrow,
   text-align: center;
 }
 
-/* Diagram sections.
-   A drawing is content, not a card: it sits directly under its own heading on
-   the page background, the way a truth table sits under "Truth Table". */
 .diagram-body {
   margin: 1.5rem auto 0;
   width: 100%;
@@ -1959,12 +1841,10 @@ a:hover > .link-arrow,
   height: auto;
 }
 
-/* Circuit art is wide; keep it readable but never wider than the column. */
 .diagram-body img[src*='/circuits/'] {
   max-width: min(100%, 980px);
 }
 
-/* Pin-level symbols are small drawings, so they get a smaller ceiling. */
 .diagram-body img[src*='/components/'],
 .diagram-body img[src*='/gates/'],
 .diagram-body img[src*='/flipflops/'],
@@ -1983,8 +1863,6 @@ a:hover > .link-arrow,
   max-width: min(100%, 560px);
 }
 
-/* State and timing drawings carry far more detail than a symbol, so they get
-   the full column width. The doubled class beats the directory rules above. */
 .diagram-body.diagram-body--compact img,
 .diagram-body.diagram-body--timing img {
   max-width: min(100%, 1000px);
@@ -2001,7 +1879,6 @@ a:hover > .link-arrow,
   justify-content: center;
 }
 
-/* Fullscreen diagram viewer (opened by "View fullscreen"). */
 .diagram-frame {
   display: flex;
   align-items: center;
@@ -2017,9 +1894,6 @@ a:hover > .link-arrow,
   object-fit: contain;
 }
 
-/* ----------------------------------------------------------------
-   Pagination
-   ---------------------------------------------------------------- */
 .pagination-bar {
   display: flex;
   flex-wrap: wrap;
@@ -2051,7 +1925,6 @@ a:hover > .link-arrow,
   color: var(--accent-hover);
 }
 
-/* Pagination arrows take the same step; only their palette differs. */
 .page-arrow {
   --arrow-idle: var(--fg-light);
   --arrow-live: var(--accent-hover);
@@ -2074,14 +1947,6 @@ a:hover > .link-arrow,
   padding: 0 0.2rem;
 }
 
-/* ----------------------------------------------------------------
-   Lab console
-   ---------------------------------------------------------------- */
-/* ----------------------------------------------------------------
-   Range sliders (lab console controls)
-   Themed to the accent so they read as part of the interface rather
-   than a stock browser widget.
-   ---------------------------------------------------------------- */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
@@ -2175,8 +2040,6 @@ input[type='range']:focus-visible {
   margin: 0;
 }
 
-/* Lab console header: an unboxed page heading, consistent with the home hero.
-   The old gradient banner competed with the content below it. */
 .lab-header {
   margin-top: 2.6rem;
   padding-bottom: 1.1rem;
@@ -2199,8 +2062,6 @@ input[type='range']:focus-visible {
   color: var(--fg);
 }
 
-/* One segmented control for every tab, so Stored Programs, Index Benchmarks and
-   the Dashboard read as peers rather than mixed button styles. */
 .lab-tabs {
   display: flex;
   max-width: 100%;
@@ -2413,8 +2274,6 @@ input[type='range']:focus-visible {
   word-break: break-word;
 }
 
-/* Benchmark report: the markdown report is presented as a stack of tables,
-   each with its own caption, instead of a scrolling wall of monospaced text. */
 .bench-heading {
   display: flex;
   align-items: center;
@@ -2546,7 +2405,6 @@ input[type='range']:focus-visible {
   color: var(--muted);
 }
 
-/* Alerts */
 .alert {
   display: flex;
   align-items: flex-start;
@@ -2589,7 +2447,6 @@ input[type='range']:focus-visible {
   color: var(--white);
 }
 
-/* Empty & loading states */
 .empty-state {
   padding: 3rem 1.5rem;
   border: 1px dashed var(--border-strong);
@@ -2639,9 +2496,6 @@ input[type='range']:focus-visible {
   to { transform: rotate(360deg); }
 }
 
-/* ----------------------------------------------------------------
-   Modal
-   ---------------------------------------------------------------- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2734,9 +2588,73 @@ input[type='range']:focus-visible {
   overflow-y: auto;
 }
 
-/* ----------------------------------------------------------------
-   Toasts
-   ---------------------------------------------------------------- */
+.modal-viewer-close {
+  display: none;
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  font-size: 1.6rem;
+  border-color: var(--border-strong);
+  background: rgba(3, 6, 12, 0.72);
+  color: var(--fg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-viewer-close:hover {
+  border-color: var(--accent);
+  background: rgba(3, 6, 12, 0.92);
+  color: var(--fg);
+}
+
+.modal-overlay--viewer {
+  padding: 1rem;
+  background: rgba(3, 6, 12, 0.94);
+}
+
+.modal-overlay--viewer .modal-viewer-close {
+  display: inline-flex;
+}
+
+.modal-overlay--viewer .modal-box {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.modal-overlay--viewer .modal-header {
+  display: none;
+}
+
+.modal-overlay--viewer .modal-body {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.modal-overlay--viewer .diagram-frame {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.modal-overlay--viewer .diagram-frame img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .toast-stack {
   position: fixed;
   right: 1.25rem;
@@ -2789,9 +2707,6 @@ input[type='range']:focus-visible {
   to { opacity: 0; transform: translate3d(0, 8px, 0); }
 }
 
-/* ----------------------------------------------------------------
-   Responsive
-   ---------------------------------------------------------------- */
 @media (max-width: 1180px) {
   .links {
     gap: 1.25rem;
@@ -2896,7 +2811,6 @@ input[type='range']:focus-visible {
     font-size: 1.7rem;
   }
 
-  /* Let search drop to its own full-width row without shrinking the brand */
   .header-actions {
     display: contents;
   }
@@ -2986,6 +2900,18 @@ input[type='range']:focus-visible {
   .modal-overlay {
     padding: 0.75rem;
   }
+
+  .modal-overlay--viewer {
+    padding: 0.5rem;
+  }
+
+  .modal-viewer-close {
+    top: 0.9rem;
+    right: 0.9rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.45rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3013,10 +2939,6 @@ input[type='range']:focus-visible {
     display: none;
   }
 }
-
-/* ================================================================
-   Accounts: navigation, auth forms, bookmarks, collections, dashboard
-   ================================================================ */
 
 .nav-account {
   display: flex;
@@ -3094,7 +3016,6 @@ input[type='range']:focus-visible {
   color: var(--danger);
 }
 
-/* --- shared form extras ------------------------------------------------ */
 .page--narrow {
   max-width: 620px;
 }
@@ -3144,7 +3065,6 @@ input[type='range']:focus-visible {
   font-size: 0.85rem;
 }
 
-/* --- auth pages ------------------------------------------------------- */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -3184,7 +3104,6 @@ input[type='range']:focus-visible {
   color: var(--accent-hover);
 }
 
-/* --- account pages ---------------------------------------------------- */
 .account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -3208,8 +3127,6 @@ input[type='range']:focus-visible {
   margin-bottom: 1.4rem;
 }
 
-/* A bar holding a single account action (sign out). It carries no heading and
-   no explanatory copy: the button says what it does. */
 .account-panel--actions {
   display: flex;
   justify-content: flex-end;
@@ -3217,8 +3134,6 @@ input[type='range']:focus-visible {
   padding: 0.9rem 1.5rem;
 }
 
-/* Beats `.account-panel .btn { align-self: flex-start }`, which would pin the
-   button to the top edge of the bar. */
 .account-panel.account-panel--actions .btn {
   align-self: center;
 }
@@ -3245,7 +3160,6 @@ input[type='range']:focus-visible {
   align-self: flex-start;
 }
 
-/* --- bookmark controls ------------------------------------------------ */
 .component-card-link {
   display: flex;
   flex: 1;
@@ -3261,8 +3175,6 @@ input[type='range']:focus-visible {
   margin-top: auto;
 }
 
-/* The card is now a container with a link and a button inside it, so the
-   keyboard needs the same highlight the pointer gets. */
 .component-card:focus-within {
   border-color: rgba(0, 167, 218, 0.55);
   box-shadow: var(--shadow-glow);
@@ -3315,7 +3227,6 @@ input[type='range']:focus-visible {
   fill: rgba(0, 223, 193, 0.32);
 }
 
-/* The same control on a component page sits with the other buttons. */
 .component-actions .bookmark-btn {
   padding: 0.5rem 0.9rem;
   border-color: var(--border-strong);
@@ -3324,8 +3235,6 @@ input[type='range']:focus-visible {
   font-size: 0.72rem;
 }
 
-/* A touch smaller than the primary action next to it, so "Save" and "Add to
-   collection" read as secondary without becoming chip-sized. */
 .btn-compact {
   padding: 0.55rem 1rem;
   font-size: 0.72rem;
@@ -3337,7 +3246,6 @@ input[type='range']:focus-visible {
   border-color: rgba(0, 223, 193, 0.45);
 }
 
-/* --- collections ------------------------------------------------------ */
 .collection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3460,7 +3368,6 @@ input[type='range']:focus-visible {
   margin-top: 1.2rem;
 }
 
-/* --- dashboard -------------------------------------------------------- */
 .stat-card--link {
   text-decoration: none;
   color: inherit;
@@ -3499,7 +3406,6 @@ input[type='range']:focus-visible {
   }
 }
 
-/* --- preview demo credentials on the sign-in page ---------------------- */
 .demo-accounts {
   margin: 0 0 1.2rem;
   padding: 1rem 1.1rem;

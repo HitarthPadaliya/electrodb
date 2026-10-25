@@ -1,22 +1,5 @@
 #!/usr/bin/env node
-/**
- * Generate the "Circuit Diagram" artwork for every catalogue component.
- *
- * The design reference ships two drawings:
- *   electrodb-frontend/img/jk-flip-flop.svg          → block/pin-level symbol
- *   electrodb-frontend/img/jk-flip-flop_circuit.svg  → gate/transistor-level circuit
- *
- * Only the reference is hand-drawn per component; everything else is produced
- * here from a small schematic DSL so the whole catalogue shares one visual
- * language (colours and typography taken from the reference):
- *
- *   inputs  #00a7da (cyan)      outputs #00dfc1 (teal)
- *   control #8a8d93 (dashed)    device bodies #0d1117 fill / #168fe5 stroke
- *   labels  Consolas, #e8eaed / #c5c7c9
- *
- * Output: public/assets/svg/circuits/<slug>.svg
- * Usage:  node scripts/build-circuit-diagrams.js [--check]
- */
+
 'use strict';
 
 const fs = require('fs');
@@ -54,7 +37,6 @@ class Schematic {
     this.parts = [];
   }
 
-  /** Polyline through the given points. */
   wire(points, tone = 'input', dashed = false) {
     const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
     this.parts.push(
@@ -64,7 +46,6 @@ class Schematic {
     return this;
   }
 
-  /** Junction dot. */
   node(x, y, tone = 'output', r = 3.2) {
     this.parts.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${INK[tone]}"/>`);
     return this;
@@ -84,7 +65,6 @@ class Schematic {
     return this;
   }
 
-  /** Logic gate. Inputs are at 30% / 70% of the body height. */
   gate(type, x, y, w = 76, h = 60, name = '') {
     const kind = String(type).toLowerCase();
     const stroke = `fill="${INK.body}" stroke="${INK.bodyStroke}" stroke-width="2" stroke-linejoin="round"`;
@@ -129,7 +109,6 @@ class Schematic {
     };
   }
 
-  /** Rounded device block. */
   block(x, y, w, h, title, sub = '') {
     this.parts.push(
       `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${INK.body}" stroke="${INK.bodyStroke}" stroke-width="2"/>`
@@ -158,30 +137,22 @@ class Schematic {
     return { start: vertical ? [x, y] : [x, y], end: vertical ? [x, y + length] : [x + length, y] };
   }
 
-  /**
-   * N/P channel MOSFET. Returns the three external pins so callers can wire
-   * exactly onto the symbol.
-   */
   mosfet(cx, cy, opts = {}) {
     const { name = 'M1', pchannel = false } = opts;
     const barX = cx - 16;
 
-    // gate bar + gate lead (comes in from the left)
     this.parts.push(`<path d="M${cx - 28},${cy - 26} v52" stroke="${INK.bodyStroke}" stroke-width="2.4"/>`);
     this.parts.push(`<path d="M${cx - 70},${cy} h42" stroke="${INK.input}" stroke-width="2"/>`);
 
-    // channel: three dashes
     this.parts.push(
       `<path d="M${barX},${cy - 24} v14 M${barX},${cy - 5} v10 M${barX},${cy + 10} v14" stroke="${INK.input}" stroke-width="2.4" stroke-linecap="round"/>`
     );
 
-    // drain (top) and source (bottom) legs
     this.parts.push(
       `<path d="M${barX},${cy - 17} h34" stroke="${INK.input}" stroke-width="2" stroke-linecap="round"/>` +
         `<path d="M${barX},${cy + 17} h34" stroke="${INK.input}" stroke-width="2" stroke-linecap="round"/>`
     );
 
-    // body arrow (N-channel points in, P-channel points out)
     if (pchannel) {
       this.parts.push(`<path d="M${barX},${cy} h20 M${barX},${cy} l9,-5 v10 z" fill="${INK.input}" stroke="${INK.input}" stroke-width="1"/>`);
     } else {
@@ -200,7 +171,7 @@ class Schematic {
   diode(x, y, opts = {}) {
     const { kind = 'diode', name = '', angle = 0 } = opts;
     const g = [];
-    // triangle points in +x before rotation
+
     if (angle === 90) {
       g.push(`<path d="M${x - 12},${y - 10} h24 l-12,20 z" fill="${INK.body}" stroke="${INK.input}" stroke-width="2" stroke-linejoin="round"/>`);
       g.push(`<path d="M${x - 12},${y + 10} h24" stroke="${INK.input}" stroke-width="2.2"/>`);
@@ -237,9 +208,6 @@ class Schematic {
   }
 }
 
-// ================================================================== families
-
-/** Logic gates: the Boolean symbol plus its canonical realisation. */
 function gateFamily(slug, name) {
   const s = new Schematic(name);
   const key = slug.replace(/-gate$/, '');
@@ -290,7 +258,6 @@ function gateFamily(slug, name) {
   return s;
 }
 
-/** Sequential counters: a flip-flop chain sharing a clock. */
 function counterFamily(slug, name, bits) {
   const s = new Schematic(name);
   const stages = Math.max(2, Math.min(bits, 4));
@@ -299,24 +266,20 @@ function counterFamily(slug, name, bits) {
     boxes.push(s.block(120 + i * 120, 104, 84, 96, 'FF', `Q${i}`));
   }
 
-  // shared clock rail (solid, feeds every stage directly)
   s.label(36, 96, 'CLK', { size: 11, tone: 'pin' });
   s.wire([[36, 104], [36, 200], [120, 200]], 'input');
   boxes.forEach(b => s.wire([[b.left, 200], [b.left + 20, 200], [b.left + 20, 200]], 'input'));
 
-  // ripple carry between stages
   boxes.forEach((b, i) => {
     if (i === boxes.length - 1) return;
     s.wire([[b.right, 132], [boxes[i + 1].left, 132]], 'input', true);
   });
 
-  // outputs
   boxes.forEach((b, i) => {
     s.wire([[b.right - 22, 104], [b.right - 22, 84]], 'output');
     s.label(b.right - 22, 74, `Q${i}`, { anchor: 'middle', size: 10, tone: 'output' });
   });
 
-  // asynchronous clear
   s.label(36, 300, 'CLR', { size: 10, tone: 'pin' });
   s.wire([[36, 291], [560, 291]], 'control', true);
   boxes.forEach(b => s.wire([[b.left + 62, 291], [b.left + 62, 200]], 'control', true));
@@ -325,7 +288,6 @@ function counterFamily(slug, name, bits) {
   return s;
 }
 
-/** Cross-coupled NAND storage loop. */
 function flipFlopFamily(slug, name) {
   const s = new Schematic(name);
 
@@ -353,11 +315,9 @@ function flipFlopFamily(slug, name) {
   s.label(60, g2.in1.y - 6, labels[1], { size: 12, tone: 'label' });
   s.wire([[60, g2.in1.y], [250, g2.in1.y]], labels[1] === 'CLK' ? 'control' : 'input', labels[1] === 'CLK');
 
-  // cross-coupled feedback
   s.wire([[g2.out.x, g2.out.y], [420, g2.out.y], [420, 70], [196, 70], [196, g1.in2.y], [250, g1.in2.y]], 'input');
   s.wire([[g1.out.x, g1.out.y], [450, g1.out.y], [450, 300], [176, 300], [176, g2.in2.y], [250, g2.in2.y]], 'input');
 
-  // outputs branch off the gate outputs
   s.wire([[g1.out.x, g1.out.y], [560, g1.out.y]], 'output');
   s.label(564, g1.out.y + 4, 'Q', { tone: 'output', size: 12 });
   s.wire([[g1.out.x + 12, g1.out.y], [g1.out.x + 12, 56]], 'output');
@@ -369,7 +329,6 @@ function flipFlopFamily(slug, name) {
   return s;
 }
 
-/** Multiplexers: one AND term per channel, combined by an OR gate. */
 function muxFamily(slug, name) {
   const s = new Schematic(name);
   const channels = /16-to-1|16to1/.test(slug) ? 4 : /8-to-1|8to1/.test(slug) ? 4 : /4-to-1|4to1/.test(slug) ? 4 : 2;
@@ -386,7 +345,6 @@ function muxFamily(slug, name) {
     s.wire([[a.out.x, a.out.y], [320, a.out.y], [320, or.out.y]], 'input');
   });
 
-  // select rail feeding the second input of every AND term
   s.label(60, 300, 'S', { size: 11, tone: 'pin' });
   s.wire([[60, 292], [160, 292]], 'control');
   ands.forEach(a => s.wire([[160, a.in2.y], [190, a.in2.y]], 'control', true));
@@ -397,7 +355,6 @@ function muxFamily(slug, name) {
   return s;
 }
 
-/** Decoders / encoders: an AND array over the input rails. */
 function decoderFamily(slug, name) {
   const s = new Schematic(name);
   const outputs = /4-to-16|4to16/.test(slug) ? 4 : /3-to-8|3to8/.test(slug) ? 4 : /2-to-4|2to4/.test(slug) ? 4 : 2;
@@ -443,13 +400,11 @@ function diodeFamily(slug, name) {
   return s;
 }
 
-/** NPN common-emitter stage (BJTs, Darlingtons, phototransistors). */
 function bjtFamily(slug, name) {
   const s = new Schematic(name);
   const cx = 300;
   const cy = 190;
 
-  // collector / emitter leads
   s.parts.push(
     `<path d="M${cx},${cy - 42} v56" stroke="${INK.bodyStroke}" stroke-width="2.6"/>` +
       `<path d="M${cx},${cy - 18} L${cx + 46},${cy - 46} V${cy - 96}" stroke="${INK.input}" stroke-width="2" fill="none"/>` +
@@ -459,7 +414,6 @@ function bjtFamily(slug, name) {
   );
   s.label(cx + 54, cy + 6, 'Q1', { size: 10, weight: 400, tone: 'pin' });
 
-  // supply rail, collector resistor, output node
   s.wire([[cx + 46, cy - 96], [cx + 46, 56], [520, 56]], 'input');
   s.label(470, 48, 'V_CC', { size: 10, weight: 400, tone: 'pin' });
   s.resistor(cx + 46, 56, 46, true, 'R_C');
@@ -468,12 +422,10 @@ function bjtFamily(slug, name) {
   s.wire([[cx + 46, 96], [540, 96]], 'output');
   s.label(546, 100, 'V_OUT', { tone: 'output', size: 10 });
 
-  // base resistor and input
   s.resistor(140, cy, 84, false, 'R_B');
   s.wire([[60, cy], [140, cy]], 'input');
   s.label(60, cy - 8, 'V_IN', { size: 10, tone: 'pin' });
 
-  // emitter to ground
   s.wire([[cx + 46, cy + 96], [cx + 46, cy + 118]], 'input');
   s.ground(cx + 46, cy + 118);
 
@@ -481,17 +433,14 @@ function bjtFamily(slug, name) {
   return s;
 }
 
-/** MOSFET switch / amplifier. */
 function mosfetFamily(slug, name) {
   const s = new Schematic(name);
   const pchannel = /pmos|p-channel/.test(slug);
   const m = s.mosfet(300, 190, { name: 'M1', pchannel });
 
-  // gate input
   s.wire([[60, m.gate[1]], [m.gate[0], m.gate[1]]], 'input');
   s.label(60, m.gate[1] - 8, 'V_IN', { size: 10, tone: 'pin' });
 
-  // drain → load resistor → supply
   s.wire([m.drain, [m.drain[0], 96]], 'input');
   s.resistor(m.drain[0], 56, 40, true, 'R_D');
   s.wire([[m.drain[0], 56], [520, 56]], 'input');
@@ -500,7 +449,6 @@ function mosfetFamily(slug, name) {
   s.wire([[m.drain[0], 96], [540, 96]], 'output');
   s.label(546, 100, 'V_OUT', { tone: 'output', size: 10 });
 
-  // source → ground
   s.wire([m.source, [m.source[0], 290]], 'input');
   s.ground(m.source[0], 290);
 
@@ -514,7 +462,6 @@ function opAmpFamily(slug, name) {
   const left = 300;
   const apex = [430, 170];
 
-  // Triangle body with "−" on top and "+" underneath.
   s.parts.push(
     `<path d="M${left},${top} L${left},${224} L${apex[0]},${apex[1]} Z" fill="${INK.body}" stroke="${INK.bodyStroke}" stroke-width="2" stroke-linejoin="round"/>`
   );
@@ -527,7 +474,6 @@ function opAmpFamily(slug, name) {
   const outY = apex[1];
   const feedbackY = 66;
 
-  // Output rail
   s.wire([[apex[0], outY], [560, outY]], 'output');
   s.node(560, outY, 'output');
   s.label(566, outY + 4, 'V_OUT', { tone: 'output', size: 10 });
@@ -537,7 +483,7 @@ function opAmpFamily(slug, name) {
   const nonInverting = /non-inverting/.test(slug);
 
   if (follower) {
-    // Unity-gain buffer: output fed straight back to the inverting input.
+
     s.label(40, plusY - 8, 'V_IN', { size: 10, tone: 'pin' });
     s.wire([[40, plusY], [left, plusY]], 'input');
     s.wire([[500, outY], [500, feedbackY], [240, feedbackY], [240, minusY], [left, minusY]], 'input');
@@ -546,7 +492,7 @@ function opAmpFamily(slug, name) {
   }
 
   if (nonInverting) {
-    // Signal to "+", feedback divider (R_f / R1) around the inverting input.
+
     s.label(40, 290, 'V_IN', { size: 10, tone: 'pin' });
     s.wire([[40, 298], [150, 298], [150, plusY], [left, plusY]], 'input');
     s.wire([[left, minusY], [110, minusY]], 'input');
@@ -562,7 +508,6 @@ function opAmpFamily(slug, name) {
     return s;
   }
 
-  // Inverting (and summing) amplifier.
   s.label(40, minusY - 8, 'V_IN', { size: 10, tone: 'pin' });
   s.wire([[40, minusY], [100, minusY]], 'input');
   s.resistor(100, minusY, 80, false, 'R1');
@@ -576,11 +521,9 @@ function opAmpFamily(slug, name) {
     s.wire([[220, minusY + 56], [240, minusY + 56], [240, minusY]], 'input');
   }
 
-  // Non-inverting input to ground.
   s.wire([[left, plusY], [266, plusY], [266, 268]], 'input');
   s.ground(266, 268);
 
-  // Feedback resistor from the output back to the inverting node.
   s.wire([[240, minusY], [240, feedbackY]], 'input');
   s.resistor(260, feedbackY, 80, false, 'R_f');
   s.wire([[240, feedbackY], [260, feedbackY]], 'input');
@@ -663,7 +606,7 @@ function adcFamily(slug, name) {
   const s = new Schematic(name);
 
   if (/flash/.test(slug)) {
-    // resistor ladder with a comparator per tap
+
     s.wire([[120, 62], [520, 62]], 'input');
     s.label(60, 58, 'V_REF', { size: 10, tone: 'pin' });
     s.wire([[60, 70], [120, 62]], 'input');
@@ -741,7 +684,6 @@ function relayFamily(slug, name) {
     return s;
   }
 
-  // Driver stage
   s.label(40, 128, 'V_CTRL', { size: 10, tone: 'pin' });
   s.wire([[40, 136], [120, 136]], 'input');
   s.resistor(120, 136, 60, false, 'R1');
@@ -753,7 +695,6 @@ function relayFamily(slug, name) {
   s.label(230, 180, 'Q1', { size: 9, weight: 400, tone: 'pin', anchor: 'middle' });
   s.wire([[180, 136], [180, 176], [200, 176]], 'input');
 
-  // Coil between the supply rail and the collector
   s.wire([[230, 132], [230, 96], [400, 96]], 'input');
   s.label(452, 88, 'V+', { size: 10, weight: 400, tone: 'pin' });
   s.parts.push(
@@ -763,17 +704,14 @@ function relayFamily(slug, name) {
   s.wire([[330, 96], [230, 96]], 'input');
   s.wire([[430, 96], [470, 96]], 'input');
 
-  // Flyback diode in parallel with the coil (cathode to the supply rail)
   s.wire([[330, 96], [300, 96], [300, 150]], 'input');
   s.wire([[430, 96], [430, 150], [312, 150]], 'input');
   s.diode(300, 150, { kind: 'diode', name: 'D1' });
   s.wire([[230, 96], [300, 96]], 'input');
 
-  // Emitter to ground
   s.wire([[230, 232], [230, 262]], 'input');
   s.ground(230, 262);
 
-  // Isolated contact + load
   s.wire([[470, 210], [520, 210]], 'output');
   s.parts.push(`<path d="M520,210 L566,182" stroke="${INK.output}" stroke-width="2"/>`);
   s.node(520, 210, 'output');
@@ -820,7 +758,6 @@ function motorFamily(slug, name) {
   return s;
 }
 
-// ------------------------------------------------------------------ mapping
 const FAMILY_BY_CATEGORY = {
   6: (c) => counterFamily(c.slug, c.name, /mod-?5|mod5|6|johnson|ring/.test(c.slug) ? 3 : /mod-?8|mod8/.test(c.slug) ? 3 : 4),
   7: (c) => flipFlopFamily(c.slug, c.name),
@@ -847,7 +784,6 @@ function familyFor(component) {
   return build(component);
 }
 
-// ------------------------------------------------------------------ sql parse
 function splitTuple(line) {
   const fields = [];
   let current = '';
@@ -919,7 +855,7 @@ function main() {
   for (const component of components) {
     if (seen.has(component.slug)) continue;
     seen.add(component.slug);
-    if (component.slug === 'jk-flip-flop') continue; // hand-drawn reference drawing
+    if (component.slug === 'jk-flip-flop') continue;
     const svg = familyFor(component).toSvg();
     const target = path.join(OUT_DIR, `${component.slug}.svg`);
     const existing = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';

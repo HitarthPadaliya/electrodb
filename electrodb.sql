@@ -1,71 +1,8 @@
--- ================================================================
--- ElectroDB - Complete database installer (single file)
--- Target: MySQL 8.0+ / MariaDB 10.4+ (utf8mb4)
---
--- HOW TO IMPORT
---   Create an empty database first, then import this file into it. The file
---   does not create, drop or name a database, so it works whatever you called
---   yours.
---
---   Command line:
---     mysql -u root -p -e "CREATE DATABASE mydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
---     mysql -u root -p mydb < electrodb.sql
---
---   phpMyAdmin:
---     1. New -> create a database (utf8mb4_unicode_ci)
---     2. select it -> Import -> choose this file -> Go
---
--- WHAT IT CREATES
---   * 17 tables: the component catalogue, its educational content, diagrams,
---     specifications, plus application accounts and per-user data
---   * 2 views, 11 stored procedures, 1 function, 15 triggers
---   * Seed data: 23 categories, 147 components, 12 tags, their content,
---     diagrams, specifications and specifications mapping
---
--- AFTER IMPORTING
---   No application users are seeded, so nothing here has a default password.
---   Point .env at the database and create the first DBA account once:
---     npm run bootstrap:dba        (reads BOOTSTRAP_DBA_* from .env)
---   Then `npm start`; `npm run verify` re-checks the schema, the seed counts
---   and the HTTP endpoints against the live database.
---
--- RE-IMPORTING
---   Section 0 below drops every view, trigger, stored procedure, function and
---   table this script owns, so the file can be run again against an existing
---   database without "already exists" errors. It does NOT drop the database and
---   does not touch anything it did not create.
---   Running it against a database that holds real data will delete that data.
---
--- NOT INCLUDED
---   database/00_create_users_and_roles.sql (server roles and MySQL accounts)
---   is deliberately separate: it needs administrative privileges and it grants
---   on a specific schema name. Apply it afterwards if you want it, adjusting
---   the schema name to yours.
---
--- NOTES
---   * Tables declare utf8mb4/utf8mb4_unicode_ci explicitly, so the database
---     default character set does not matter (some seed values contain
---     non-ASCII symbols such as the degree sign in '°C').
---   * MySQL stored-program syntax, not Oracle PL/SQL.
---   * Diagram rows store SVG paths; the files themselves live in
---     public/assets/svg and are shipped with the application.
---   * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and
---     trigger features.
--- ================================================================
-
 SET NAMES utf8mb4;
 
--- Foreign-key checks are suspended for the whole load: the table drops need it,
--- and it keeps the seed inserts independent of insertion order. The setting the
--- session arrived with is restored at the end of the file.
 SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ------------------------------
--- 0. Reset everything this script owns
--- ------------------------------
--- Views and stored programs are dropped explicitly: they are not removed by
--- DROP TABLE, and MySQL has no CREATE OR REPLACE for procedures or functions.
 DROP VIEW IF EXISTS v_component_catalogue;
 DROP VIEW IF EXISTS v_category_component_counts;
 
@@ -116,10 +53,6 @@ DROP PROCEDURE IF EXISTS sp_update_app_user;
 DROP PROCEDURE IF EXISTS sp_delete_app_user;
 DROP FUNCTION IF EXISTS fn_sum_component_ids;
 
-
--- ------------------------------
--- 1. Hierarchical category tree
--- ------------------------------
 CREATE TABLE categories (
   category_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   parent_category_id BIGINT UNSIGNED NULL,
@@ -139,9 +72,6 @@ CREATE TABLE categories (
   CONSTRAINT chk_categories_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 2. Tags
--- ------------------------------
 CREATE TABLE tags (
   tag_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(80) NOT NULL,
@@ -151,9 +81,6 @@ CREATE TABLE tags (
   UNIQUE KEY uq_tags_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 3. Components
--- ------------------------------
 CREATE TABLE components (
   component_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   category_id BIGINT UNSIGNED NOT NULL,
@@ -194,9 +121,6 @@ CREATE TABLE component_tags (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 4. Content types and category templates
--- ------------------------------
 CREATE TABLE content_types (
   content_type_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   code VARCHAR(40) NOT NULL,
@@ -225,10 +149,6 @@ CREATE TABLE category_content_types (
   CONSTRAINT chk_cct_required CHECK (is_required IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 5. Component educational content
--- content may be prose, JSON text, LaTeX, or an SVG resource path.
--- ------------------------------
 CREATE TABLE component_content (
   component_content_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
@@ -253,18 +173,11 @@ CREATE TABLE component_content (
     ON DELETE RESTRICT ON UPDATE CASCADE
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 5A. Component diagrams
--- All diagrams share one storage model. The database stores title,
--- caption, alt text, asset path, and display order; it does not classify
--- diagrams as circuit/timing/state/etc.
--- ------------------------------
 CREATE TABLE component_diagrams (
   diagram_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   component_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
-  -- Distinguishes a pin-level symbol from a gate/transistor-level circuit
-  -- diagram, and from state/timing artwork, so the UI can place each one.
+
   diagram_kind ENUM('SYMBOL','CIRCUIT','PINOUT','STATE','TIMING','OTHER') NOT NULL DEFAULT 'OTHER',
   image_path VARCHAR(500) NOT NULL,
   alt_text VARCHAR(500) NULL,
@@ -280,9 +193,6 @@ CREATE TABLE component_diagrams (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 6. Specifications
--- ------------------------------
 CREATE TABLE specifications (
   specification_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(120) NOT NULL,
@@ -315,17 +225,10 @@ CREATE TABLE component_specifications (
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 7. Application user accounts
--- These are application demo records, not MySQL server accounts.
--- Password hashes must be generated by the backend; no plaintext passwords.
--- ------------------------------
 CREATE TABLE app_users (
   user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username VARCHAR(100) NOT NULL,
-  -- Login identifier. Nullable so rows created before accounts existed stay
-  -- valid, since a UNIQUE key permits several NULLs while keeping real
-  -- addresses unique.
+
   email VARCHAR(255) NULL,
   password_hash VARCHAR(255) NOT NULL,
   role_code ENUM('NAIVE_USER','APP_DEVELOPER','DBA') NOT NULL DEFAULT 'NAIVE_USER',
@@ -339,9 +242,6 @@ CREATE TABLE app_users (
   CONSTRAINT chk_app_users_active CHECK (is_active IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 8. Audit log
--- ------------------------------
 CREATE TABLE application_audit_log (
   audit_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   table_name VARCHAR(128) NOT NULL,
@@ -357,9 +257,6 @@ CREATE TABLE application_audit_log (
   KEY idx_audit_operation_time (operation_type, changed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------
--- 9. Content type seed data
--- ------------------------------
 INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('TEXT','Text','TEXT','Readable prose or lists'),
 ('IMAGE','Image','IMAGE','Image or image resource'),
@@ -369,9 +266,6 @@ INSERT INTO content_types (code, label, render_kind, description) VALUES
 ('GRAPH','Graph','SVG_DIAGRAM','Graph image or SVG resource'),
 ('DOCUMENT','Document','DOCUMENT','Datasheet or document URL');
 
--- ------------------------------
--- 10. Categories
--- ------------------------------
 INSERT INTO categories (category_id, parent_category_id, name, slug, description, display_order) VALUES
 (1,NULL,'Digital Electronics','digital-electronics','Digital logic and sequential circuits',1),
 (2,NULL,'Semiconductor Devices','semiconductor-devices','Semiconductor components',2),
@@ -399,18 +293,12 @@ INSERT INTO categories (category_id, parent_category_id, name, slug, description
 (22,5,'Relays','relays','Electrically operated switches',1),
 (23,5,'DC Motors','dc-motors','Brushed DC motors and control',2);
 
--- ------------------------------
--- 11. Tags
--- ------------------------------
 INSERT INTO tags (name, slug) VALUES
 ('digital','digital'),('sequential-logic','sequential-logic'),('combinational-logic','combinational-logic'),
 ('semiconductor','semiconductor'),('analog','analog'),('power','power'),('sensor','sensor'),
 ('memory','memory'),('electromechanical','electromechanical'),
 ('timing','timing'),('state-machine','state-machine'),('la-te-x','latex');
 
--- ------------------------------
--- 12. Specification definitions
--- ------------------------------
 INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('Number of States',NULL,'NUMBER','Number of logical states'),
 ('Number of Bits','bit','NUMBER','Number of state bits'),
@@ -437,22 +325,19 @@ INSERT INTO specifications (name, unit, value_kind, description) VALUES
 ('No-Load Speed','RPM','NUMBER','No-load speed'),
 ('Contact Configuration',NULL,'TEXT','Contact arrangement');
 
--- ------------------------------
--- 13. Components (45 initial educational entries)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
-(6, 'Decade Counter', 'decade-counter', 'A modulo-10 counter cycling through decimal digits.', 'A decade counter has ten valid states represented by four bits. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/decade-counter.png', '/assets/svg/counters/decade-counter-symbol.svg', NULL, 1, 1),
-(6, 'Mod-8 Up Counter', 'mod8-up-counter', 'A three-bit counter that counts from 0 through 7.', 'A modulo-8 counter uses three state bits. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/mod8.png', '/assets/svg/counters/mod8-symbol.svg', NULL, 1, 1),
-(6, 'Mod-8 Down Counter', 'mod8-down-counter', 'A three-bit counter that counts down from 7 to 0.', 'A modulo-8 down counter cycles through eight binary states. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/mod8-down.png', '/assets/svg/counters/mod8-down-symbol.svg', NULL, 1, 1),
-(6, 'Binary Up Counter', 'binary-up-counter', 'A counter that increments its binary state.', 'Binary counters represent integer states using flip-flops. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/binary-up.png', '/assets/svg/counters/binary-counter.svg', NULL, 1, 1),
-(6, 'Binary Ripple Counter', 'binary-ripple-counter', 'An asynchronous counter with cascaded toggle stages.', 'Each stage is clocked by a preceding stage output. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/counters/ripple.png', '/assets/svg/counters/ripple-counter.svg', NULL, 1, 1),
-(7, 'SR Flip-Flop', 'sr-flip-flop', 'A set-reset bistable storage element.', 'The SR element stores one bit using set and reset inputs. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/sr.png', '/assets/svg/flipflops/sr.svg', NULL, 1, 1),
-(7, 'JK Flip-Flop', 'jk-flip-flop', 'A bistable element with set, reset, hold, and toggle behavior.', 'The JK flip-flop is a clocked sequential element. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/jk.png', '/assets/svg/flipflops/jk-flip-flop.svg', NULL, 1, 1),
-(7, 'D Flip-Flop', 'd-flip-flop', 'A clocked storage element that samples D.', 'The D flip-flop stores the input value at the active clock edge. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/d.png', '/assets/svg/flipflops/d.svg', NULL, 1, 1),
-(7, 'T Flip-Flop', 't-flip-flop', 'A toggle flip-flop.', 'The T flip-flop either holds or toggles its state. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/t.png', '/assets/svg/flipflops/t.svg', NULL, 1, 1),
-(7, 'Master-Slave JK Flip-Flop', 'master-slave-jk-flip-flop', 'A JK flip-flop using master and slave stages.', 'Two controlled storage stages reduce race-through behavior. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/flipflops/master-slave-jk.png', '/assets/svg/flipflops/master-slave-jk.svg', NULL, 1, 1),
+(6, 'Decade Counter', 'decade-counter', 'A modulo-10 counter cycling through decimal digits.', 'A decade counter has ten valid states represented by four bits. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/counters/decade-counter.png', '/assets/svg/counters/decade-counter-symbol.svg', NULL, 1, 1),
+(6, 'Mod-8 Up Counter', 'mod8-up-counter', 'A three-bit counter that counts from 0 through 7.', 'A modulo-8 counter uses three state bits. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/counters/mod8.png', '/assets/svg/counters/mod8-symbol.svg', NULL, 1, 1),
+(6, 'Mod-8 Down Counter', 'mod8-down-counter', 'A three-bit counter that counts down from 7 to 0.', 'A modulo-8 down counter cycles through eight binary states. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/counters/mod8-down.png', '/assets/svg/counters/mod8-down-symbol.svg', NULL, 1, 1),
+(6, 'Binary Up Counter', 'binary-up-counter', 'A counter that increments its binary state.', 'Binary counters represent integer states using flip-flops. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/counters/binary-up.png', '/assets/svg/counters/binary-counter.svg', NULL, 1, 1),
+(6, 'Binary Ripple Counter', 'binary-ripple-counter', 'An asynchronous counter with cascaded toggle stages.', 'Each stage is clocked by a preceding stage output. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/counters/ripple.png', '/assets/svg/counters/ripple-counter.svg', NULL, 1, 1),
+(7, 'SR Flip-Flop', 'sr-flip-flop', 'A set-reset bistable storage element.', 'The SR element stores one bit using set and reset inputs. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/flipflops/sr.png', '/assets/svg/flipflops/sr.svg', NULL, 1, 1),
+(7, 'JK Flip-Flop', 'jk-flip-flop', 'A bistable element with set, reset, hold, and toggle behavior.', 'The JK flip-flop is a clocked sequential element. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/flipflops/jk.png', '/assets/svg/flipflops/jk-flip-flop.svg', NULL, 1, 1),
+(7, 'D Flip-Flop', 'd-flip-flop', 'A clocked storage element that samples D.', 'The D flip-flop stores the input value at the active clock edge. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/flipflops/d.png', '/assets/svg/flipflops/d.svg', NULL, 1, 1),
+(7, 'T Flip-Flop', 't-flip-flop', 'A toggle flip-flop.', 'The T flip-flop either holds or toggles its state. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/flipflops/t.png', '/assets/svg/flipflops/t.svg', NULL, 1, 1),
+(7, 'Master-Slave JK Flip-Flop', 'master-slave-jk-flip-flop', 'A JK flip-flop using master and slave stages.', 'Two controlled storage stages reduce race-through behavior. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/flipflops/master-slave-jk.png', '/assets/svg/flipflops/master-slave-jk.svg', NULL, 1, 1),
 (8, 'AND Gate', 'and-gate', 'Output is high only when all inputs are high.', 'The AND gate implements logical conjunction. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/and.png', '/assets/svg/gates/and.svg', NULL, 0, 1),
 (8, 'OR Gate', 'or-gate', 'Output is high when at least one input is high.', 'The OR gate implements logical disjunction. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/or.png', '/assets/svg/gates/or.svg', NULL, 0, 1),
 (8, 'NOT Gate', 'not-gate', 'Inverts a single logic input.', 'The NOT gate produces the complement of its input. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/not.png', '/assets/svg/gates/not.svg', NULL, 0, 1),
@@ -460,10 +345,10 @@ VALUES
 (8, 'NOR Gate', 'nor-gate', 'An OR gate followed by inversion.', 'NOR is functionally complete when combined appropriately. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/nor.png', '/assets/svg/gates/nor.svg', NULL, 0, 1),
 (8, 'XOR Gate', 'xor-gate', 'Output is high when inputs differ.', 'XOR implements exclusive disjunction. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/xor.png', '/assets/svg/gates/xor.svg', NULL, 0, 1),
 (8, 'XNOR Gate', 'xnor-gate', 'Output is high when inputs are equal.', 'XNOR is the complement of XOR. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/gates/xnor.png', '/assets/svg/gates/xnor.svg', NULL, 0, 1),
-(9, '2-to-1 Multiplexer', 'mux-2-to-1', 'Selects one of two data inputs.', 'A 2:1 multiplexer routes one data input to the output. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/mux/2to1.png', '/assets/svg/mux/2to1.svg', NULL, 0, 1),
-(9, '4-to-1 Multiplexer', 'mux-4-to-1', 'Selects one of four data inputs.', 'A 4:1 multiplexer uses two select lines. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/mux/4to1.png', '/assets/svg/mux/4to1.svg', NULL, 0, 1),
-(10, '2-to-4 Decoder', 'decoder-2-to-4', 'Activates one output based on a two-bit input.', 'A decoder converts an input code to one-of-N outputs. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/encoders/decoder2to4.png', '/assets/svg/encoders/decoder2to4.svg', NULL, 0, 1),
-(10, '4-to-2 Encoder', 'encoder-4-to-2', 'Encodes one of four active inputs into two bits.', 'A simple encoder assumes a valid one-hot input unless priority logic is specified. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/encoders/encoder4to2.png', '/assets/svg/encoders/encoder4to2.svg', NULL, 0, 1),
+(9, '2-to-1 Multiplexer', 'mux-2-to-1', 'Selects one of two data inputs.', 'A 2:1 multiplexer routes one data input to the output. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/mux/2to1.png', '/assets/svg/mux/2to1.svg', NULL, 0, 1),
+(9, '4-to-1 Multiplexer', 'mux-4-to-1', 'Selects one of four data inputs.', 'A 4:1 multiplexer uses two select lines. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/mux/4to1.png', '/assets/svg/mux/4to1.svg', NULL, 0, 1),
+(10, '2-to-4 Decoder', 'decoder-2-to-4', 'Activates one output based on a two-bit input.', 'A decoder converts an input code to one-of-N outputs. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/encoders/decoder2to4.png', '/assets/svg/encoders/decoder2to4.svg', NULL, 0, 1),
+(10, '4-to-2 Encoder', 'encoder-4-to-2', 'Encodes one of four active inputs into two bits.', 'A simple encoder assumes a valid one-hot input unless priority logic is specified. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/encoders/encoder4to2.png', '/assets/svg/encoders/encoder4to2.svg', NULL, 0, 1),
 (11, 'Rectifier Diode', 'rectifier-diode', 'A diode used for rectification.', 'A PN junction conducts primarily under forward bias. Selection and sizing should account for forward-current rating, reverse-voltage rating, forward voltage, power dissipation, switching behavior, and thermal conditions. Values vary by part number and must be confirmed in the component datasheet.', '/assets/images/diodes/rectifier.png', '/assets/svg/diodes/diode.svg', NULL, 1, 1),
 (12, 'Zener Diode', 'zener-diode', 'A diode used in reverse breakdown for voltage reference/regulation.', 'A Zener diode is operated in its specified reverse-breakdown region. A Zener diode is normally used with a current-limiting element and within its specified reverse-current and power limits. Regulation accuracy depends on Zener voltage tolerance, dynamic resistance, operating current, temperature, and load variation.', '/assets/images/diodes/zener.png', '/assets/svg/diodes/zener.svg', NULL, 1, 1),
 (13, 'Schottky Diode', 'schottky-diode', 'A metal-semiconductor diode often used for fast switching.', 'Schottky diodes typically have low charge storage compared with PN diodes. Schottky devices are commonly considered where low forward drop or fast switching is useful. Reverse leakage, reverse-voltage rating, surge current, and thermal limits remain important selection criteria and vary across part numbers.', '/assets/images/diodes/schottky.png', '/assets/svg/diodes/schottky.svg', NULL, 1, 1),
@@ -489,36 +374,31 @@ VALUES
 (23, 'Brushed DC Motor', 'brushed-dc-motor', 'A motor using brushes and a commutator.', 'Armature current interacts with a magnetic field to create torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/brushed-dc.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1),
 (23, 'DC Gear Motor', 'dc-gear-motor', 'A DC motor combined with a reduction gearbox.', 'The gearbox trades speed for increased output torque. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/motors/dc-gear.png', '/assets/svg/motors/dc-motor.svg', NULL, 1, 1);
 
-
-
--- ------------------------------
--- 13B. Additional component seed data (102 more; total catalogue exceeds 100)
--- ------------------------------
 INSERT INTO components
 (category_id, name, slug, short_description, description, main_image_path, circuit_symbol_path, datasheet_url, is_illustrative, is_published)
 VALUES
-(6, 'Mod-5 Counter', 'mod5-counter', 'A counter with five valid states.', 'A modulo-5 counter cycles through five states. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/mod5-counter.png', '/assets/svg/components/mod5-counter.svg', NULL, 1, 1),
-(6, 'Mod-6 Counter', 'mod6-counter', 'A counter with six valid states.', 'A modulo-6 counter cycles through six states. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/mod6-counter.png', '/assets/svg/components/mod6-counter.svg', NULL, 1, 1),
-(6, 'Mod-10 Synchronous Counter', 'mod10-synchronous-counter', 'A synchronous decade counter.', 'All state flip-flops share a common clock. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/mod10-synchronous-counter.png', '/assets/svg/components/mod10-synchronous-counter.svg', NULL, 1, 1),
-(6, 'BCD Counter', 'bcd-counter', 'A counter that cycles through BCD digits.', 'A BCD counter represents decimal digits using four binary bits. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/bcd-counter.png', '/assets/svg/components/bcd-counter.svg', NULL, 1, 1),
-(6, 'Johnson Counter', 'johnson-counter', 'A twisted-ring shift counter.', 'A Johnson counter feeds the inverted final stage back to the first stage. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/johnson-counter.png', '/assets/svg/components/johnson-counter.svg', NULL, 1, 1),
-(6, 'Ring Counter', 'ring-counter', 'A shift-register counter with circulating state.', 'A ring counter circulates a one-hot pattern through its stages. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/ring-counter.png', '/assets/svg/components/ring-counter.svg', NULL, 1, 1),
-(6, 'Up-Down Counter', 'up-down-counter', 'A counter supporting increment and decrement.', 'Direction logic selects the next count state. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/up-down-counter.png', '/assets/svg/components/up-down-counter.svg', NULL, 1, 1),
-(6, 'Asynchronous Binary Counter', 'asynchronous-binary-counter', 'A counter with cascaded clocking stages.', 'Later stages are triggered by preceding stages. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/asynchronous-binary-counter.png', '/assets/svg/components/asynchronous-binary-counter.svg', NULL, 1, 1),
-(6, 'Synchronous Binary Counter', 'synchronous-binary-counter', 'A counter whose stages share a clock.', 'All state bits receive the same clock signal. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/synchronous-binary-counter.png', '/assets/svg/components/synchronous-binary-counter.svg', NULL, 1, 1),
-(6, 'Programmable Modulo Counter', 'programmable-modulo-counter', 'A counter with a configurable terminal count.', 'A programmable comparator determines the wrap state. The detail page should explain the count sequence, number of state bits, modulus, clock edge or level, reset behavior, and whether the implementation is synchronous or asynchronous. Exact timing limits depend on the selected circuit or IC.', '/assets/images/6/programmable-modulo-counter.png', '/assets/svg/components/programmable-modulo-counter.svg', NULL, 1, 1),
-(7, 'Gated SR Latch', 'gated-sr-latch', 'An SR latch controlled by an enable input.', 'The enable signal determines when S and R can affect the stored state. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/gated-sr-latch.png', '/assets/svg/components/gated-sr-latch.svg', NULL, 1, 1),
-(7, 'Active-Low SR Latch', 'active-low-sr-latch', 'An SR latch with active-low control inputs.', 'Control inputs are asserted at logic zero. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/active-low-sr-latch.png', '/assets/svg/components/active-low-sr-latch.svg', NULL, 1, 1),
-(7, 'Edge-Triggered D Flip-Flop', 'edge-triggered-d-flip-flop', 'A D storage element triggered by a clock edge.', 'The D input is sampled at a specified clock transition. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/edge-triggered-d-flip-flop.png', '/assets/svg/components/edge-triggered-d-flip-flop.svg', NULL, 1, 1),
-(7, 'Positive-Edge D Flip-Flop', 'positive-edge-d-flip-flop', 'A D flip-flop triggered on a rising clock edge.', 'The rising clock edge defines the sampling instant. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/positive-edge-d-flip-flop.png', '/assets/svg/components/positive-edge-d-flip-flop.svg', NULL, 1, 1),
-(7, 'Negative-Edge D Flip-Flop', 'negative-edge-d-flip-flop', 'A D flip-flop triggered on a falling clock edge.', 'The falling clock edge defines the sampling instant. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/negative-edge-d-flip-flop.png', '/assets/svg/components/negative-edge-d-flip-flop.svg', NULL, 1, 1),
-(7, 'JK Latch', 'jk-latch', 'A level-sensitive JK storage element.', 'The latch responds while its enable level is active. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/jk-latch.png', '/assets/svg/components/jk-latch.svg', NULL, 1, 1),
-(7, 'Toggle Latch', 'toggle-latch', 'A level-controlled storage element with toggle behavior.', 'A toggle control determines whether the stored state changes. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/toggle-latch.png', '/assets/svg/components/toggle-latch.svg', NULL, 1, 1),
-(7, 'Dual D Flip-Flop', 'dual-d-flip-flop', 'Two D flip-flops in one integrated circuit.', 'The device contains two independent D storage channels. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/dual-d-flip-flop.png', '/assets/svg/components/dual-d-flip-flop.svg', NULL, 1, 1),
-(7, 'Quad D Flip-Flop', 'quad-d-flip-flop', 'Four D flip-flops in one package.', 'The device provides four clocked storage bits. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/quad-d-flip-flop.png', '/assets/svg/components/quad-d-flip-flop.svg', NULL, 1, 1),
-(7, 'Presettable D Flip-Flop', 'presettable-d-flip-flop', 'A D flip-flop with asynchronous preset.', 'Preset forces a defined output state independently of the clock. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/presettable-d-flip-flop.png', '/assets/svg/components/presettable-d-flip-flop.svg', NULL, 1, 1),
-(7, 'Clearable D Flip-Flop', 'clearable-d-flip-flop', 'A D flip-flop with clear input.', 'Clear forces the output to a defined state. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/clearable-d-flip-flop.png', '/assets/svg/components/clearable-d-flip-flop.svg', NULL, 1, 1),
-(7, 'JK Flip-Flop with Preset and Clear', 'jk-preset-clear-flip-flop', 'A JK flip-flop with asynchronous controls.', 'Preset and clear establish the initial output state. The detail page should identify the input signals, active clock edge or enable condition, asynchronous preset/clear behavior if present, and the output-state convention. Timing-sensitive designs must also respect setup time, hold time, and clock-to-output delay from the relevant datasheet.', '/assets/images/7/jk-preset-clear-flip-flop.png', '/assets/svg/components/jk-preset-clear-flip-flop.svg', NULL, 1, 1),
+(6, 'Mod-5 Counter', 'mod5-counter', 'A counter with five valid states.', 'A modulo-5 counter cycles through five states. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/mod5-counter.png', '/assets/svg/components/mod5-counter.svg', NULL, 1, 1),
+(6, 'Mod-6 Counter', 'mod6-counter', 'A counter with six valid states.', 'A modulo-6 counter cycles through six states. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/mod6-counter.png', '/assets/svg/components/mod6-counter.svg', NULL, 1, 1),
+(6, 'Mod-10 Synchronous Counter', 'mod10-synchronous-counter', 'A synchronous decade counter.', 'All state flip-flops share a common clock. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/mod10-synchronous-counter.png', '/assets/svg/components/mod10-synchronous-counter.svg', NULL, 1, 1),
+(6, 'BCD Counter', 'bcd-counter', 'A counter that cycles through BCD digits.', 'A BCD counter represents decimal digits using four binary bits. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/bcd-counter.png', '/assets/svg/components/bcd-counter.svg', NULL, 1, 1),
+(6, 'Johnson Counter', 'johnson-counter', 'A twisted-ring shift counter.', 'A Johnson counter feeds the inverted final stage back to the first stage. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/johnson-counter.png', '/assets/svg/components/johnson-counter.svg', NULL, 1, 1),
+(6, 'Ring Counter', 'ring-counter', 'A shift-register counter with circulating state.', 'A ring counter circulates a one-hot pattern through its stages. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/ring-counter.png', '/assets/svg/components/ring-counter.svg', NULL, 1, 1),
+(6, 'Up-Down Counter', 'up-down-counter', 'A counter supporting increment and decrement.', 'Direction logic selects the next count state. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/up-down-counter.png', '/assets/svg/components/up-down-counter.svg', NULL, 1, 1),
+(6, 'Asynchronous Binary Counter', 'asynchronous-binary-counter', 'A counter with cascaded clocking stages.', 'Later stages are triggered by preceding stages. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/asynchronous-binary-counter.png', '/assets/svg/components/asynchronous-binary-counter.svg', NULL, 1, 1),
+(6, 'Synchronous Binary Counter', 'synchronous-binary-counter', 'A counter whose stages share a clock.', 'All state bits receive the same clock signal. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/synchronous-binary-counter.png', '/assets/svg/components/synchronous-binary-counter.svg', NULL, 1, 1),
+(6, 'Programmable Modulo Counter', 'programmable-modulo-counter', 'A counter with a configurable terminal count.', 'A programmable comparator determines the wrap state. An N-state counter advances through its defined sequence on the active clock event and wraps or reloads at its terminal condition. Its modulus and state width determine sequence capacity; direction, reset or load controls, and synchronous versus ripple clocking determine transition behavior. Maximum clock rate and reset timing depend on the selected implementation.', '/assets/images/6/programmable-modulo-counter.png', '/assets/svg/components/programmable-modulo-counter.svg', NULL, 1, 1),
+(7, 'Gated SR Latch', 'gated-sr-latch', 'An SR latch controlled by an enable input.', 'The enable signal determines when S and R can affect the stored state. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/gated-sr-latch.png', '/assets/svg/components/gated-sr-latch.svg', NULL, 1, 1),
+(7, 'Active-Low SR Latch', 'active-low-sr-latch', 'An SR latch with active-low control inputs.', 'Control inputs are asserted at logic zero. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/active-low-sr-latch.png', '/assets/svg/components/active-low-sr-latch.svg', NULL, 1, 1),
+(7, 'Edge-Triggered D Flip-Flop', 'edge-triggered-d-flip-flop', 'A D storage element triggered by a clock edge.', 'The D input is sampled at a specified clock transition. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/edge-triggered-d-flip-flop.png', '/assets/svg/components/edge-triggered-d-flip-flop.svg', NULL, 1, 1),
+(7, 'Positive-Edge D Flip-Flop', 'positive-edge-d-flip-flop', 'A D flip-flop triggered on a rising clock edge.', 'The rising clock edge defines the sampling instant. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/positive-edge-d-flip-flop.png', '/assets/svg/components/positive-edge-d-flip-flop.svg', NULL, 1, 1),
+(7, 'Negative-Edge D Flip-Flop', 'negative-edge-d-flip-flop', 'A D flip-flop triggered on a falling clock edge.', 'The falling clock edge defines the sampling instant. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/negative-edge-d-flip-flop.png', '/assets/svg/components/negative-edge-d-flip-flop.svg', NULL, 1, 1),
+(7, 'JK Latch', 'jk-latch', 'A level-sensitive JK storage element.', 'The latch responds while its enable level is active. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/jk-latch.png', '/assets/svg/components/jk-latch.svg', NULL, 1, 1),
+(7, 'Toggle Latch', 'toggle-latch', 'A level-controlled storage element with toggle behavior.', 'A toggle control determines whether the stored state changes. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/toggle-latch.png', '/assets/svg/components/toggle-latch.svg', NULL, 1, 1),
+(7, 'Dual D Flip-Flop', 'dual-d-flip-flop', 'Two D flip-flops in one integrated circuit.', 'The device contains two independent D storage channels. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/dual-d-flip-flop.png', '/assets/svg/components/dual-d-flip-flop.svg', NULL, 1, 1),
+(7, 'Quad D Flip-Flop', 'quad-d-flip-flop', 'Four D flip-flops in one package.', 'The device provides four clocked storage bits. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/quad-d-flip-flop.png', '/assets/svg/components/quad-d-flip-flop.svg', NULL, 1, 1),
+(7, 'Presettable D Flip-Flop', 'presettable-d-flip-flop', 'A D flip-flop with asynchronous preset.', 'Preset forces a defined output state independently of the clock. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/presettable-d-flip-flop.png', '/assets/svg/components/presettable-d-flip-flop.svg', NULL, 1, 1),
+(7, 'Clearable D Flip-Flop', 'clearable-d-flip-flop', 'A D flip-flop with clear input.', 'Clear forces the output to a defined state. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/clearable-d-flip-flop.png', '/assets/svg/components/clearable-d-flip-flop.svg', NULL, 1, 1),
+(7, 'JK Flip-Flop with Preset and Clear', 'jk-preset-clear-flip-flop', 'A JK flip-flop with asynchronous controls.', 'Preset and clear establish the initial output state. During normal operation, the next output state is determined by the input combination and the active clock edge or enable level. Preset and clear, when provided, may override that behavior with device-specific active polarity. Setup time, hold time, and propagation delay are electrical limits specified for the selected part.', '/assets/images/7/jk-preset-clear-flip-flop.png', '/assets/svg/components/jk-preset-clear-flip-flop.svg', NULL, 1, 1),
 (8, 'Buffer Gate', 'buffer-gate', 'A non-inverting logic buffer.', 'The output follows the input logic level. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/buffer-gate.png', '/assets/svg/components/buffer-gate.svg', NULL, 1, 1),
 (8, 'Tri-State Buffer', 'tri-state-buffer', 'A buffer with high-impedance output state.', 'An enable input controls whether the output is driven. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/tri-state-buffer.png', '/assets/svg/components/tri-state-buffer.svg', NULL, 1, 1),
 (8, 'Open-Collector Inverter', 'open-collector-inverter', 'An inverter with an open-collector output stage.', 'The output transistor can pull low and requires a pull-up. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/open-collector-inverter.png', '/assets/svg/components/open-collector-inverter.svg', NULL, 1, 1),
@@ -528,21 +408,21 @@ VALUES
 (8, '2-Input OR-AND-Invert Gate', 'oai21-gate', 'Combines OR and AND terms followed by inversion.', 'An OAI21 cell implements a compound logic function. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/oai21-gate.png', '/assets/svg/components/oai21-gate.svg', NULL, 1, 1),
 (8, 'Four-Input NAND Gate', 'four-input-nand-gate', 'A NAND gate with four inputs.', 'The output complements the conjunction of four inputs. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/four-input-nand-gate.png', '/assets/svg/components/four-input-nand-gate.svg', NULL, 1, 1),
 (8, 'Four-Input NOR Gate', 'four-input-nor-gate', 'A NOR gate with four inputs.', 'The output complements the disjunction of four inputs. The Boolean function defines the ideal logic behavior; a physical implementation also has logic-level thresholds, propagation delay, fan-in limits, and output-drive limits. Multi-input and compound variants should be evaluated against their exact truth table and device datasheet.', '/assets/images/8/four-input-nor-gate.png', '/assets/svg/components/four-input-nor-gate.svg', NULL, 1, 1),
-(9, '8-to-1 Multiplexer', 'mux-8-to-1', 'Selects one of eight data inputs.', 'Three select bits address one of eight inputs. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/mux-8-to-1.png', '/assets/svg/components/mux-8-to-1.svg', NULL, 1, 1),
-(9, '16-to-1 Multiplexer', 'mux-16-to-1', 'Selects one of sixteen data inputs.', 'Four select bits address one of sixteen inputs. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/mux-16-to-1.png', '/assets/svg/components/mux-16-to-1.svg', NULL, 1, 1),
-(9, 'Dual 4-to-1 Multiplexer', 'dual-mux-4-to-1', 'Two independent four-input multiplexers.', 'The device provides two separate selection channels. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/dual-mux-4-to-1.png', '/assets/svg/components/dual-mux-4-to-1.svg', NULL, 1, 1),
-(9, 'Analog Multiplexer', 'analog-multiplexer', 'Routes one analog signal to a shared output.', 'A control code selects one analog channel. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/analog-multiplexer.png', '/assets/svg/components/analog-multiplexer.svg', NULL, 1, 1),
-(9, 'Demultiplexer 1-to-4', 'demux-1-to-4', 'Routes one input to one of four outputs.', 'Select inputs determine which output receives the data. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/demux-1-to-4.png', '/assets/svg/components/demux-1-to-4.svg', NULL, 1, 1),
-(9, 'Demultiplexer 1-to-8', 'demux-1-to-8', 'Routes one input to one of eight outputs.', 'Three select bits choose an output channel. The number of data channels and select lines determines the selection capacity. The detail page should clarify select-code mapping, enable polarity, output behavior, and whether the device switches digital logic or analog signals.', '/assets/images/9/demux-1-to-8.png', '/assets/svg/components/demux-1-to-8.svg', NULL, 1, 1),
-(10, '3-to-8 Decoder', 'decoder-3-to-8', 'Decodes a three-bit code to eight outputs.', 'Each input code selects one output line. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/decoder-3-to-8.png', '/assets/svg/components/decoder-3-to-8.svg', NULL, 1, 1),
-(10, '4-to-16 Decoder', 'decoder-4-to-16', 'Decodes a four-bit code to sixteen outputs.', 'Four input bits identify one of sixteen output lines. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/decoder-4-to-16.png', '/assets/svg/components/decoder-4-to-16.svg', NULL, 1, 1),
-(10, 'Priority Encoder 4-to-2', 'priority-encoder-4-to-2', 'Encodes the highest-priority active input.', 'Priority logic resolves multiple simultaneous asserted inputs. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/priority-encoder-4-to-2.png', '/assets/svg/components/priority-encoder-4-to-2.svg', NULL, 1, 1),
-(10, 'Priority Encoder 8-to-3', 'priority-encoder-8-to-3', 'Encodes eight inputs into a three-bit code with priority.', 'Priority logic chooses one asserted input when several are active. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/priority-encoder-8-to-3.png', '/assets/svg/components/priority-encoder-8-to-3.svg', NULL, 1, 1),
-(10, 'BCD-to-7-Segment Decoder', 'bcd-to-7-segment-decoder', 'Converts BCD digits to seven-segment control signals.', 'Combinational logic maps each decimal digit to segment patterns. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/bcd-to-7-segment-decoder.png', '/assets/svg/components/bcd-to-7-segment-decoder.svg', NULL, 1, 1),
-(10, 'Binary-to-Gray Converter', 'binary-to-gray-converter', 'Converts binary code to Gray code.', 'Adjacent Gray-code values differ by one bit. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/binary-to-gray-converter.png', '/assets/svg/components/binary-to-gray-converter.svg', NULL, 1, 1),
-(10, 'Gray-to-Binary Converter', 'gray-to-binary-converter', 'Converts Gray code to binary.', 'Cumulative XOR operations recover the binary code. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/gray-to-binary-converter.png', '/assets/svg/components/gray-to-binary-converter.svg', NULL, 1, 1),
-(10, 'BCD-to-Binary Converter', 'bcd-to-binary-converter', 'Converts packed decimal digits to a binary number.', 'The decimal digit values are combined by place value. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/bcd-to-binary-converter.png', '/assets/svg/components/bcd-to-binary-converter.svg', NULL, 1, 1),
-(10, 'Binary-to-BCD Converter', 'binary-to-bcd-converter', 'Converts a binary number to decimal-coded digits.', 'Conversion logic produces one BCD nibble per decimal digit. The input code maps to an output code or one-of-N output lines. The detail page should state input/output polarity, valid-input assumptions, priority behavior where applicable, and how simultaneous active inputs are handled.', '/assets/images/10/binary-to-bcd-converter.png', '/assets/svg/components/binary-to-bcd-converter.svg', NULL, 1, 1),
+(9, '8-to-1 Multiplexer', 'mux-8-to-1', 'Selects one of eight data inputs.', 'Three select bits address one of eight inputs. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/mux-8-to-1.png', '/assets/svg/components/mux-8-to-1.svg', NULL, 1, 1),
+(9, '16-to-1 Multiplexer', 'mux-16-to-1', 'Selects one of sixteen data inputs.', 'Four select bits address one of sixteen inputs. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/mux-16-to-1.png', '/assets/svg/components/mux-16-to-1.svg', NULL, 1, 1),
+(9, 'Dual 4-to-1 Multiplexer', 'dual-mux-4-to-1', 'Two independent four-input multiplexers.', 'The device provides two separate selection channels. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/dual-mux-4-to-1.png', '/assets/svg/components/dual-mux-4-to-1.svg', NULL, 1, 1),
+(9, 'Analog Multiplexer', 'analog-multiplexer', 'Routes one analog signal to a shared output.', 'A control code selects one analog channel. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/analog-multiplexer.png', '/assets/svg/components/analog-multiplexer.svg', NULL, 1, 1),
+(9, 'Demultiplexer 1-to-4', 'demux-1-to-4', 'Routes one input to one of four outputs.', 'Select inputs determine which output receives the data. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/demux-1-to-4.png', '/assets/svg/components/demux-1-to-4.svg', NULL, 1, 1),
+(9, 'Demultiplexer 1-to-8', 'demux-1-to-8', 'Routes one input to one of eight outputs.', 'Three select bits choose an output channel. The number of data channels and select lines determines the selection capacity. Select inputs determine the routed channel; an enable input, when present, qualifies the connection and defines its inactive behavior. For analog switches, also check signal range, on-resistance, leakage, bandwidth, and charge injection. Digital multiplexers must meet logic-threshold and timing requirements.', '/assets/images/9/demux-1-to-8.png', '/assets/svg/components/demux-1-to-8.svg', NULL, 1, 1),
+(10, '3-to-8 Decoder', 'decoder-3-to-8', 'Decodes a three-bit code to eight outputs.', 'Each input code selects one output line. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/decoder-3-to-8.png', '/assets/svg/components/decoder-3-to-8.svg', NULL, 1, 1),
+(10, '4-to-16 Decoder', 'decoder-4-to-16', 'Decodes a four-bit code to sixteen outputs.', 'Four input bits identify one of sixteen output lines. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/decoder-4-to-16.png', '/assets/svg/components/decoder-4-to-16.svg', NULL, 1, 1),
+(10, 'Priority Encoder 4-to-2', 'priority-encoder-4-to-2', 'Encodes the highest-priority active input.', 'Priority logic resolves multiple simultaneous asserted inputs. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/priority-encoder-4-to-2.png', '/assets/svg/components/priority-encoder-4-to-2.svg', NULL, 1, 1),
+(10, 'Priority Encoder 8-to-3', 'priority-encoder-8-to-3', 'Encodes eight inputs into a three-bit code with priority.', 'Priority logic chooses one asserted input when several are active. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/priority-encoder-8-to-3.png', '/assets/svg/components/priority-encoder-8-to-3.svg', NULL, 1, 1),
+(10, 'BCD-to-7-Segment Decoder', 'bcd-to-7-segment-decoder', 'Converts BCD digits to seven-segment control signals.', 'Combinational logic maps each decimal digit to segment patterns. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/bcd-to-7-segment-decoder.png', '/assets/svg/components/bcd-to-7-segment-decoder.svg', NULL, 1, 1),
+(10, 'Binary-to-Gray Converter', 'binary-to-gray-converter', 'Converts binary code to Gray code.', 'Adjacent Gray-code values differ by one bit. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/binary-to-gray-converter.png', '/assets/svg/components/binary-to-gray-converter.svg', NULL, 1, 1),
+(10, 'Gray-to-Binary Converter', 'gray-to-binary-converter', 'Converts Gray code to binary.', 'Cumulative XOR operations recover the binary code. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/gray-to-binary-converter.png', '/assets/svg/components/gray-to-binary-converter.svg', NULL, 1, 1),
+(10, 'BCD-to-Binary Converter', 'bcd-to-binary-converter', 'Converts packed decimal digits to a binary number.', 'The decimal digit values are combined by place value. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/bcd-to-binary-converter.png', '/assets/svg/components/bcd-to-binary-converter.svg', NULL, 1, 1),
+(10, 'Binary-to-BCD Converter', 'binary-to-bcd-converter', 'Converts a binary number to decimal-coded digits.', 'Conversion logic produces one BCD nibble per decimal digit. The input code maps to an output code or one-of-N output lines. Truth tables define valid input combinations, output coding, and active-high or active-low conventions. A priority encoder resolves simultaneous requests according to its priority order; a simple encoder may require one-hot inputs, while decoders and code converters follow their specified mappings. Enable and invalid-code behavior depend on the specific device.', '/assets/images/10/binary-to-bcd-converter.png', '/assets/svg/components/binary-to-bcd-converter.svg', NULL, 1, 1),
 (11, 'Fast Recovery Diode', 'fast-recovery-diode', 'A diode optimized for short reverse-recovery time.', 'The device is designed to switch between conduction states quickly. Selection and sizing should account for forward-current rating, reverse-voltage rating, forward voltage, power dissipation, switching behavior, and thermal conditions. Values vary by part number and must be confirmed in the component datasheet.', '/assets/images/11/fast-recovery-diode.png', '/assets/svg/components/fast-recovery-diode.svg', NULL, 1, 1),
 (11, 'Bridge Rectifier', 'bridge-rectifier', 'A four-diode arrangement for full-wave rectification.', 'Two diodes conduct during each half-cycle. Selection and sizing should account for forward-current rating, reverse-voltage rating, forward voltage, power dissipation, switching behavior, and thermal conditions. Values vary by part number and must be confirmed in the component datasheet.', '/assets/images/11/bridge-rectifier.png', '/assets/svg/components/bridge-rectifier.svg', NULL, 1, 1),
 (11, 'Small-Signal Switching Diode', 'small-signal-switching-diode', 'A diode intended for low-current switching applications.', 'The junction switches between forward and reverse bias. Selection and sizing should account for forward-current rating, reverse-voltage rating, forward voltage, power dissipation, switching behavior, and thermal conditions. Values vary by part number and must be confirmed in the component datasheet.', '/assets/images/11/small-signal-switching-diode.png', '/assets/svg/components/small-signal-switching-diode.svg', NULL, 1, 1),
@@ -600,9 +480,6 @@ VALUES
 (23, 'Servo Motor', 'servo-motor', 'A motor used in a closed-loop position or speed system.', 'Feedback compares desired and measured motion. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/servo-motor.png', '/assets/svg/components/servo-motor.svg', NULL, 1, 1),
 (23, 'Permanent-Magnet DC Motor', 'permanent-magnet-dc-motor', 'A DC motor with permanent-magnet field excitation.', 'Armature current interacts with the fixed magnetic field. Motor operation depends on rated voltage, load torque, speed, current, mechanical mounting, and thermal limits. Reversing direction or controlling speed requires a suitable driver and protection against inductive transients.', '/assets/images/23/permanent-magnet-dc-motor.png', '/assets/svg/components/permanent-magnet-dc-motor.svg', NULL, 1, 1);
 
--- ------------------------------
--- 14. Component tags
--- ------------------------------
 INSERT IGNORE INTO component_tags (component_id, tag_id)
 SELECT c.component_id, t.tag_id
 FROM components c
@@ -616,9 +493,6 @@ JOIN tags t ON (
   (c.category_id IN (22,23) AND t.slug IN ('electromechanical'))
 );
 
--- ------------------------------
--- 15. Category content templates
--- ------------------------------
 INSERT INTO category_content_types
 (category_id, content_type_id, section_key, section_label, is_required, display_order)
 SELECT c.category_id, ct.content_type_id, x.section_key, x.section_label, x.is_required, x.display_order
@@ -639,17 +513,12 @@ FROM (
 JOIN categories c ON c.category_id = x.category_id
 JOIN content_types ct ON ct.code = x.type_code;
 
--- ------------------------------
--- 16. Component content seed records
--- ------------------------------
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'overview', 'Overview',
        c.description, NULL, NULL, 1
 FROM components c JOIN content_types ct ON ct.code='TEXT';
 
-
--- Counter state tables (stored as JSON strings)
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'state_table', 'State / Next-State Table',
@@ -672,7 +541,6 @@ FROM components c
 JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=6;
 
--- Flip-flop truth, characteristic, excitation tables, and equations are separate.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, alt_text, caption, display_order)
 SELECT c.component_id, ct.content_type_id, 'truth_table', 'Truth Table',
@@ -739,18 +607,13 @@ SELECT c.component_id, ct.content_type_id, 'excitation_table', 'Excitation Table
 FROM components c JOIN content_types ct ON ct.code='TABLE'
 WHERE c.category_id=7;
 
--- Visual assets share one model; diagram_kind records which drawing it is.
--- SYMBOL is the pin-level block (what the hero shows); CIRCUIT is the
--- all-NAND implementation shown immediately below the hero; PINOUT is the DIP
--- package drawing shown beside the technical specifications.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Symbol Diagram', 'SYMBOL',
-       c.circuit_symbol_path, CONCAT('Pin-level symbol for ',c.name), 'Pin-level block symbol.', 10
+       c.circuit_symbol_path, CONCAT('Pin-level diagram for ',c.name,', showing its functional symbol and labeled input, output, clock, control, and supply terminals where applicable.'), 'Functional block diagram identifying the component and its labeled signal, clock, control, supply, and output terminals where applicable.', 10
 FROM components c
 WHERE c.circuit_symbol_path IS NOT NULL;
 
--- Logic gates have no circuit diagram: their implementation is the IC pinout.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
@@ -758,16 +621,15 @@ SELECT c.component_id, 'Circuit Diagram', 'CIRCUIT',
          WHEN 'jk-flip-flop' THEN '/assets/svg/circuits/jk-flip-flop-circuit.svg'
          ELSE CONCAT('/assets/svg/circuits/',c.slug,'.svg')
        END,
-       CONCAT('Circuit diagram for ',c.name), 'All-NAND implementation.', 20
+       CONCAT('Circuit schematic for ',c.name,', showing interconnected logic gates or device stages and their principal signal paths.'), 'Schematic showing the principal logic or device stages, their interconnections, and the signal and control paths in the reference implementation.', 20
 FROM components c
 WHERE c.category_id <> 8;
 
--- IC pinout, shown with the technical specifications.
 INSERT INTO component_diagrams
 (component_id, title, diagram_kind, image_path, alt_text, caption, display_order)
 SELECT c.component_id, 'Pinout Diagram', 'PINOUT',
        CONCAT('/assets/svg/pinouts/',c.slug,'.svg'),
-       CONCAT('IC pinout for ',c.name), 'DIP package pin numbering.', 25
+       CONCAT('Package pin map for ',c.name,', showing numbered terminals and signal names; confirm orientation and package variant against the datasheet.'), 'Identifies numbered package terminals and their signal names in standard orientation. Confirm package variant and pin-one orientation against the device datasheet.', 25
 FROM components c
 WHERE c.category_id IN (6,7,8,9,10,17,18,19,20,21);
 
@@ -791,7 +653,7 @@ SELECT c.component_id, 'State Diagram', 'STATE',
          WHEN 'johnson-counter' THEN '/assets/svg/counters/johnson-counter-state.svg'
          WHEN 'mod10-synchronous-counter' THEN '/assets/svg/counters/mod10-synchronous-counter-state.svg'
          ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-state.svg')
-       END, CONCAT('State machine for ',c.name), 'Moore and Mealy machines, side by side.', 30
+       END, CONCAT(c.name,' state transitions: MOORE machine first on the left with outputs associated with states; MEALY machine second on the right with input/output labels on directed arrows. Self-loops and cross-state transitions show direction.'), 'MOORE appears first on the left, with outputs associated with states; MEALY follows on the right, with input/output labels on transitions. Directed arrowheads mark every transition, including self-loops.', 30
 FROM components c
 WHERE c.category_id IN (6,7);
 
@@ -802,11 +664,10 @@ SELECT c.component_id, 'Timing Diagram', 'TIMING',
             THEN CONCAT('/assets/svg/counters/',c.slug,'-timing.svg')
             ELSE CONCAT('/assets/svg/flipflops/',c.slug,'-timing.svg')
        END,
-       CONCAT('Timing diagram for ',c.name), 'Signal levels over successive clock cycles.', 40
+       CONCAT('Timing waveform for ',c.name,', with clock and related logic signals across successive cycles, showing transitions and resulting state or output changes.'), 'Aligns clock and logic signals across successive cycles to show active transitions and resulting state or output changes. Exact setup, hold, and propagation limits depend on the selected device.', 40
 FROM components c
 WHERE c.category_id IN (6,7);
 
--- Representative Boolean equations for gates and multiplexers.
 INSERT INTO component_content
 (component_id, content_type_id, section_key, title, content, display_order)
 SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation',
@@ -825,9 +686,6 @@ SELECT c.component_id, ct.content_type_id, 'boolean_equation', 'Boolean Equation
 FROM components c JOIN content_types ct ON ct.code='EQUATION'
 WHERE c.category_id IN (8,9);
 
--- ------------------------------
--- 17. Specification values
--- ------------------------------
 INSERT INTO component_specifications
 (component_id, specification_id, numeric_value, text_value, range_min, range_max, unit_override, source_note)
 SELECT c.component_id, s.specification_id,
@@ -856,9 +714,6 @@ SELECT c.component_id, s.specification_id, 1, NULL, NULL, NULL, NULL, 'Logical i
 FROM components c JOIN specifications s ON s.name='Number of Inputs'
 WHERE c.slug='not-gate';
 
--- ------------------------------
--- 18. Views
--- ------------------------------
 CREATE VIEW v_component_catalogue AS
 SELECT c.component_id, c.name AS component_name, c.slug, c.short_description,
        c.is_published, c.is_illustrative, cat.category_id, cat.name AS category_name,
@@ -873,9 +728,6 @@ FROM categories cat
 LEFT JOIN components c ON c.category_id = cat.category_id
 GROUP BY cat.category_id, cat.name;
 
--- ------------------------------
--- 19. Stored procedures/functions/triggers
--- ------------------------------
 DELIMITER $$
 
 CREATE PROCEDURE sp_insert_component(
@@ -1042,8 +894,6 @@ BEGIN
   DELETE FROM app_users WHERE user_id=p_user_id;
 END$$
 
--- Category self-parent validation is implemented with triggers rather than a CHECK.
--- MySQL rejects references to AUTO_INCREMENT columns inside CHECK constraints.
 CREATE TRIGGER trg_categories_no_self_parent_bi
 BEFORE INSERT ON categories FOR EACH ROW
 BEGIN
@@ -1060,7 +910,6 @@ BEGIN
   END IF;
 END$$
 
--- MySQL row-level validation triggers. The table also has declarative checks.
 CREATE TRIGGER trg_components_validate_bi
 BEFORE INSERT ON components FOR EACH ROW
 BEGIN
@@ -1083,7 +932,6 @@ BEGIN
   END IF;
 END$$
 
--- MySQL has no statement-level trigger; these row triggers normalize each changed row.
 CREATE TRIGGER trg_components_uppercase_bi
 BEFORE INSERT ON components FOR EACH ROW
 BEGIN
@@ -1156,14 +1004,6 @@ END$$
 
 DELIMITER ;
 
--- ------------------------------
--- 20. Accounts: sessions and personal collections
---     Mirrors database/11_auth_and_personalization.sql. This file is a fresh
---     install, so the objects are created outright rather than migrated.
---
---     The cookie carries a random token; only its SHA-256 digest is stored here,
---     so a database dump cannot be replayed as a live session.
--- ------------------------------
 CREATE TABLE user_sessions (
   session_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -1180,7 +1020,6 @@ CREATE TABLE user_sessions (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- One row per (user, component): saving twice cannot create a duplicate.
 CREATE TABLE bookmarks (
   bookmark_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
@@ -1227,7 +1066,6 @@ CREATE TABLE collection_components (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- DATETIME(6): two views inside the same second still have a definite order.
 CREATE TABLE recently_viewed (
   user_id BIGINT UNSIGNED NOT NULL,
   component_id BIGINT UNSIGNED NOT NULL,
@@ -1242,8 +1080,6 @@ CREATE TABLE recently_viewed (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Audit trail for account changes (mirrors database/12_app_user_audit.sql).
--- Password material is never logged: an update records only whether it changed.
 DELIMITER $$
 
 CREATE TRIGGER trg_app_users_audit_ai
@@ -1283,9 +1119,6 @@ END$$
 
 DELIMITER ;
 
--- ------------------------------
--- 21. Verification queries
--- ------------------------------
 SELECT 'categories' AS table_name, COUNT(*) AS row_count FROM categories
 UNION ALL SELECT 'components', COUNT(*) FROM components
 UNION ALL SELECT 'content_types', COUNT(*) FROM content_types
@@ -1298,34 +1131,4 @@ UNION ALL SELECT 'user_sessions', COUNT(*) FROM user_sessions
 UNION ALL SELECT 'bookmarks', COUNT(*) FROM bookmarks
 UNION ALL SELECT 'collections', COUNT(*) FROM collections;
 
--- Query examples (a fuller set lives in database/09_assignment11_queries.sql).
--- 1. Full-table display:
--- SELECT * FROM components;
--- 2. Insert demonstration (use a valid category and unique slug):
--- CALL sp_insert_component(8,'Example Gate','example-gate','Example row inserted through the procedure');
--- 3. Aggregate:
--- SELECT COUNT(*) AS component_count FROM components;
--- 4. Conditional query:
--- SELECT * FROM components WHERE category_id=6;
--- 5. Join:
--- SELECT c.name,cat.name AS category_name FROM components c JOIN categories cat ON cat.category_id=c.category_id;
--- 6. Subquery:
--- SELECT name FROM components WHERE category_id IN (SELECT category_id FROM categories WHERE parent_category_id=1);
--- 7. Correlated subquery:
--- SELECT cat.name FROM categories cat WHERE EXISTS (SELECT 1 FROM components c WHERE c.category_id=cat.category_id);
--- 8. Update:
--- UPDATE components SET short_description='Updated description' WHERE slug='decade-counter';
--- XML output for queries 1, 3, and 4 should be serialized by the Node.js API/frontend.
-
--- Final notes:
--- * This script resets the tables it owns (see the DROP list at the top);
---   it never drops or creates the database itself.
--- * State-machine and other SVG files are referenced by path and must be created in the frontend.
--- * Do not use the application demo user table as a substitute for MySQL server accounts/roles.
--- * Some MySQL/MariaDB versions differ in CHECK constraint enforcement and trigger features.
-
--- ------------------------------
--- Restore the session setting changed at the top of this file
--- ------------------------------
 SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS;
-

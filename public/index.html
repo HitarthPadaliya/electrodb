@@ -7,29 +7,23 @@
   <meta name="theme-color" content="#05070E">
   <title>ElectroDB - Electronic Components Reference Catalog</title>
 
-  <!-- Favicon -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-  <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300..700&family=Poppins:wght@200;300;400;500;600;700&family=Lexend:wght@200..700&family=Inter:wght@300..700&display=swap" rel="stylesheet">
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="/assets/css/styles.css?v=22">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=24">
 
-  <!-- KaTeX for LaTeX Math Rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-  <!-- Cursor spotlight (decorative) -->
   <div class="cursor-glow" id="glow" aria-hidden="true"></div>
 
   <a class="skip-link" href="#app-content">Skip to content</a>
 
-  <!-- Site Header / Navbar -->
   <header class="navbar" id="site-navbar">
     <a href="#/" class="brand" aria-label="ElectroDB home">
       <img src="/favicon.svg" alt="" width="40" height="40">
@@ -68,7 +62,7 @@
         <span aria-hidden="true">⚗</span> Lab Console
       </a>
 
-      <div class="nav-account" id="nav-account"><!-- session controls --></div>
+      <div class="nav-account" id="nav-account"></div>
 
       <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
@@ -76,28 +70,22 @@
     </div>
   </header>
 
-  <!-- Main Content Container (populated by the SPA router) -->
   <main id="app-content" class="main-content" tabindex="-1"></main>
 
-  <!-- Global Modal Box (SVG zoom, XML exports, forms) -->
   <div id="global-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close-btn modal-viewer-close" type="button" aria-label="Close fullscreen view">&times;</button>
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="modal-title">Details</h3>
         <button class="modal-close-btn" type="button" aria-label="Close dialog">&times;</button>
       </div>
       <div id="modal-body" class="modal-body">
-        <!-- Content injected dynamically -->
       </div>
     </div>
   </div>
 
-  <!-- Toast notifications -->
   <div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
 
-  <!-- Scripts -->
-  <script src="/assets/js/api.js?v=22"></script>
-  <script src="/assets/js/account.js?v=22"></script>
-  <script src="/assets/js/app.js?v=22"></script>
+  <script src="/assets/js/app.js?v=24"></script>
 </body>
 </html>

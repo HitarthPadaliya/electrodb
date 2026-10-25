@@ -1,16 +1,7 @@
--- ================================================================
--- ElectroDB - 06_triggers.sql
--- Integrity, normalization, audit, and restricted-hours triggers
--- Target: MySQL 8.0+ / MariaDB 10.4+
--- ================================================================
-
 USE electrodb;
 
 DELIMITER $$
 
--- ----------------------------------------------------------------
--- 1. Category self-parent validation triggers
--- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_categories_no_self_parent_bi$$
 CREATE TRIGGER trg_categories_no_self_parent_bi
 BEFORE INSERT ON categories FOR EACH ROW
@@ -29,11 +20,6 @@ BEGIN
   END IF;
 END$$
 
--- ----------------------------------------------------------------
--- 2. BEFORE triggers checking at least two integrity conditions
--- Integrity rule 1: Component name must not be blank after trimming.
--- Integrity rule 2: Short description must not exceed 1000 characters.
--- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_validate_bi$$
 CREATE TRIGGER trg_components_validate_bi
 BEFORE INSERT ON components FOR EACH ROW
@@ -58,11 +44,6 @@ BEGIN
   END IF;
 END$$
 
--- ----------------------------------------------------------------
--- 3. Uppercase trigger
--- Note: MySQL supports row-level triggers, which execute per changed row.
--- This normalizes component names to UPPER case on insert/update.
--- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_uppercase_bi$$
 CREATE TRIGGER trg_components_uppercase_bi
 BEFORE INSERT ON components FOR EACH ROW
@@ -77,9 +58,6 @@ BEGIN
   SET NEW.name = UPPER(TRIM(NEW.name));
 END$$
 
--- ----------------------------------------------------------------
--- 4. AFTER DML audit trigger logging to application_audit_log
--- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_audit_ai$$
 CREATE TRIGGER trg_components_audit_ai
 AFTER INSERT ON components FOR EACH ROW
@@ -114,10 +92,6 @@ BEGIN
      JSON_OBJECT('name', OLD.name, 'category_id', OLD.category_id, 'short_description', OLD.short_description), NULL);
 END$$
 
--- ----------------------------------------------------------------
--- 5. Restricted-hours trigger
--- Blocks modifications on Monday (DAYOFWEEK = 2) from 14:00 to 16:00
--- ----------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_components_restricted_bi$$
 CREATE TRIGGER trg_components_restricted_bi
 BEFORE INSERT ON components FOR EACH ROW

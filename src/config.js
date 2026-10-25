@@ -1,9 +1,7 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load environment variables from server/.env or root .env
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const isProduction = (process.env.NODE_ENV || 'development') === 'production';
 
@@ -14,24 +12,15 @@ const config = {
   enableLabConsole: process.env.ENABLE_LAB_CONSOLE !== 'false',
   trustProxy: process.env.TRUST_PROXY === 'true',
 
-  // `mysql` (default) is the real store. `memory` is used by the preview server
-  // and by the automated tests, which have no database to talk to.
-  personalStore: process.env.PERSONAL_STORE === 'memory' ? 'memory' : 'mysql',
+      personalStore: process.env.PERSONAL_STORE === 'memory' ? 'memory' : 'mysql',
 
   session: {
     cookieName: process.env.SESSION_COOKIE_NAME || 'electrodb_sid',
     ttlHours: Math.max(1, parseInt(process.env.SESSION_TTL_HOURS || '168', 10)),
-    // Cookies can only be Secure over HTTPS; production defaults to on and the
-    // flag exists so a plain-HTTP staging box can opt out explicitly.
-    secureCookie: process.env.SESSION_COOKIE_SECURE
+            secureCookie: process.env.SESSION_COOKIE_SECURE
       ? process.env.SESSION_COOKIE_SECURE === 'true'
       : isProduction,
-    // lax | strict | none | auto
-    //   lax    the default; correct for a site served top-level
-    //   none   for a site embedded in another origin (needs HTTPS + Secure)
-    //   auto   none over HTTPS, lax otherwise - what the preview server uses,
-    //          because the preview is shown inside a frame
-    sameSite: String(process.env.SESSION_COOKIE_SAMESITE || 'lax').toLowerCase()
+                        sameSite: String(process.env.SESSION_COOKIE_SAMESITE || 'lax').toLowerCase()
   },
   db: {
     host: process.env.DB_HOST || 'localhost',
@@ -46,4 +35,29 @@ const config = {
   }
 };
 
-module.exports = config;
+function toDbDateTime(date) {
+  return new Date(date).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+function toDbDateTimeMs(date = Date.now()) {
+  return new Date(date).toISOString().slice(0, 23).replace('T', ' ');
+}
+
+function fromDbDateTime(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const text = String(value);
+    return new Date(`${text.replace(' ', 'T')}Z`);
+}
+
+function nowPlus(ms) {
+  return toDbDateTime(Date.now() + ms);
+}
+
+module.exports = {
+  config,
+  toDbDateTime,
+  toDbDateTimeMs,
+  fromDbDateTime,
+  nowPlus
+};

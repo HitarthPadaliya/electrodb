@@ -22,7 +22,7 @@ rewritten, and no component data is touched.
 The database keeps the original enum (`NAIVE_USER` / `APP_DEVELOPER` / `DBA`) because
 `database/01_schema.sql`, the stored procedures and the Assignment 10 demo data all depend on it.
 The API and the interface speak `User` / `Developer` / `DBA`; the translation lives in exactly one
-file, `server/src/security/roles.js`.
+file, `src/security.js`.
 
 A role can only be granted by a DBA through `PATCH /api/admin/users/:id`, or by the bootstrap
 script that runs with database credentials. Public registration ignores any role in the request
@@ -163,7 +163,7 @@ account endpoints inside it (`/api/lab/users`) additionally require DBA, and
 
 Only one place matters: the request never supplies its own identity.
 
-1. `attachUser` (`server/src/middleware/auth.js`) reads the cookie, looks the digest up in
+1. `attachUser` (`src/routes.js`) reads the cookie, looks the digest up in
    `user_sessions`, rejects expired or revoked rows, and puts the account on `req.user`.
 2. `requireAuth`, `requireRole(...)`, `requireContentAuthor` and `requireAdmin` guard the routers.
 3. Services take the user id from `req.user.userId`. There is no `userId` field in any request body
@@ -199,7 +199,7 @@ password that fails the strength rules, and prints a clear message if migration 
 
 ## 7. Frontend
 
-- `public/assets/js/account.js` holds the session in the browser, renders the account pages and the
+- `public/assets/js/app.js` holds the session in the browser, renders the account pages and the
   navigation, and owns the bookmark control.
 - Navigation by role (visibility only): guest → `Sign in` / `Create account`; `User` → avatar,
   `Dashboard`, `Bookmarks`, `Sign out`; `Developer` → adds `Lab Console`; `DBA` → adds
@@ -241,6 +241,10 @@ authorization story.
 ## 9. Testing report
 
 Honest summary of what was and was not verified in this environment.
+
+> **Note:** the `test`, `test:offline` and `test:personal` suites were removed when the
+> repository was consolidated into a single source tree. The commands below no longer exist;
+> the results are kept as the record of what they proved at the time.
 
 **Automated, passing**
 

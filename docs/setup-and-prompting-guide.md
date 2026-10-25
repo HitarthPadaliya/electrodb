@@ -76,7 +76,7 @@ npm install --save-dev nodemon
 
 On Windows PowerShell, `mkdir` can also create directories, but the `-p` flag may not behave like a Unix shell. Create the folder manually or use `New-Item -ItemType Directory -Force server`.
 
-Add scripts to `server/package.json`, adjusting filenames to match the project:
+Add scripts to `package.json`, adjusting filenames to match the project:
 
 ```json
 {

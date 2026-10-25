@@ -1,35 +1,111 @@
-/**
- * ElectroDB — Frontend Preview Server (no database required)
- *
- * Serves the real `public/` frontend and answers the same REST contract as
- * `server/src/` using data derived from `electrodb.sql`, so the UI can be
- * reviewed on machines where MySQL/MariaDB is not installed.
- *
- * This is a development convenience only. It is NOT the application backend:
- * it has no connection pool, no stored programs, and no write support, and it
- * must not be used to demonstrate the Assignment 10/11 database behaviour.
- * Use `npm start` for the real Express API against a seeded MySQL database.
- *
- * Usage:
- *   npm run preview                 # http://localhost:3000
- *   PORT=4000 npm run preview       # custom port
- */
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const { truthTableFor, characteristicTableFor } = require('./lib/content-tables');
+function flipFlopKind(slug) {
+  const name = String(slug || '').toLowerCase();
+  if (name.includes('jk')) return 'jk';
+  if (name.includes('toggle') || /(^|-)t-/.test(name)) return 't';
+  if (name.includes('sr')) return 'sr';
+  return 'd';
+}
+
+const TRUTH_TABLES = {
+  jk: {
+    columns: ['\\(J\\)', '\\(K\\)', '\\(Q_{n+1}\\)', 'Operation'],
+    rows: [
+      [0, 0, '\\(Q_n\\)', 'Hold'],
+      [0, 1, 0, 'Reset'],
+      [1, 0, 1, 'Set'],
+      [1, 1, '\\(\\overline{Q_n}\\)', 'Toggle']
+    ]
+  },
+  sr: {
+    columns: ['\\(S\\)', '\\(R\\)', '\\(Q_{n+1}\\)', 'Operation'],
+    rows: [
+      [0, 0, '\\(Q_n\\)', 'Hold'],
+      [0, 1, 0, 'Reset'],
+      [1, 0, 1, 'Set'],
+      [1, 1, 'X', 'Invalid']
+    ]
+  },
+  d: {
+    columns: ['\\(D\\)', '\\(Q_{n+1}\\)', 'Operation'],
+    rows: [
+      [0, 0, 'Reset'],
+      [1, 1, 'Set']
+    ]
+  },
+  t: {
+    columns: ['\\(T\\)', '\\(Q_{n+1}\\)', 'Operation'],
+    rows: [
+      [0, '\\(Q_n\\)', 'Hold'],
+      [1, '\\(\\overline{Q_n}\\)', 'Toggle']
+    ]
+  }
+};
+
+const CHARACTERISTIC_TABLES = {
+  jk: {
+    columns: ['\\(J\\)', '\\(K\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
+    rows: [
+      [0, 0, 0, 0],
+      [0, 0, 1, 1],
+      [0, 1, 0, 0],
+      [0, 1, 1, 0],
+      [1, 0, 0, 1],
+      [1, 0, 1, 1],
+      [1, 1, 0, 1],
+      [1, 1, 1, 0]
+    ]
+  },
+  sr: {
+    columns: ['\\(S\\)', '\\(R\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
+    rows: [
+      [0, 0, 0, 0],
+      [0, 0, 1, 1],
+      [0, 1, 0, 0],
+      [0, 1, 1, 0],
+      [1, 0, 0, 1],
+      [1, 0, 1, 1],
+      [1, 1, 0, 'X'],
+      [1, 1, 1, 'X']
+    ]
+  },
+  d: {
+    columns: ['\\(D\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
+    rows: [
+      [0, 0, 0],
+      [0, 1, 0],
+      [1, 0, 1],
+      [1, 1, 1]
+    ]
+  },
+  t: {
+    columns: ['\\(T\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
+    rows: [
+      [0, 0, 0],
+      [0, 1, 1],
+      [1, 0, 1],
+      [1, 1, 0]
+    ]
+  }
+};
+
+const clone = table => ({ columns: [...table.columns], rows: table.rows.map(row => [...row]) });
+
+const truthTableFor = slug => clone(TRUTH_TABLES[flipFlopKind(slug)]);
+const characteristicTableFor = slug => clone(CHARACTERISTIC_TABLES[flipFlopKind(slug)]);
+
+module.exports = { flipFlopKind, truthTableFor, characteristicTableFor };
 
 const REPO = path.resolve(__dirname, '..');
 const PUBLIC = path.join(REPO, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 
-// ---------------------------------------------------------------- seed parsing
 function splitTuple(line) {
-  // Rows end in '),' except the last row of a block, which ends in ');'.
-  const inner = line.trim().replace(/^\(/, '').replace(/\)[;,]*$/, '');
+    const inner = line.trim().replace(/^\(/, '').replace(/\)[;,]*$/, '');
   const fields = [];
   let cur = '';
   let quoted = false;
@@ -51,7 +127,6 @@ const sql = fs.readFileSync(path.join(REPO, 'electrodb.sql'), 'utf8');
 const lines = sql.split('\n');
 const categories = [];
 const components = [];
-// Definition tables whose rows are only ever counted, never served.
 const rowOnlyCounts = { specifications: 0, content_types: 0 };
 let mode = null;
 
@@ -101,7 +176,6 @@ const tagDefs = [
 ];
 const tags = tagDefs.map(([name, slug], index) => ({ tag_id: index + 1, name, slug }));
 
-// Preview-only audit history; the dashboard reports its real length.
 const AUDIT_LOG_FIXTURES = [
   { audit_id: 12, table_name: 'components', operation_type: 'INSERT', row_key: '148', db_user: 'electrodb_app', changed_at: '2026-01-12 11:02:14', new_values: { name: 'Quad OR Gate', category_id: 8 } },
   { audit_id: 11, table_name: 'components', operation_type: 'UPDATE', row_key: '17', db_user: 'electrodb_app', changed_at: '2026-01-12 10:58:03', new_values: { short_description: 'Updated summary' } },
@@ -174,8 +248,6 @@ function categoriesTree() {
     }));
 }
 
-// Everything the public pages print as a number is counted here, from the same
-// seed the mock serves. Nothing in this file should hard-code a total.
 function catalogueStats() {
   return {
     components: components.filter(c => c.is_published).length,
@@ -219,7 +291,6 @@ function tagDetail(identifier, page, pageSize) {
   };
 }
 
-// ---------------------------------------------------------------- mock content
 function equationFor(component) {
   const map = {
     'jk-flip-flop': 'Q_{next}=J\\overline{Q}+\\overline{K}Q',
@@ -355,8 +426,6 @@ function specificationsFor(component) {
   return defs.map(([name, value, unit]) => ({ name, value, unit, sourceNote: 'Illustrative educational value' }));
 }
 
-// Pinout drawings are generated for the IC categories and the IC-like gate
-// packages; a component only advertises one when the file actually exists.
 const PINOUT_CATEGORIES = new Set([6, 7, 8, 9, 10, 17, 18, 19, 20, 21]);
 const PINOUT_EXCLUDE = new Set();
 
@@ -369,13 +438,10 @@ function diagramsFor(component) {
     diagrams.push({ diagramId: diagrams.length + 1, title, kind, imagePath, altText, caption });
   };
 
-  // Hero artwork: the pin-level block / gate / device symbol.
-  add('Symbol Diagram', 'SYMBOL', component.circuit_symbol_path,
+    add('Symbol Diagram', 'SYMBOL', component.circuit_symbol_path,
     `Pin-level symbol for ${component.name}`, null);
 
-  // All-NAND implementation, shown directly beneath the hero. Logic gates are
-  // excluded: their implementation is the IC pinout below.
-  if (component.category_id !== 8) {
+      if (component.category_id !== 8) {
     const circuitPath =
       component.slug === 'jk-flip-flop'
         ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
@@ -384,14 +450,12 @@ function diagramsFor(component) {
       `Circuit diagram for ${component.name}`, null);
   }
 
-  // IC pinout, displayed with the technical specifications.
-  if (PINOUT_CATEGORIES.has(component.category_id) && !PINOUT_EXCLUDE.has(component.slug)) {
+    if (PINOUT_CATEGORIES.has(component.category_id) && !PINOUT_EXCLUDE.has(component.slug)) {
     add('Pinout Diagram', 'PINOUT', `/assets/svg/pinouts/${component.slug}.svg`,
       `IC pinout for ${component.name}`, null);
   }
 
-  // Supporting artwork lives in the directory that matches the category.
-  const supportDir = component.category_id === 6 ? 'counters' : 'flipflops';
+    const supportDir = component.category_id === 6 ? 'counters' : 'flipflops';
   add('State Machine', 'STATE', `/assets/svg/${supportDir}/${component.slug}-state.svg`,
     `State machine for ${component.name}`, null);
   add('Timing Diagram', 'TIMING', `/assets/svg/${supportDir}/${component.slug}-timing.svg`,
@@ -437,7 +501,6 @@ function componentDetail(identifier) {
   };
 }
 
-// ---------------------------------------------------------------- XML helpers
 function xmlEscape(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -446,7 +509,6 @@ function componentsXml(list) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<components>\n${list.map(c => `  <component id="${c.component_id}" categoryId="${c.category_id}">\n    <name>${xmlEscape(c.name)}</name>\n    <slug>${xmlEscape(c.slug)}</slug>\n    <shortDescription>${xmlEscape(c.short_description || '')}</shortDescription>\n  </component>`).join('\n')}\n</components>`;
 }
 
-// ---------------------------------------------------------------- request handling
 function json(res, body, status = 200) {
   const payload = JSON.stringify(body);
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -531,8 +593,7 @@ function handleApi(req, res, url) {
     return json(res, { data: { query, items: result.items, pagination: result.pagination } });
   }
 
-  // ---- Lab endpoints ----
-  if (p === '/api/lab/users') {
+    if (p === '/api/lab/users') {
     return json(res, { data: [
       { user_id: 1, username: 'lab_student', role_code: 'APP_DEVELOPER', is_active: 1, created_at: '2026-01-12 10:20:00' },
       { user_id: 2, username: 'catalogue_dba', role_code: 'DBA', is_active: 1, created_at: '2026-01-12 10:24:00' }
@@ -690,26 +751,16 @@ function handleApi(req, res, url) {
   return json(res, { error: { code: 'NOT_FOUND', message: `Unknown preview endpoint: ${p}` } }, 404);
 }
 
-// ---------------------------------------------------------------- account API
-// The account, bookmark, collection and administration routes below are the
-// real routers, middleware and services from `server/src`, backed by the
-// in-memory store. The preview therefore enforces exactly the same
-// authorization rules as the Express application; only persistence differs.
 process.env.PERSONAL_STORE = 'memory';
-// The preview is shown inside the Arena frame, which is a cross-site context:
-// the session cookie has to be SameSite=None over HTTPS or the browser will
-// never send it back, and every sign-in would appear to fail.
 process.env.SESSION_COOKIE_SAMESITE = process.env.SESSION_COOKIE_SAMESITE || 'auto';
 
 const express = require('express');
-const errorHandler = require('../server/src/middleware/errorHandler');
-const { attachUser } = require('../server/src/middleware/auth');
-const { getStore } = require('../server/src/db/personalStore');
-const passwords = require('../server/src/security/passwords');
+const { errorHandler } = require('../src/errors');
+const { authRouter, userRouter, adminRouter, attachUser } = require('../src/routes');
+const { getStore } = require('../src/store');
+const { passwords } = require('../src/security');
 
 const PREVIEW_PASSWORD = 'Electrodb#2025';
-// Account state is kept between restarts so a dev edit does not sign every
-// reviewer out. It holds demo data only and is gitignored.
 const STATE_FILE = path.join(REPO, '.preview-state.json');
 const PREVIEW_ACCOUNTS = [
   { key: 'dba', username: 'preview_dba', email: 'dba@preview.local', roleCode: 'DBA' },
@@ -721,17 +772,13 @@ const accountApi = express();
 accountApi.disable('x-powered-by');
 accountApi.use(express.json({ limit: '64kb' }));
 
-// Save the in-memory account state after anything that could change it, so a
-// restart does not sign reviewers out or lose their bookmarks.
 let stateSaveTimer = null;
 function persistAccountState() {
   if (stateSaveTimer) return;
   stateSaveTimer = setTimeout(() => {
     stateSaveTimer = null;
     try {
-      // Write then rename: a process killed mid-write must not leave a
-      // truncated file that would sign everybody out on the next boot.
-      const temporary = `${STATE_FILE}.tmp`;
+                  const temporary = `${STATE_FILE}.tmp`;
       fs.writeFileSync(temporary, JSON.stringify(getStore().snapshot()));
       fs.renameSync(temporary, STATE_FILE);
     } catch (err) {
@@ -746,11 +793,9 @@ accountApi.use((req, res, next) => {
 });
 
 accountApi.use('/api', attachUser);
-accountApi.use('/api/auth', require('../server/src/routes/authRoutes'));
-accountApi.use('/api/users', require('../server/src/routes/userRoutes'));
-accountApi.use('/api/admin', require('../server/src/routes/adminRoutes'));
-// Demo credentials for the sign-in page. This endpoint only exists in the
-// preview server; the real application never exposes account details.
+accountApi.use('/api/auth', authRouter);
+accountApi.use('/api/users', userRouter);
+accountApi.use('/api/admin', adminRouter);
 accountApi.get('/api/preview/demo-accounts', (req, res) =>
   json(res, {
     data: {
@@ -768,11 +813,6 @@ accountApi.use('/api', (req, res) =>
 );
 accountApi.use(errorHandler);
 
-/**
- * Mirror the seed catalogue into the store and make sure the demo accounts
- * exist. A saved snapshot is restored first, so bookmarks, collections and
- * live sessions survive a restart.
- */
 async function seedAccounts() {
   const store = getStore();
   store.components.seed(components);
@@ -800,8 +840,7 @@ async function seedAccounts() {
     if (!existing) created = true;
   }
 
-  // A little history, so the personal pages are not all empty on first run.
-  if (created) {
+    if (created) {
     const demo = accounts.user;
     const picks = components.slice(0, 3).map(component => component.component_id);
     for (const componentId of picks) await store.bookmarks.add(demo.userId, componentId);
@@ -848,10 +887,7 @@ const server = http.createServer((req, res) => {
   }
 
   const ext = path.extname(filePath).toLowerCase();
-  // A preview server must never hand back a stale drawing while the artwork is
-  // being iterated on. Serve with no-store plus a strong validator so even an
-  // intermediary proxy revalidates instead of replaying an old body.
-  const stat = fs.statSync(filePath);
+        const stat = fs.statSync(filePath);
   const etag = `"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
   const headers = {
     'Content-Type': MIME[ext] || 'application/octet-stream',
