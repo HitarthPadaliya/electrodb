@@ -439,7 +439,8 @@ function diagramsFor(component) {
   };
 
     add('Symbol Diagram', 'SYMBOL', component.circuit_symbol_path,
-    `Pin-level symbol for ${component.name}`, null);
+    `Pin-level diagram for ${component.name}, showing its functional symbol and labeled signal terminals where applicable.`,
+    `The symbol identifies ${component.name} and labels its principal input, output, clock, control, and supply terminals when present.`);
 
       if (component.category_id !== 8) {
     const circuitPath =
@@ -447,19 +448,23 @@ function diagramsFor(component) {
         ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
         : `/assets/svg/circuits/${component.slug}.svg`;
     add('Circuit Diagram', 'CIRCUIT', circuitPath,
-      `Circuit diagram for ${component.name}`, null);
+      `Circuit schematic for ${component.name}, showing connected logic or device stages and their principal signal paths.`,
+      `The schematic shows the main logic or device stages in ${component.name}, how they interconnect, and the signal and control paths in the reference implementation.`);
   }
 
     if (PINOUT_CATEGORIES.has(component.category_id) && !PINOUT_EXCLUDE.has(component.slug)) {
     add('Pinout Diagram', 'PINOUT', `/assets/svg/pinouts/${component.slug}.svg`,
-      `IC pinout for ${component.name}`, null);
+      `Package pin map for ${component.name}, showing numbered terminals and signal names.`,
+      `The pin map identifies package terminals and signal names for ${component.name}. Confirm package variant and pin-one orientation against the device datasheet.`);
   }
 
     const supportDir = component.category_id === 6 ? 'counters' : 'flipflops';
   add('State Machine', 'STATE', `/assets/svg/${supportDir}/${component.slug}-state.svg`,
-    `State machine for ${component.name}`, null);
+    `${component.name} state-transition comparison: MOORE machine first on the left, followed by MEALY on the right.`,
+    `MOORE is shown first on the left, with outputs associated with states. MEALY follows on the right, with input/output labels on directed transitions. Arrowheads mark every transition, including self-loops.`);
   add('Timing Diagram', 'TIMING', `/assets/svg/${supportDir}/${component.slug}-timing.svg`,
-    `Timing diagram for ${component.name}`, null);
+    `Timing waveform for ${component.name}, showing clock and related logic signals across successive cycles.`,
+    `The timing trace aligns clock and logic signals to show active transitions and resulting state or output changes. Setup, hold, and propagation limits depend on the selected device.`);
 
   return diagrams;
 }

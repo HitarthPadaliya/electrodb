@@ -1569,16 +1569,6 @@ a:hover > .link-arrow,
   object-fit: contain;
 }
 
-.component-art figcaption {
-  position: relative;
-  font-family: var(--font-nav);
-  font-size: 0.63rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .component-art--empty {
   color: var(--muted);
   font-size: 2rem;
@@ -1646,19 +1636,6 @@ a:hover > .link-arrow,
   width: min(100%, 780px);
   height: auto;
   margin: 0 auto;
-}
-
-.circuit-figure figcaption {
-  position: relative;
-  margin-top: 0.9rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-family: var(--font-nav);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  text-align: center;
 }
 
 .circuit-actions {
