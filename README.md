@@ -175,6 +175,35 @@ so the frontend can place each drawing: the pin-level **symbol** in the hero and
 gate/device-level **circuit diagram** immediately beneath it. Anything previously labelled
 "Circuit / Symbol Diagram" was a pin-level block drawing, which is what the rename corrects.
 
+### Completing catalogue data
+
+Logical table data is defined in `src/catalogue-tables.js` and shared by the preview
+and the generated SQL. It covers counter state sequences, flip-flop truth,
+characteristic and excitation tables, gate truth tables, mux/demux selection, and
+encoder/decoder/code-converter mappings. Captions identify illustrative widths,
+control assumptions, invalid inputs, and high-impedance outputs.
+
+Fresh imports of either seed already include these completed tables. To repair an
+existing database without reimporting it, apply the idempotent upgrade:
+
+```bash
+mysql -u <dba-user> -p electrodb < database/13_complete_catalogue_tables.sql
+```
+
+To regenerate the SQL completion blocks and fill missing diagram files:
+
+```bash
+npm run data:fill
+npm test
+```
+
+**Diagram placeholders:** the 69 previously missing SVG files (47 circuits and 22
+pinouts) are separate, byte-for-byte copies of
+`public/assets/svg/circuits/jk-flip-flop-circuit.svg`, as requested. They are not
+accurate schematics or pinouts for the components named by their filenames.
+Existing artwork is left unchanged. `data:fill` only creates files that do not
+exist; `svg:circuits` is a different command that regenerates circuit artwork.
+
 ### Previewing the UI without MySQL
 
 `npm run preview` starts `scripts/preview-server.js`, which serves the real `public/` frontend
