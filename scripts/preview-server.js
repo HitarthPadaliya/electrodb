@@ -2,101 +2,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-function flipFlopKind(slug) {
-  const name = String(slug || '').toLowerCase();
-  if (name.includes('jk')) return 'jk';
-  if (name.includes('toggle') || /(^|-)t-/.test(name)) return 't';
-  if (name.includes('sr')) return 'sr';
-  return 'd';
-}
-
-const TRUTH_TABLES = {
-  jk: {
-    columns: ['\\(J\\)', '\\(K\\)', '\\(Q_{n+1}\\)', 'Operation'],
-    rows: [
-      [0, 0, '\\(Q_n\\)', 'Hold'],
-      [0, 1, 0, 'Reset'],
-      [1, 0, 1, 'Set'],
-      [1, 1, '\\(\\overline{Q_n}\\)', 'Toggle']
-    ]
-  },
-  sr: {
-    columns: ['\\(S\\)', '\\(R\\)', '\\(Q_{n+1}\\)', 'Operation'],
-    rows: [
-      [0, 0, '\\(Q_n\\)', 'Hold'],
-      [0, 1, 0, 'Reset'],
-      [1, 0, 1, 'Set'],
-      [1, 1, 'X', 'Invalid']
-    ]
-  },
-  d: {
-    columns: ['\\(D\\)', '\\(Q_{n+1}\\)', 'Operation'],
-    rows: [
-      [0, 0, 'Reset'],
-      [1, 1, 'Set']
-    ]
-  },
-  t: {
-    columns: ['\\(T\\)', '\\(Q_{n+1}\\)', 'Operation'],
-    rows: [
-      [0, '\\(Q_n\\)', 'Hold'],
-      [1, '\\(\\overline{Q_n}\\)', 'Toggle']
-    ]
-  }
-};
-
-const CHARACTERISTIC_TABLES = {
-  jk: {
-    columns: ['\\(J\\)', '\\(K\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
-    rows: [
-      [0, 0, 0, 0],
-      [0, 0, 1, 1],
-      [0, 1, 0, 0],
-      [0, 1, 1, 0],
-      [1, 0, 0, 1],
-      [1, 0, 1, 1],
-      [1, 1, 0, 1],
-      [1, 1, 1, 0]
-    ]
-  },
-  sr: {
-    columns: ['\\(S\\)', '\\(R\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
-    rows: [
-      [0, 0, 0, 0],
-      [0, 0, 1, 1],
-      [0, 1, 0, 0],
-      [0, 1, 1, 0],
-      [1, 0, 0, 1],
-      [1, 0, 1, 1],
-      [1, 1, 0, 'X'],
-      [1, 1, 1, 'X']
-    ]
-  },
-  d: {
-    columns: ['\\(D\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
-    rows: [
-      [0, 0, 0],
-      [0, 1, 0],
-      [1, 0, 1],
-      [1, 1, 1]
-    ]
-  },
-  t: {
-    columns: ['\\(T\\)', '\\(Q_n\\)', '\\(Q_{n+1}\\)'],
-    rows: [
-      [0, 0, 0],
-      [0, 1, 1],
-      [1, 0, 1],
-      [1, 1, 0]
-    ]
-  }
-};
-
-const clone = table => ({ columns: [...table.columns], rows: table.rows.map(row => [...row]) });
-
-const truthTableFor = slug => clone(TRUTH_TABLES[flipFlopKind(slug)]);
-const characteristicTableFor = slug => clone(CHARACTERISTIC_TABLES[flipFlopKind(slug)]);
-
+const { tablesFor, flipFlopKind } = require('../src/catalogue-tables');
+const truthTableFor = slug => tablesFor({ category_id: 7, slug })[0].content;
+const characteristicTableFor = slug => tablesFor({ category_id: 7, slug })[1].content;
 module.exports = { flipFlopKind, truthTableFor, characteristicTableFor };
 
 const REPO = path.resolve(__dirname, '..');
@@ -327,59 +235,7 @@ function contentFor(component) {
   }];
   const cid = component.category_id;
 
-  if (cid === 6) {
-    content.push({
-      sectionKey: 'state_table', title: 'State / Next-State Table', type: 'TABLE',
-      content: {
-        columns: ['Decimal', 'Current state Q3Q2Q1Q0', 'Next state Q3Q2Q1Q0'],
-        rows: [[0, '0000', '0001'], [1, '0001', '0010'], [2, '0010', '0011'], [3, '0011', '0100'], [4, '0100', '0101'], [5, '0101', '0110'], [6, '0110', '0111'], [7, '0111', '1000'], [8, '1000', '1001'], [9, '1001', '0000']]
-      },
-      caption: 'The state sequence wraps back to 0000 after the final valid state.'
-    });
-  }
-
-  if (cid === 7) {
-    content.push({
-      sectionKey: 'truth_table', title: 'Truth Table', type: 'TABLE',
-      content: truthTableFor(component.slug),
-      caption: 'Qn is the stored state; Qn+1 is the state after the active clock edge.'
-    });
-    content.push({
-      sectionKey: 'characteristic_table', title: 'Characteristic Table', type: 'TABLE',
-      content: characteristicTableFor(component.slug),
-      caption: null
-    });
-  }
-
-  if (cid === 8) {
-    content.push({
-      sectionKey: 'truth_table', title: 'Truth Table', type: 'TABLE',
-      content: { columns: ['A', 'B', 'Y'], rows: [[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 0]] },
-      caption: 'Two-input truth table; compound gates expose their own input sets.'
-    });
-  }
-
-  if (cid === 9) {
-    content.push({
-      sectionKey: 'selection_table', title: 'Selection Table', type: 'TABLE',
-      content: {
-        columns: ['S1', 'S0', 'Y'],
-        rows: [[0, 0, 'I\u2080'], [0, 1, 'I\u2081'], [1, 0, 'I\u2082'], [1, 1, 'I\u2083']]
-      },
-      caption: 'Select inputs route one data input to the output.'
-    });
-  }
-
-  if (cid === 10) {
-    content.push({
-      sectionKey: 'mapping_table', title: 'Code Mapping', type: 'TABLE',
-      content: {
-        columns: ['Input', 'Output code'],
-        rows: [['D0', '000'], ['D1', '001'], ['D2', '010'], ['D3', '011']]
-      },
-      caption: 'Representative mapping for a 4-to-3 encoder.'
-    });
-  }
+  content.push(...tablesFor(component));
 
   const equation = equationFor(component);
   if (equation && cid !== 7) {
@@ -442,7 +298,7 @@ function diagramsFor(component) {
     `Pin-level diagram for ${component.name}, showing its functional symbol and labeled signal terminals where applicable.`,
     `The symbol identifies ${component.name} and labels its principal input, output, clock, control, and supply terminals when present.`);
 
-      if (component.category_id !== 8) {
+  {
     const circuitPath =
       component.slug === 'jk-flip-flop'
         ? '/assets/svg/circuits/jk-flip-flop-circuit.svg'
