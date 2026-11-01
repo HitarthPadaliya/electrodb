@@ -1,23 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Latching Relay circuit diagram">
-  <title>Latching Relay circuit diagram</title>
-  <path d="M90,130 L300,130" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="300" y="96" width="120" height="68" rx="8" fill="#0d1117" stroke="#00a7da" stroke-width="2"/>
-  <path d="M318,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M339,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M360,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M381,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M420,130 L560,130 L560,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="560" cy="130" r="4.5" fill="#c5c7c9"/>
-  <text x="40" y="138" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
-  <text x="470" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A2</text>
-  <path d="M560,250 L636,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="640" cy="250" r="4" fill="none" stroke="#e8eaed" stroke-width="2"/>
-  <path d="M646,250 L818,176" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round"/>
-  <path d="M646,250 L818,324" stroke="#8a8d93" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <path d="M860,170 L960,170" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M860,330 L960,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="470" y="258" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">COM</text>
-  <text x="972" y="178" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NO</text>
-  <text x="972" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NC</text>
-  <path d="M560,210 v22 M556,210 h8" stroke="#8a8d93" stroke-width="1.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 560">
+  <style>
+    .wire{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .coil{fill:none;stroke:#168fe5;stroke-width:2;stroke-linecap:round}
+    .contact{fill:#101f38;stroke:#168fe5;stroke-width:2}
+    .link{fill:none;stroke:#c5c7c9;stroke-width:2;stroke-dasharray:6 6}
+    text{font:24px Consolas,monospace;fill:#168fe5}
+    .output{fill:#00dfdf}
+    .label{font:bold 16px Arial,sans-serif;fill:#e8eaed;text-anchor:middle}
+  </style>
+
+  <text class="label" x="540" y="45">Dual-Coil Latching Relay</text>
+
+  <g class="wire">
+    <path d="M170 130V200M170 360V440"/>
+    <path d="M350 130V200M350 360V440"/>
+    <path d="M590 320H650L826 200"/>
+    <path d="M834 200H930M834 360H930"/>
+  </g>
+
+  <g class="coil">
+    <path d="M170 200Q230 220 170 240Q230 260 170 280Q230 300 170 320Q230 340 170 360"/>
+    <path d="M350 200Q410 220 350 240Q410 260 350 280Q410 300 350 320Q410 340 350 360"/>
+  </g>
+
+  <path class="link" d="M210 280H470M390 280H470M510 280H709"/>
+
+  <rect class="contact" x="470" y="260" width="40" height="40"/>
+  <path class="wire" d="M480 270V290H500"/>
+
+  <g class="contact">
+    <circle cx="650" cy="320" r="4"/>
+    <circle cx="830" cy="200" r="4"/>
+    <circle cx="830" cy="360" r="4"/>
+  </g>
+
+  <g text-anchor="middle">
+    <text x="170" y="110">SET+</text>
+    <text x="170" y="478">SET−</text>
+    <text x="350" y="110">RESET+</text>
+    <text x="350" y="478">RESET−</text>
+  </g>
+
+  <text x="570" y="328" text-anchor="end">COM</text>
+
+  <g class="output">
+    <text x="950" y="208">NC</text>
+    <text x="950" y="368">NO</text>
+  </g>
 </svg>

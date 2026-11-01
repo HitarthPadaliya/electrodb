@@ -6,7 +6,7 @@
   <line x1="50.8" y1="82" x2="72.8" y2="82" stroke="#b48cf0" stroke-width="2" stroke-linecap="round"/>
   <circle cx="78.8" cy="82" r="6" fill="none" stroke="#b48cf0" stroke-width="2"/>
   <text x="100.8" y="86" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">1</text>
-  <text x="42.8" y="87" fill="#b48cf0" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1CLR</text>
+  <text x="42.8" y="87" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1CLR</text>
   <line x1="50.8" y1="116" x2="84.8" y2="116" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
   <text x="100.8" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">2</text>
   <text x="42.8" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1D</text>
@@ -16,7 +16,7 @@
   <line x1="50.8" y1="184" x2="72.8" y2="184" stroke="#e8b455" stroke-width="2" stroke-linecap="round"/>
   <circle cx="78.8" cy="184" r="6" fill="none" stroke="#e8b455" stroke-width="2"/>
   <text x="100.8" y="188" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">4</text>
-  <text x="42.8" y="189" fill="#e8b455" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1PRE</text>
+  <text x="42.8" y="189" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1PRE</text>
   <line x1="50.8" y1="218" x2="84.8" y2="218" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
   <text x="100.8" y="222" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">5</text>
   <text x="42.8" y="223" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">1Q</text>
@@ -32,7 +32,7 @@
   <line x1="295.2" y1="116" x2="273.2" y2="116" stroke="#b48cf0" stroke-width="2" stroke-linecap="round"/>
   <circle cx="267.2" cy="116" r="6" fill="none" stroke="#b48cf0" stroke-width="2"/>
   <text x="245.2" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">13</text>
-  <text x="303.2" y="121" fill="#b48cf0" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2CLR</text>
+  <text x="303.2" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2CLR</text>
   <line x1="295.2" y1="150" x2="261.2" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
   <text x="245.2" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">12</text>
   <text x="303.2" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2D</text>
@@ -42,7 +42,7 @@
   <line x1="295.2" y1="218" x2="273.2" y2="218" stroke="#e8b455" stroke-width="2" stroke-linecap="round"/>
   <circle cx="267.2" cy="218" r="6" fill="none" stroke="#e8b455" stroke-width="2"/>
   <text x="245.2" y="222" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">10</text>
-  <text x="303.2" y="223" fill="#e8b455" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2PRE</text>
+  <text x="303.2" y="223" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2PRE</text>
   <line x1="295.2" y1="252" x2="261.2" y2="252" stroke="#00dfc1" stroke-width="2" stroke-linecap="round"/>
   <text x="245.2" y="256" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="end">9</text>
   <text x="303.2" y="257" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="start">2Q</text>

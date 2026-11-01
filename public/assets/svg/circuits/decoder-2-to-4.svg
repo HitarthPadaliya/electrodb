@@ -1,41 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="2-to-4 Decoder circuit diagram">
-  <title>2-to-4 Decoder circuit diagram</title>
-  <path d="M220,150 H245.76 A28,28 0 0 1 245.76,206 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="284" cy="178" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M220,300 H245.76 A28,28 0 0 1 245.76,356 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="284" cy="328" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,40 H636.8 A40,40 0 0 1 636.8,120 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="80" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,145 H636.8 A40,40 0 0 1 636.8,225 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="185" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,250 H636.8 A40,40 0 0 1 636.8,330 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="290" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,355 H636.8 A40,40 0 0 1 636.8,435 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="395" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M60,178 L140,178 L220,178" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M60,328 L180,328 L220,328" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="186" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A0</text>
-  <text x="34" y="336" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
-  <circle cx="140" cy="178" r="4.5" fill="#c5c7c9"/>
-  <circle cx="180" cy="328" r="4.5" fill="#c5c7c9"/>
-  <path d="M140,178 L140,440 L300,440 L300,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M290,178 L340,178 L340,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M180,328 L180,460 L460,460 L460,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M290,328 L500,328 L500,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M340,56 L600,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M500,104 L600,104" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,80 L940,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="88" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y0</text>
-  <path d="M300,161 L600,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M500,209 L600,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,185 L940,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="193" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y1</text>
-  <path d="M340,266 L600,266" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M460,314 L600,314" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,290 L940,290" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="298" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y2</text>
-  <path d="M300,371 L600,371" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M460,419 L600,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,395 L940,395" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="403" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y3</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 800">
+  <style>
+    .wire{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .gate{fill:#101f38;stroke:#168fe5;stroke-width:2;stroke-linejoin:round}
+    .dot{fill:#fff}
+    text{font:24px Consolas,monospace;fill:#168fe5}
+    .output{fill:#00dfdf}
+  </style>
+
+  <defs>
+    <g id="inverter">
+      <path class="wire" d="M-20 0V-13H0M-20 0V13H0"/>
+      <circle class="dot" cx="-20" cy="0" r="3"/>
+      <path class="gate" d="M0-30H30A30 30 0 0 1 30 30H0Z"/>
+      <circle class="gate" cx="66" cy="0" r="6"/>
+    </g>
+    <g id="branch">
+      <path class="gate" d="M420-30H450A30 30 0 0 1 450 30H420Z"/>
+      <circle class="gate" cx="486" cy="0" r="6"/>
+      <path class="wire" d="M492 0H540"/>
+      <use href="#inverter" transform="translate(560 0)"/>
+      <path class="wire" d="M632 0H740"/>
+    </g>
+  </defs>
+
+  <g class="wire">
+    <path d="M60 100H80V718M172 100V718"/>
+    <path d="M220 100H240V718M332 100V718"/>
+
+    <path d="M172 247H420M332 273H420"/>
+    <path d="M172 387H420M240 413H420"/>
+    <path d="M80 527H420M332 553H420"/>
+    <path d="M80 667H420M240 693H420"/>
+  </g>
+
+  <use href="#inverter" transform="translate(100 100)"/>
+  <use href="#inverter" transform="translate(260 100)"/>
+
+  <use href="#branch" transform="translate(0 260)"/>
+  <use href="#branch" transform="translate(0 400)"/>
+  <use href="#branch" transform="translate(0 540)"/>
+  <use href="#branch" transform="translate(0 680)"/>
+
+  <g class="dot">
+    <circle cx="172" cy="247" r="3"/>
+    <circle cx="332" cy="273" r="3"/>
+    <circle cx="172" cy="387" r="3"/>
+    <circle cx="240" cy="413" r="3"/>
+    <circle cx="80" cy="527" r="3"/>
+    <circle cx="332" cy="553" r="3"/>
+    <circle cx="80" cy="667" r="3"/>
+    <circle cx="240" cy="693" r="3"/>
+  </g>
+
+  <text x="24" y="78">A1</text>
+  <text x="204" y="78">A0</text>
+
+  <g text-anchor="middle">
+    <text x="80" y="752">A1</text>
+    <text x="172" y="752">A1'</text>
+    <text x="240" y="752">A0</text>
+    <text x="332" y="752">A0'</text>
+  </g>
+
+  <g class="output">
+    <text x="758" y="268">Y0</text>
+    <text x="758" y="408">Y1</text>
+    <text x="758" y="548">Y2</text>
+    <text x="758" y="688">Y3</text>
+  </g>
 </svg>

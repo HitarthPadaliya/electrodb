@@ -1,24 +1,117 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="8-to-1 Multiplexer circuit diagram">
-  <title>8-to-1 Multiplexer circuit diagram</title>
-  <path d="M150,372 H175.76 A28,28 0 0 1 175.76,428 H150 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="214" cy="400" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M400,94 H436.8 A40,40 0 0 1 436.8,174 H400 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="488" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M400,334 H436.8 A40,40 0 0 1 436.8,414 H400 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="488" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M720,214 H756.8 A40,40 0 0 1 756.8,294 H720 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="808" cy="254" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M60,110 L400,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M60,350 L400,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D0</text>
-  <text x="34" y="358" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D1</text>
-  <path d="M60,400 L150,400" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="110" cy="400" r="4.5" fill="#c5c7c9"/>
-  <path d="M110,400 L110,398 L400,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="408" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">S</text>
-  <path d="M220,400 L320,400 L320,158 L400,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M494,134 L620,134 L620,230 L720,230" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M494,374 L660,374 L660,278 L720,278" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M814,254 L1000,254" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="1012" y="262" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1140">
+  <style>
+    .wire{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .gate{fill:#101f38;stroke:#168fe5;stroke-width:2;stroke-linejoin:round}
+    .dot{fill:#fff}
+    text{font:24px Consolas,monospace;fill:#168fe5}
+  </style>
+
+  <g class="wire">
+    <path d="M60 100H80V1050M80 87V113M80 87H100M80 113H100M172 100V1050"/>
+    <path d="M220 100H240V1050M240 87V113M240 87H260M240 113H260M332 100V1050"/>
+    <path d="M380 100H400V1050M400 87V113M400 87H420M400 113H420M492 100V1050"/>
+
+    <path d="M540 276H580M172 292H580M332 308H580M492 324H580"/>
+    <path d="M540 376H580M172 392H580M332 408H580M400 424H580"/>
+    <path d="M540 476H580M172 492H580M240 508H580M492 524H580"/>
+    <path d="M540 576H580M172 592H580M240 608H580M400 624H580"/>
+    <path d="M540 676H580M80 692H580M332 708H580M492 724H580"/>
+    <path d="M540 776H580M80 792H580M332 808H580M400 824H580"/>
+    <path d="M540 876H580M80 892H580M240 908H580M492 924H580"/>
+    <path d="M540 976H580M80 992H580M240 1008H580M400 1024H580"/>
+
+    <path d="M660 300H800M660 400H800M660 500H800M660 600H800"/>
+    <path d="M660 700H800M660 800H800M660 900H800M660 1000H800"/>
+    <path d="M1002 650H1100"/>
+  </g>
+
+  <g class="gate">
+    <path d="M100 70H130A30 30 0 0 1 130 130H100Z"/>
+    <circle cx="166" cy="100" r="6"/>
+    <path d="M260 70H290A30 30 0 0 1 290 130H260Z"/>
+    <circle cx="326" cy="100" r="6"/>
+    <path d="M420 70H450A30 30 0 0 1 450 130H420Z"/>
+    <circle cx="486" cy="100" r="6"/>
+
+    <path d="M580 266H614A34 34 0 0 1 614 334H580Z"/>
+    <circle cx="654" cy="300" r="6"/>
+    <path d="M580 366H614A34 34 0 0 1 614 434H580Z"/>
+    <circle cx="654" cy="400" r="6"/>
+    <path d="M580 466H614A34 34 0 0 1 614 534H580Z"/>
+    <circle cx="654" cy="500" r="6"/>
+    <path d="M580 566H614A34 34 0 0 1 614 634H580Z"/>
+    <circle cx="654" cy="600" r="6"/>
+    <path d="M580 666H614A34 34 0 0 1 614 734H580Z"/>
+    <circle cx="654" cy="700" r="6"/>
+    <path d="M580 766H614A34 34 0 0 1 614 834H580Z"/>
+    <circle cx="654" cy="800" r="6"/>
+    <path d="M580 866H614A34 34 0 0 1 614 934H580Z"/>
+    <circle cx="654" cy="900" r="6"/>
+    <path d="M580 966H614A34 34 0 0 1 614 1034H580Z"/>
+    <circle cx="654" cy="1000" r="6"/>
+
+    <path d="M800 260H850A140 390 0 0 1 850 1040H800Z"/>
+    <circle cx="996" cy="650" r="6"/>
+  </g>
+
+  <g class="dot">
+    <circle cx="80" cy="100" r="3"/>
+    <circle cx="240" cy="100" r="3"/>
+    <circle cx="400" cy="100" r="3"/>
+
+    <circle cx="172" cy="292" r="3"/>
+    <circle cx="332" cy="308" r="3"/>
+    <circle cx="492" cy="324" r="3"/>
+
+    <circle cx="172" cy="392" r="3"/>
+    <circle cx="332" cy="408" r="3"/>
+    <circle cx="400" cy="424" r="3"/>
+
+    <circle cx="172" cy="492" r="3"/>
+    <circle cx="240" cy="508" r="3"/>
+    <circle cx="492" cy="524" r="3"/>
+
+    <circle cx="172" cy="592" r="3"/>
+    <circle cx="240" cy="608" r="3"/>
+    <circle cx="400" cy="624" r="3"/>
+
+    <circle cx="80" cy="692" r="3"/>
+    <circle cx="332" cy="708" r="3"/>
+    <circle cx="492" cy="724" r="3"/>
+
+    <circle cx="80" cy="792" r="3"/>
+    <circle cx="332" cy="808" r="3"/>
+    <circle cx="400" cy="824" r="3"/>
+
+    <circle cx="80" cy="892" r="3"/>
+    <circle cx="240" cy="908" r="3"/>
+    <circle cx="492" cy="924" r="3"/>
+
+    <circle cx="80" cy="992" r="3"/>
+    <circle cx="240" cy="1008" r="3"/>
+    <circle cx="400" cy="1024" r="3"/>
+  </g>
+
+  <text x="24" y="78">S2</text>
+  <text x="204" y="78">S1</text>
+  <text x="364" y="78">S0</text>
+
+  <g text-anchor="middle">
+    <text x="80" y="1090">S2</text>
+    <text x="172" y="1090">S2'</text>
+    <text x="240" y="1090">S1</text>
+    <text x="332" y="1090">S1'</text>
+    <text x="400" y="1090">S0</text>
+    <text x="492" y="1090">S0'</text>
+  </g>
+
+  <text x="530" y="260">I0</text>
+  <text x="530" y="360">I1</text>
+  <text x="530" y="460">I2</text>
+  <text x="530" y="560">I3</text>
+  <text x="530" y="660">I4</text>
+  <text x="530" y="760">I5</text>
+  <text x="530" y="860">I6</text>
+  <text x="530" y="960">I7</text>
+  <text x="1118" y="658" style="fill:#00dfdf">Y</text>
 </svg>

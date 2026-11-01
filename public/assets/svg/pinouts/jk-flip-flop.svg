@@ -9,7 +9,7 @@
   <line x1="50.8" y1="116" x2="72.8" y2="116" stroke="#b48cf0" stroke-width="2" stroke-linecap="round"/>
   <circle cx="78.8" cy="116" r="6" fill="none" stroke="#b48cf0" stroke-width="2"/>
   <text x="100.8" y="120" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">2</text>
-  <text x="42.8" y="121" fill="#b48cf0" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">CLR1</text>
+  <text x="42.8" y="121" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">CLR1</text>
   <line x1="50.8" y1="150" x2="84.8" y2="150" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
   <text x="100.8" y="154" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">3</text>
   <text x="42.8" y="155" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">K1</text>
@@ -22,7 +22,7 @@
   <line x1="50.8" y1="252" x2="72.8" y2="252" stroke="#b48cf0" stroke-width="2" stroke-linecap="round"/>
   <circle cx="78.8" cy="252" r="6" fill="none" stroke="#b48cf0" stroke-width="2"/>
   <text x="100.8" y="256" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">6</text>
-  <text x="42.8" y="257" fill="#b48cf0" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">CLR2</text>
+  <text x="42.8" y="257" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">CLR2</text>
   <line x1="50.8" y1="286" x2="84.8" y2="286" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
   <text x="100.8" y="290" fill="#8a8d93" font-family="Consolas" font-size="12" font-weight="400" text-anchor="start">7</text>
   <text x="42.8" y="291" fill="#e8eaed" font-family="Consolas" font-size="14" font-weight="400" text-anchor="end">J2</text>

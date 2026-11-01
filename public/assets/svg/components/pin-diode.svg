@@ -1,8 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 180" role="img" aria-label="PIN DIODE symbol">
-  <title>PIN DIODE symbol</title>
-  <g transform="translate(120,90)"><path d="M0,-14 v28 l24,-14 z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/><path d="M24,-14 v28" stroke="#00a7da" stroke-width="2.4"/></g>
-  <line x1="60" y1="90" x2="104" y2="90" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="50" y="95.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">A</text>
-  <line x1="136" y1="90" x2="180" y2="90" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="190" y="95.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">K</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240" role="img" aria-label="Fast-Recovery Diode symbol">
+  <title>PIN Diode symbol</title>
+
+  <g fill="none" stroke="#e8eaed" stroke-width="2" stroke-linecap="round">
+    <path d="M100 120 H190"/>
+    <path d="M190 120 H260"/>
+  </g>
+
+  <g transform="translate(164,120)">
+    <path d="M0 -24 V24 L42 0 Z"
+          fill="#101f38"
+          stroke="#00a7da"
+          stroke-width="2"
+          stroke-linejoin="round"/>
+    <path d="M42 -24 V24"
+          stroke="#00a7da"
+          stroke-width="2.4"/>
+  </g>
+
+<text x="90" y="125.5" fill="#168fe5"
+     font-family="Consolas" font-size="16"
+     text-anchor="end">A</text>
+
+<text x="270" y="125.5" fill="#00dfc1"
+     font-family="Consolas" font-size="16">K</text> </svg>

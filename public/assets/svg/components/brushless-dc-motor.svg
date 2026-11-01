@@ -1,12 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 180" role="img" aria-label="BRUSHLESS DC MOTOR symbol">
-  <title>BRUSHLESS DC MOTOR symbol</title>
-  <g transform="translate(120,90)"><circle cx="0" cy="0" r="26" fill="#0d1117" stroke="#00a7da" stroke-width="2"/><path d="M-10,-10 v20 M0,-10 v20 M10,-10 v20" stroke="#00dfc1" stroke-width="2"/></g>
-  <line x1="60" y1="46" x2="104" y2="46" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="50" y="51.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">U</text>
-  <line x1="60" y1="90" x2="104" y2="90" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="50" y="95.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">V</text>
-  <line x1="60" y1="134" x2="104" y2="134" stroke="#00a7da" stroke-width="2" stroke-linecap="round"/>
-  <text x="50" y="139.5" fill="#168fe5" font-family="Consolas" font-size="16" font-weight="400" text-anchor="end">W</text>
-  <line x1="136" y1="90" x2="180" y2="90" stroke="#00dfc1" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="190" y="95.5" fill="#00dfdf" font-family="Consolas" font-size="16" font-weight="400" text-anchor="start">SHAFT</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240" role="img" aria-label="Brushless DC Motor symbol">
+  <title>Brushless DC Motor symbol</title>
+
+  <g fill="none" stroke="#e8eaed" stroke-width="2" stroke-linecap="round">
+    <path d="M60 90 H191"/>
+    <path d="M60 120 H191"/>
+    <path d="M60 150 H191"/>
+    <path d="M230 120 H270"/>
+  </g>
+
+<circle cx="190" cy="120" r="42"
+       fill="#0d1117"
+       stroke="#00a7da"
+       stroke-width="2"/>
+
+<g fill="none" stroke="#00dfc1" stroke-width="2"
+  stroke-linecap="round"> <path d="M174 102 V138"/> <path d="M190 102 V138"/> <path d="M206 102 V138"/> </g>
+
+<g fill="#168fe5" font-family="Consolas" font-size="16"
+  font-weight="400" text-anchor="end"> <text x="50" y="95.5">U</text> <text x="50" y="125.5">V</text> <text x="50" y="155.5">W</text> </g>
+
+<text x="280" y="125.5" fill="#00dfc1"
+     font-family="Consolas" font-size="16">SHAFT</text> </svg>

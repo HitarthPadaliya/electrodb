@@ -1,23 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="DPDT Relay circuit diagram">
-  <title>DPDT Relay circuit diagram</title>
-  <path d="M90,130 L300,130" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="300" y="96" width="120" height="68" rx="8" fill="#0d1117" stroke="#00a7da" stroke-width="2"/>
-  <path d="M318,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M339,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M360,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M381,140 a10,10 0 0 1 20,0" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M420,130 L560,130 L560,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="560" cy="130" r="4.5" fill="#c5c7c9"/>
-  <text x="40" y="138" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
-  <text x="470" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A2</text>
-  <path d="M560,250 L636,250" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="640" cy="250" r="4" fill="none" stroke="#e8eaed" stroke-width="2"/>
-  <path d="M646,250 L818,176" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round"/>
-  <path d="M646,250 L818,324" stroke="#8a8d93" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <path d="M860,170 L960,170" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M860,330 L960,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="470" y="258" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">COM</text>
-  <text x="972" y="178" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NO</text>
-  <text x="972" y="338" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">NC</text>
-  <path d="M560,210 v22 M556,210 h8" stroke="#8a8d93" stroke-width="1.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620">
+  <style>
+    .wire{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .coil{fill:none;stroke:#168fe5;stroke-width:2;stroke-linecap:round}
+    .contact{fill:#101f38;stroke:#168fe5;stroke-width:2}
+    .link{fill:none;stroke:#c5c7c9;stroke-width:2;stroke-dasharray:6 6}
+    text{font:24px Consolas,monospace;fill:#168fe5}
+    .output{fill:#00dfdf}
+    .label{font:bold 16px Arial,sans-serif;fill:#e8eaed;text-anchor:middle}
+  </style>
+
+  <text class="label" x="460" y="45">DPDT Relay</text>
+
+  <g class="wire">
+    <path d="M200 120V220M200 380V500"/>
+
+    <path d="M340 230H440L616 160"/>
+    <path d="M624 160H740M624 260H740"/>
+
+    <path d="M340 450H440L616 380"/>
+    <path d="M624 380H740M624 480H740"/>
+  </g>
+
+  <path class="coil" d="M200 220Q260 240 200 260Q260 280 200 300Q260 320 200 340Q260 360 200 380"/>
+
+  <path class="link" d="M240 300H500M500 206V426"/>
+
+  <g class="contact">
+    <circle cx="440" cy="230" r="4"/>
+    <circle cx="620" cy="160" r="4"/>
+    <circle cx="620" cy="260" r="4"/>
+    <circle cx="440" cy="450" r="4"/>
+    <circle cx="620" cy="380" r="4"/>
+    <circle cx="620" cy="480" r="4"/>
+  </g>
+
+  <text x="184" y="100">A1</text>
+  <text x="184" y="540">A2</text>
+
+  <g text-anchor="end">
+    <text x="320" y="238">COM1</text>
+    <text x="320" y="458">COM2</text>
+  </g>
+
+  <g class="output">
+    <text x="760" y="168">NC1</text>
+    <text x="760" y="268">NO1</text>
+    <text x="760" y="388">NC2</text>
+    <text x="760" y="488">NO2</text>
+  </g>
 </svg>

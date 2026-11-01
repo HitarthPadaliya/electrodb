@@ -1,43 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Mod-5 Counter circuit diagram">
-  <title>Mod-5 Counter circuit diagram</title>
-  <path d="M120,94 H156.8 A40,40 0 0 1 156.8,174 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="208" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M120,314 H156.8 A40,40 0 0 1 156.8,394 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="208" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M50,450 L84,450 L84,110 L120,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="24" y="458" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
-  <path d="M84,110 L84,330 L120,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="84" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M214,354 L250,354 L250,158 L120,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M214,134 L290,134 L290,378 L120,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="250" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="290" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M290,134 L290,452 L248,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="224" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q0</text>
-  <path d="M368,94 H404.8 A40,40 0 0 1 404.8,174 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="456" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M368,314 H404.8 A40,40 0 0 1 404.8,394 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="456" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M290,94 L332,94 L332,110 L368,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M332,110 L332,330 L368,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="332" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M462,354 L498,354 L498,158 L368,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M462,134 L538,134 L538,378 L368,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="498" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="538" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M538,134 L538,452 L496,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="472" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q1</text>
-  <path d="M616,94 H652.8 A40,40 0 0 1 652.8,174 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="704" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M616,314 H652.8 A40,40 0 0 1 652.8,394 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="704" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M538,94 L580,94 L580,110 L616,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M580,110 L580,330 L616,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="580" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M710,354 L746,354 L746,158 L616,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M710,134 L786,134 L786,378 L616,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="746" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="786" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M786,134 L786,452 L744,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="720" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q2</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400">
+  <title>Asynchronous MOD-5 Counter</title>
+  <desc>Positive-edge-triggered T flip-flops with complementary-output ripple clocking. NAND decoding of Q2 and Q0 drives active-low asynchronous clear. Count sequence: 000, 001, 010, 011, 100, then reset on transient 101. Reference: </desc> [electronics-tutorials](https://www.electronics-tutorials.ws/counter/mod-counters.html)
+  <style>
+    .body{fill:#101f38;stroke:#168fe5;stroke-width:2}
+    .input{fill:none;stroke:#168fe5;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .output{fill:none;stroke:#00dfdf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .wire{fill:none;stroke:#c5c7c9;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .signal{fill:#00dfdf;font-family:Consolas,monospace;font-size:24px}
+    .pin{fill:#e8eaed;font-family:Arial,sans-serif;font-size:16px}
+    .note{fill:#c5c7c9;font-family:Arial,sans-serif;font-size:10px}
+  </style>
+
+  <g class="signal" text-anchor="middle">
+    <text x="240" y="40">Q0</text>
+    <text x="440" y="40">Q1</text>
+    <text x="640" y="40">Q2</text>
+  </g>
+
+  <g class="input">
+    <path d="M90 88V120H120"/>
+    <path d="M290 88V120H320"/>
+    <path d="M490 88V120H520"/>
+    <path d="M35 160H120"/>
+  </g>
+  <g fill="#168fe5" font-family="Consolas,monospace" font-size="24">
+    <text x="90" y="78" text-anchor="middle">1</text>
+    <text x="290" y="78" text-anchor="middle">1</text>
+    <text x="490" y="78" text-anchor="middle">1</text>
+    <text x="30" y="195">CLK</text>
+  </g>
+
+  <g class="wire">
+    <path d="M220 190H270V160H320"/>
+    <path d="M420 190H470V160H520"/>
+  </g>
+
+  <g class="output">
+    <path d="M220 130H240V55"/>
+    <path d="M420 130H440V55"/>
+    <path d="M620 130H640V55"/>
+    <path d="M240 70H685V312H450"/>
+    <path d="M640 95H720V348H450"/>
+  </g>
+
+  <g class="body">
+    <rect x="120" y="100" width="100" height="130"/>
+    <rect x="320" y="100" width="100" height="130"/>
+    <rect x="520" y="100" width="100" height="130"/>
+  </g>
+
+  <g class="wire">
+    <path d="M120 152L131 160L120 168"/>
+    <path d="M320 152L331 160L320 168"/>
+    <path d="M520 152L531 160L520 168"/>
+  </g>
+
+  <g class="pin">
+    <text x="132" y="126">T</text>
+    <text x="332" y="126">T</text>
+    <text x="532" y="126">T</text>
+    <text x="197" y="136">Q</text>
+    <text x="397" y="136">Q</text>
+    <text x="597" y="136">Q</text>
+    <text x="197" y="195">Q</text>
+    <text x="397" y="195">Q</text>
+  </g>
+  <g fill="none" stroke="#e8eaed" stroke-width="1.5">
+    <path d="M197 180H210"/>
+    <path d="M397 180H410"/>
+  </g>
+
+  <g class="note" text-anchor="middle">
+    <text x="170" y="218">CLR</text>
+    <text x="370" y="218">CLR</text>
+    <text x="570" y="218">CLR</text>
+  </g>
+
+  <g class="body">
+    <circle cx="170" cy="235" r="5"/>
+    <circle cx="370" cy="235" r="5"/>
+    <circle cx="570" cy="235" r="5"/>
+    <path d="M450 290H410A40 40 0 0 0 410 370H450Z"/>
+    <circle cx="364" cy="330" r="6"/>
+  </g>
+
+  <g class="wire">
+    <path d="M170 240V265H570V240"/>
+    <path d="M370 240V265"/>
+    <path d="M358 330H85V265H170"/>
+  </g>
+
+  <g fill="#168fe5">
+    <circle cx="35" cy="160" r="4"/>
+    <circle cx="90" cy="88" r="3.5"/>
+    <circle cx="290" cy="88" r="3.5"/>
+    <circle cx="490" cy="88" r="3.5"/>
+  </g>
+  <g fill="#00dfdf">
+    <circle cx="240" cy="55" r="4"/>
+    <circle cx="440" cy="55" r="4"/>
+    <circle cx="640" cy="55" r="4"/>
+    <circle cx="240" cy="70" r="3.5"/>
+    <circle cx="640" cy="95" r="3.5"/>
+  </g>
+  <g fill="#c5c7c9">
+    <circle cx="170" cy="265" r="3.5"/>
+    <circle cx="370" cy="265" r="3.5"/>
+  </g>
 </svg>

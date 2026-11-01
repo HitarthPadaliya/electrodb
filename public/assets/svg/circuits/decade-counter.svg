@@ -1,56 +1,142 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Decade Counter circuit diagram">
-  <title>Decade Counter circuit diagram</title>
-  <path d="M120,94 H156.8 A40,40 0 0 1 156.8,174 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="208" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M120,314 H156.8 A40,40 0 0 1 156.8,394 H120 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="208" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M50,450 L84,450 L84,110 L120,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="24" y="458" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
-  <path d="M84,110 L84,330 L120,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="84" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M214,354 L250,354 L250,158 L120,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M214,134 L290,134 L290,378 L120,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="250" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="290" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M290,134 L290,452 L248,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="224" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q0</text>
-  <path d="M368,94 H404.8 A40,40 0 0 1 404.8,174 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="456" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M368,314 H404.8 A40,40 0 0 1 404.8,394 H368 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="456" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M290,94 L332,94 L332,110 L368,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M332,110 L332,330 L368,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="332" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M462,354 L498,354 L498,158 L368,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M462,134 L538,134 L538,378 L368,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="498" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="538" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M538,134 L538,452 L496,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="472" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q1</text>
-  <path d="M616,94 H652.8 A40,40 0 0 1 652.8,174 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="704" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M616,314 H652.8 A40,40 0 0 1 652.8,394 H616 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="704" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M538,94 L580,94 L580,110 L616,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M580,110 L580,330 L616,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="580" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M710,354 L746,354 L746,158 L616,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M710,134 L786,134 L786,378 L616,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="746" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="786" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M786,134 L786,452 L744,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="720" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q2</text>
-  <path d="M864,94 H900.8 A40,40 0 0 1 900.8,174 H864 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="952" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M864,314 H900.8 A40,40 0 0 1 900.8,394 H864 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="952" cy="354" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M786,94 L828,94 L828,110 L864,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M828,110 L828,330 L864,330" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="828" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M958,354 L994,354 L994,158 L864,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M958,134 L1034,134 L1034,378 L864,378" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="994" cy="354" r="4.5" fill="#c5c7c9"/>
-  <circle cx="1034" cy="134" r="4.5" fill="#c5c7c9"/>
-  <path d="M1034,134 L1034,452 L992,452" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="968" y="460" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q3</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510">
+  <title>4-bit Asynchronous Decade Counter</title>
+  <style>
+    .body{fill:#101f38;stroke:#168fe5;stroke-width:2}
+    .input{fill:none;stroke:#168fe5;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .output{fill:none;stroke:#00dfdf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .wire{fill:none;stroke:#c5c7c9;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .signal{font-family:Consolas,monospace;font-size:24px}
+    .pin{fill:#e8eaed;font-family:Arial,sans-serif;font-size:16px}
+    .note{fill:#c5c7c9;font-family:Arial,sans-serif;font-size:10px}
+    .title{fill:#e8eaed;font-family:Arial,sans-serif;font-size:16px;font-weight:bold}
+  </style>
+
+  <g class="signal" fill="#00dfdf" text-anchor="middle">
+    <text x="235" y="83">Q0</text>
+    <text x="435" y="83">Q1</text>
+    <text x="635" y="83">Q2</text>
+    <text x="835" y="83">Q3</text>
+  </g>
+  <g class="note" text-anchor="middle">
+    <text x="235" y="59">LSB</text>
+    <text x="835" y="59">MSB</text>
+  </g>
+
+  <g class="input">
+    <path d="M90 120V155H110"/>
+    <path d="M290 120V155H310"/>
+    <path d="M490 120V155H510"/>
+    <path d="M690 120V155H710"/>
+    <path d="M40 195H110"/>
+  </g>
+  <g class="signal" fill="#168fe5" text-anchor="middle">
+    <text x="90" y="110">1</text>
+    <text x="290" y="110">1</text>
+    <text x="490" y="110">1</text>
+    <text x="690" y="110">1</text>
+  </g>
+  <text x="30" y="230" class="signal" fill="#168fe5">CLK</text>
+
+  <g class="wire">
+    <path d="M210 225H260V195H310"/>
+    <path d="M410 225H460V195H510"/>
+    <path d="M610 225H660V195H710"/>
+    <path d="M810 225H828"/>
+  </g>
+
+  <g class="output">
+    <path d="M210 165H235V98"/>
+    <path d="M410 165H435V98"/>
+    <path d="M610 165H635V98"/>
+    <path d="M810 165H835V98"/>
+    <path d="M435 115H880V352H550"/>
+    <path d="M835 140H910V388H550"/>
+  </g>
+
+  <g class="body">
+    <rect x="110" y="135" width="100" height="135"/>
+    <rect x="310" y="135" width="100" height="135"/>
+    <rect x="510" y="135" width="100" height="135"/>
+    <rect x="710" y="135" width="100" height="135"/>
+  </g>
+
+  <g class="wire">
+    <path d="M110 187L121 195L110 203"/>
+    <path d="M310 187L321 195L310 203"/>
+    <path d="M510 187L521 195L510 203"/>
+    <path d="M710 187L721 195L710 203"/>
+  </g>
+
+  <g class="pin">
+    <text x="121" y="161">T</text>
+    <text x="321" y="161">T</text>
+    <text x="521" y="161">T</text>
+    <text x="721" y="161">T</text>
+    <text x="187" y="170">Q</text>
+    <text x="387" y="170">Q</text>
+    <text x="587" y="170">Q</text>
+    <text x="787" y="170">Q</text>
+    <text x="187" y="230">Q</text>
+    <text x="387" y="230">Q</text>
+    <text x="587" y="230">Q</text>
+    <text x="787" y="230">Q</text>
+  </g>
+  <g fill="none" stroke="#e8eaed" stroke-width="1.5">
+    <path d="M187 215H200"/>
+    <path d="M387 215H400"/>
+    <path d="M587 215H600"/>
+    <path d="M787 215H800"/>
+  </g>
+
+  <g class="note">
+    <text x="126" y="199">CLK</text>
+    <text x="326" y="199">CLK</text>
+    <text x="526" y="199">CLK</text>
+    <text x="726" y="199">CLK</text>
+    <text x="160" y="257" text-anchor="middle">CLR</text>
+    <text x="360" y="257" text-anchor="middle">CLR</text>
+    <text x="560" y="257" text-anchor="middle">CLR</text>
+    <text x="760" y="257" text-anchor="middle">CLR</text>
+  </g>
+
+  <g class="body">
+    <circle cx="160" cy="275" r="5"/>
+    <circle cx="360" cy="275" r="5"/>
+    <circle cx="560" cy="275" r="5"/>
+    <circle cx="760" cy="275" r="5"/>
+    <path d="M550 330H510A40 40 0 0 0 510 410H550Z"/>
+    <circle cx="464" cy="370" r="6"/>
+  </g>
+
+  <g class="wire">
+    <path d="M160 280V305H760V280"/>
+    <path d="M360 280V305"/>
+    <path d="M560 280V305"/>
+    <path d="M458 370H100V305H160"/>
+  </g>
+
+  <g fill="#c5c7c9">
+    <circle cx="160" cy="305" r="3.5"/>
+    <circle cx="360" cy="305" r="3.5"/>
+    <circle cx="560" cy="305" r="3.5"/>
+    <circle cx="828" cy="225" r="3"/>
+  </g>
+  <g fill="#168fe5">
+    <circle cx="40" cy="195" r="4"/>
+    <circle cx="90" cy="120" r="3"/>
+    <circle cx="290" cy="120" r="3"/>
+    <circle cx="490" cy="120" r="3"/>
+    <circle cx="690" cy="120" r="3"/>
+  </g>
+  <g fill="#00dfdf">
+    <circle cx="235" cy="98" r="4"/>
+    <circle cx="435" cy="98" r="4"/>
+    <circle cx="635" cy="98" r="4"/>
+    <circle cx="835" cy="98" r="4"/>
+    <circle cx="435" cy="115" r="3.5"/>
+    <circle cx="835" cy="140" r="3.5"/>
+  </g>
+
+  <text x="635" y="345" class="note">Q1</text>
+  <text x="635" y="403" class="note">Q3</text>
 </svg>

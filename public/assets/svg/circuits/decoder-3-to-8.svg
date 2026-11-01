@@ -1,41 +1,111 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="3-to-8 Decoder circuit diagram">
-  <title>3-to-8 Decoder circuit diagram</title>
-  <path d="M220,150 H245.76 A28,28 0 0 1 245.76,206 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="284" cy="178" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M220,300 H245.76 A28,28 0 0 1 245.76,356 H220 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="284" cy="328" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,40 H636.8 A40,40 0 0 1 636.8,120 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="80" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,145 H636.8 A40,40 0 0 1 636.8,225 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="185" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,250 H636.8 A40,40 0 0 1 636.8,330 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="290" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M600,355 H636.8 A40,40 0 0 1 636.8,435 H600 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="688" cy="395" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M60,178 L140,178 L220,178" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M60,328 L180,328 L220,328" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="186" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A0</text>
-  <text x="34" y="336" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">A1</text>
-  <circle cx="140" cy="178" r="4.5" fill="#c5c7c9"/>
-  <circle cx="180" cy="328" r="4.5" fill="#c5c7c9"/>
-  <path d="M140,178 L140,440 L300,440 L300,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M290,178 L340,178 L340,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M180,328 L180,460 L460,460 L460,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M290,328 L500,328 L500,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M340,56 L600,56" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M500,104 L600,104" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,80 L940,80" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="88" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y0</text>
-  <path d="M300,161 L600,161" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M500,209 L600,209" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,185 L940,185" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="193" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y1</text>
-  <path d="M340,266 L600,266" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M460,314 L600,314" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,290 L940,290" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="298" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y2</text>
-  <path d="M300,371 L600,371" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M460,419 L600,419" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M694,395 L940,395" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="952" y="403" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Y3</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 1140">
+  <style>
+    .wire{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .gate{fill:#101f38;stroke:#168fe5;stroke-width:2;stroke-linejoin:round}
+    .dot{fill:#fff}
+    text{font:24px Consolas,monospace;fill:#168fe5}
+    .output{fill:#00dfdf}
+  </style>
+
+  <defs>
+    <g id="inverter">
+      <path class="wire" d="M-20 0V-13H0M-20 0V13H0"/>
+      <circle class="dot" cx="-20" cy="0" r="3"/>
+      <path class="gate" d="M0-30H30A30 30 0 0 1 30 30H0Z"/>
+      <circle class="gate" cx="66" cy="0" r="6"/>
+    </g>
+    <g id="branch">
+      <path class="gate" d="M580-30H610A30 30 0 0 1 610 30H580Z"/>
+      <circle class="gate" cx="646" cy="0" r="6"/>
+      <path class="wire" d="M652 0H700"/>
+      <use href="#inverter" transform="translate(720 0)"/>
+      <path class="wire" d="M792 0H920"/>
+    </g>
+  </defs>
+
+  <g class="wire">
+    <path d="M60 100H80V1050M172 100V1050"/>
+    <path d="M220 100H240V1050M332 100V1050"/>
+    <path d="M380 100H400V1050M492 100V1050"/>
+
+    <path d="M172 282H580M332 300H580M492 318H580"/>
+    <path d="M172 382H580M332 400H580M400 418H580"/>
+    <path d="M172 482H580M240 500H580M492 518H580"/>
+    <path d="M172 582H580M240 600H580M400 618H580"/>
+    <path d="M80 682H580M332 700H580M492 718H580"/>
+    <path d="M80 782H580M332 800H580M400 818H580"/>
+    <path d="M80 882H580M240 900H580M492 918H580"/>
+    <path d="M80 982H580M240 1000H580M400 1018H580"/>
+  </g>
+
+  <use href="#inverter" transform="translate(100 100)"/>
+  <use href="#inverter" transform="translate(260 100)"/>
+  <use href="#inverter" transform="translate(420 100)"/>
+
+  <use href="#branch" transform="translate(0 300)"/>
+  <use href="#branch" transform="translate(0 400)"/>
+  <use href="#branch" transform="translate(0 500)"/>
+  <use href="#branch" transform="translate(0 600)"/>
+  <use href="#branch" transform="translate(0 700)"/>
+  <use href="#branch" transform="translate(0 800)"/>
+  <use href="#branch" transform="translate(0 900)"/>
+  <use href="#branch" transform="translate(0 1000)"/>
+
+  <g class="dot">
+    <circle cx="172" cy="282" r="3"/>
+    <circle cx="332" cy="300" r="3"/>
+    <circle cx="492" cy="318" r="3"/>
+
+    <circle cx="172" cy="382" r="3"/>
+    <circle cx="332" cy="400" r="3"/>
+    <circle cx="400" cy="418" r="3"/>
+
+    <circle cx="172" cy="482" r="3"/>
+    <circle cx="240" cy="500" r="3"/>
+    <circle cx="492" cy="518" r="3"/>
+
+    <circle cx="172" cy="582" r="3"/>
+    <circle cx="240" cy="600" r="3"/>
+    <circle cx="400" cy="618" r="3"/>
+
+    <circle cx="80" cy="682" r="3"/>
+    <circle cx="332" cy="700" r="3"/>
+    <circle cx="492" cy="718" r="3"/>
+
+    <circle cx="80" cy="782" r="3"/>
+    <circle cx="332" cy="800" r="3"/>
+    <circle cx="400" cy="818" r="3"/>
+
+    <circle cx="80" cy="882" r="3"/>
+    <circle cx="240" cy="900" r="3"/>
+    <circle cx="492" cy="918" r="3"/>
+
+    <circle cx="80" cy="982" r="3"/>
+    <circle cx="240" cy="1000" r="3"/>
+    <circle cx="400" cy="1018" r="3"/>
+  </g>
+
+  <text x="24" y="78">A2</text>
+  <text x="204" y="78">A1</text>
+  <text x="364" y="78">A0</text>
+
+  <g text-anchor="middle">
+    <text x="80" y="1090">A2</text>
+    <text x="172" y="1090">A2'</text>
+    <text x="240" y="1090">A1</text>
+    <text x="332" y="1090">A1'</text>
+    <text x="400" y="1090">A0</text>
+    <text x="492" y="1090">A0'</text>
+  </g>
+
+  <g class="output">
+    <text x="938" y="308">Y0</text>
+    <text x="938" y="408">Y1</text>
+    <text x="938" y="508">Y2</text>
+    <text x="938" y="608">Y3</text>
+    <text x="938" y="708">Y4</text>
+    <text x="938" y="808">Y5</text>
+    <text x="938" y="908">Y6</text>
+    <text x="938" y="1008">Y7</text>
+  </g>
 </svg>

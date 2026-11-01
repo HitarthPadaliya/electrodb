@@ -1,35 +1,149 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-label="Clearable D Flip-Flop circuit diagram">
-  <title>Clearable D Flip-Flop circuit diagram</title>
-  <path d="M250,366 H275.76 A28,28 0 0 1 275.76,422 H250 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="314" cy="394" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M450,94 H486.8 A40,40 0 0 1 486.8,174 H450 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="538" cy="134" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M450,334 H486.8 A40,40 0 0 1 486.8,414 H450 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="538" cy="374" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M760,118 H796.8 A40,40 0 0 1 796.8,198 H760 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="848" cy="158" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M760,358 H796.8 A40,40 0 0 1 796.8,438 H760 Z" fill="#101f38" stroke="#00a7da" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="848" cy="398" r="6" fill="none" stroke="#00a7da" stroke-width="2"/>
-  <path d="M60,110 L140,110 L450,110" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="140" cy="110" r="4.5" fill="#c5c7c9"/>
-  <path d="M140,110 L140,394 L250,394" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M320,394 L410,394 L410,350 L450,350" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="118" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">D</text>
-  <path d="M60,240 L190,240" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M190,240 L190,158 L450,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="190" cy="240" r="4.5" fill="#c5c7c9"/>
-  <path d="M190,240 L190,398 L450,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="34" y="248" fill="#168fe5" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">CLK</text>
-  <path d="M544,134 L760,134" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M544,374 L760,374" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M854,398 L900,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="900" cy="398" r="4.5" fill="#c5c7c9"/>
-  <path d="M900,398 L900,40 L700,40 L700,182 L760,182" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M854,158 L940,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="940" cy="158" r="4.5" fill="#c5c7c9"/>
-  <path d="M940,158 L940,464 L700,464 L700,422 L760,422" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M940,158 L1000,158" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M900,398 L1000,398" fill="none" stroke="#c5c7c9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="1012" y="166" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q</text>
-  <text x="1012" y="406" fill="#00dfdf" font-family="Consolas" font-size="24" font-weight="400" text-anchor="start">Q&apos;</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650">
+  <defs>
+    <style>
+      .w{fill:none;stroke:#c5c7c9;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .i{fill:none;stroke:#168fe5;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .o{fill:none;stroke:#00dfdf;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .g{fill:#101f38;stroke:#168fe5;stroke-width:1.8}
+      .b{fill:#168fe5}
+      .c{fill:#00dfdf}
+      .n{fill:#c5c7c9}
+      .t{fill:#e8eaed;font-family:Arial,sans-serif;font-size:15px;font-weight:bold}
+      .s{fill:#c5c7c9;font-family:Arial,sans-serif;font-size:11px}
+      .il{fill:#168fe5;font-family:Consolas,monospace;font-size:22px}
+      .ol{fill:#00dfdf;font-family:Consolas,monospace;font-size:22px}
+      .gt{fill:#e8eaed;font-family:Arial,sans-serif;font-size:11px;font-weight:bold}
+    </style>
+  </defs>
+
+  <!-- Section headings -->
+
+<text class="t" x="600" y="30" text-anchor="middle">NAND IMPLEMENTATION OF CLEARABLE D FLIP-FLOP</text> <text class="s" x="310" y="65" text-anchor="middle">MASTER LATCH</text> <text class="s" x="825" y="65" text-anchor="middle">SLAVE LATCH</text>
+
+  <!-- Input D -->
+
+<text class="il" x="25" y="171">D</text> <path class="i" d="M65 164 H135 V130 H180"/> <circle class="b" cx="135" cy="164" r="3.5"/> <path class="i" d="M135 164 V260 H180"/> <text class="s" x="75" y="150">DATA</text>
+
+  <!-- D inverter NAND1 -->
+
+  <path class="g" d="M180 105 H222 Q258 105 258 130 Q258 155 222 155 H180 Z"/>
+  <circle class="g" cx="263" cy="130" r="5"/>
+  <text class="gt" x="218" y="134" text-anchor="middle">N1</text>
+  <path class="i" d="M135 130 H180 M268 130 H290 V260 H330"/>
+  <text class="s" x="280" y="119">D'</text>
+
+  <!-- Clock and clock inverter -->
+
+<text class="il" x="25" y="370">CLK</text> <path class="i" d="M85 363 H135 V410 H180"/> <path class="i" d="M135 363 V510 H180"/> <circle class="b" cx="135" cy="363" r="3.5"/>
+
+  <!-- Clock inverter N2 -->
+
+  <path class="g" d="M180 385 H222 Q258 385 258 410 Q258 435 222 435 H180 Z"/>
+  <circle class="g" cx="263" cy="410" r="5"/>
+  <text class="gt" x="218" y="414" text-anchor="middle">N2</text>
+  <path class="i" d="M268 410 H290 V480 H330"/>
+  <text class="s" x="278" y="399">CLK'</text>
+
+  <!-- Master input NAND N3 -->
+
+  <path class="g" d="M330 220 H372 Q408 220 408 245 Q408 270 372 270 H330 Z"/>
+  <circle class="g" cx="413" cy="245" r="5"/>
+  <text class="gt" x="368" y="249" text-anchor="middle">N3</text>
+  <path class="i" d="M258 130 H310 V230 H330 M135 260 H310 V260 H330"/>
+  <path class="w" d="M418 245 H450 V205 H490"/>
+
+  <!-- Master input NAND N4 -->
+
+  <path class="g" d="M330 460 H372 Q408 460 408 485 Q408 510 372 510 H330 Z"/>
+  <circle class="g" cx="413" cy="485" r="5"/>
+  <text class="gt" x="368" y="489" text-anchor="middle">N4</text>
+  <path class="w" d="M268 130 H305 V470 H330"/>
+  <path class="i" d="M135 510 H330"/>
+  <path class="w" d="M418 485 H450 V525 H490"/>
+
+  <!-- Master cross-coupled NAND latch -->
+
+  <path class="g" d="M490 175 H532 Q568 175 568 200 Q568 225 532 225 H490 Z"/>
+  <circle class="g" cx="573" cy="200" r="5"/>
+  <text class="gt" x="528" y="204" text-anchor="middle">N5</text>
+
+  <path class="g" d="M490 500 H532 Q568 500 568 525 Q568 550 532 550 H490 Z"/>
+  <circle class="g" cx="573" cy="525" r="5"/>
+  <text class="gt" x="528" y="529" text-anchor="middle">N6</text>
+
+  <path class="w" d="M450 205 H470 V200 H490 M450 525 H470 V525 H490"/>
+  <path class="w" d="M578 200 H600 V165 H470 V205 H490"/>
+  <path class="w" d="M578 525 H610 V565 H470 V525 H490"/>
+
+  <!-- Master outputs -->
+
+  <path class="w" d="M578 200 H630 V270 H675"/>
+  <path class="w" d="M578 525 H630 V455 H675"/>
+  <text class="s" x="615" y="250">M</text>
+  <text class="s" x="615" y="445">M'</text>
+
+  <!-- Interstage connections to slave -->
+
+  <path class="w" d="M630 270 H690 V205 H735"/>
+  <path class="w" d="M630 455 H690 V475 H735"/>
+
+  <!-- Slave NAND N7 -->
+
+  <path class="g" d="M735 180 H777 Q813 180 813 205 Q813 230 777 230 H735 Z"/>
+  <circle class="g" cx="818" cy="205" r="5"/>
+  <text class="gt" x="773" y="209" text-anchor="middle">N7</text>
+
+  <!-- Slave NAND N8 -->
+
+  <path class="g" d="M735 450 H777 Q813 450 813 475 Q813 500 777 500 H735 Z"/>
+  <circle class="g" cx="818" cy="475" r="5"/>
+  <text class="gt" x="773" y="479" text-anchor="middle">N8</text>
+
+  <!-- Slave latch -->
+
+  <path class="g" d="M875 180 H917 Q953 180 953 205 Q953 230 917 230 H875 Z"/>
+  <circle class="g" cx="958" cy="205" r="5"/>
+  <text class="gt" x="913" y="209" text-anchor="middle">N9</text>
+
+  <path class="g" d="M875 450 H917 Q953 450 953 475 Q953 500 917 500 H875 Z"/>
+  <circle class="g" cx="958" cy="475" r="5"/>
+  <text class="gt" x="913" y="479" text-anchor="middle">N10</text>
+
+  <path class="w" d="M823 205 H850 V205 H875"/>
+  <path class="w" d="M823 475 H850 V475 H875"/>
+
+  <!-- Slave cross coupling -->
+
+  <path class="w" d="M963 205 H1000 V155 H855 V205 H875"/>
+  <path class="w" d="M963 475 H1015 V535 H855 V475 H875"/>
+
+  <!-- Q output -->
+
+  <path class="o" d="M963 205 H1080"/>
+  <circle class="c" cx="1080" cy="205" r="4"/>
+  <text class="ol" x="1090" y="212">Q</text>
+
+  <!-- Q complement output -->
+
+  <path class="o" d="M963 475 H1080"/>
+  <circle class="c" cx="1080" cy="475" r="4"/>
+  <text class="ol" x="1090" y="482">Q'</text>
+
+  <!-- Active-low asynchronous clear circuit -->
+
+<text class="il" x="25" y="590">CLR</text> <text class="s" x="25" y="610">Active LOW</text> <path class="i" d="M90 583 H135 V550 H875 V500"/> <circle class="b" cx="135" cy="583" r="3.5"/> <circle cx="875" cy="505" r="5" fill="#101f38" stroke="#168fe5" stroke-width="1.6"/>
+
+  <!-- Clear to slave latch reset path -->
+
+  <path class="i" d="M135 550 H1040 V475 H963"/>
+  <circle class="b" cx="1040" cy="475" r="3.5"/>
+
+  <!-- Clock phase annotations -->
+
+<text class="s" x="310" y="570" text-anchor="middle">CLK' controls master latch</text> <text class="s" x="825" y="570" text-anchor="middle">CLK controls slave latch</text>
+
+  <!-- Functional note -->
+
+  <path class="w" d="M180 620 H1020" opacity=".4"/>
+  <text class="s" x="600" y="642" text-anchor="middle">Master–slave architecture | NAND-based storage | Asynchronous active-low clear</text>
 </svg>
